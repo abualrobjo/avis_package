@@ -1,0 +1,213 @@
+import 'package:easy_localization/easy_localization.dart';
+
+class CustomerTripByIdModel {
+  final int tripId;
+
+  final String? customerPrimaryName;
+  final String? customerSecondaryname;
+
+  final String? chauffeurPrimaryName;
+  final String? chauffeurSecondaryName;
+  final String? chauffeurPhoneNumber;
+  final String? chauffeurPhoto;
+
+  final String? plateNumber;
+
+  final bool? cancellationBookLaterEnabled;
+  final int? cancellationBookLaterFreeDurationHours;
+
+  /// Locations
+  final String? pickupLatitude;
+  final String? pickupLatLng;
+
+  final String? dropOffLatitude;
+  final String? dropOffLatLng;
+
+  /// Dates
+  final DateTime? tripDateTime;
+  final DateTime? tripStartDate;
+  final DateTime? tripEndDate;
+
+  /// Status
+  final int? statusId;
+  final String? statusPrimaryName;
+  final String? statusSecondaryName;
+
+  /// Driver
+  final double? driverAVGRate;
+
+  /// Vehicle
+  final int? manufacturingYear;
+
+  final String? manufacturerPrimaryName;
+  final String? manufacturerSecondaryName;
+
+  final String? colorPrimaryName;
+  final String? colorSecondaryName;
+  final String? colorCode;
+
+  final String? vehicleImagePath;
+  final String? vehicleImageName;
+  final String? vehicleClassImage;
+
+  final String? vehicleClassPrimaryName;
+  final String? vehicleClassSecondaryName;
+  final String? tripTypePrimaryName;
+
+  final int? passengersNo;
+  final int? suitcasesNo;
+
+  const CustomerTripByIdModel({
+    required this.tripId,
+    this.customerPrimaryName,
+    this.customerSecondaryname,
+    this.chauffeurPrimaryName,
+    this.chauffeurSecondaryName,
+    this.chauffeurPhoneNumber,
+    this.chauffeurPhoto,
+    this.plateNumber,
+    this.cancellationBookLaterEnabled,
+    this.cancellationBookLaterFreeDurationHours,
+    this.pickupLatitude,
+    this.pickupLatLng,
+    this.dropOffLatitude,
+    this.dropOffLatLng,
+    this.tripDateTime,
+    this.tripStartDate,
+    this.tripEndDate,
+    this.statusId,
+    this.statusPrimaryName,
+    this.statusSecondaryName,
+    this.driverAVGRate,
+    this.manufacturingYear,
+    this.manufacturerPrimaryName,
+    this.manufacturerSecondaryName,
+    this.colorPrimaryName,
+    this.colorSecondaryName,
+    this.colorCode,
+    this.vehicleImagePath,
+    this.vehicleImageName,
+    this.vehicleClassImage,
+    this.vehicleClassPrimaryName,
+    this.vehicleClassSecondaryName,
+    this.passengersNo,
+    this.suitcasesNo,
+    this.tripTypePrimaryName,
+  });
+
+  factory CustomerTripByIdModel.fromJson(Map<String, dynamic> json) {
+    return CustomerTripByIdModel(
+      tripId: (json['tripId'] as num?)?.toInt() ?? 0,
+
+      customerPrimaryName: json['customerPrimaryName'],
+      customerSecondaryname: json['customerSecondaryname'],
+
+      chauffeurPrimaryName: json['chauffeurPrimaryName'],
+      chauffeurSecondaryName: json['chauffeurSecondaryName'],
+      chauffeurPhoneNumber: json['chauffeurPhoneNumber'],
+      chauffeurPhoto: json['chauffeurPhoto'],
+      tripTypePrimaryName: json['tripTypePrimaryName'],
+
+      plateNumber: json['plateNumber'],
+
+      cancellationBookLaterEnabled: json['cancellationBookLaterEnabled'],
+      cancellationBookLaterFreeDurationHours:
+          (json['cancellationBookLaterFreeDurationHours'] as num?)?.toInt(),
+
+      /// Locations
+      pickupLatitude: json['pickup_latitude'],
+      pickupLatLng: json['pickup_longtitude'],
+
+      dropOffLatitude: json['dropOff_latitude'],
+      dropOffLatLng: json['dropOff_longtitude'],
+
+      /// Dates
+      tripDateTime: DateTime.tryParse(json['tripDateTime'] ?? ''),
+      tripStartDate: DateTime.tryParse(json['tripStartDate'] ?? ''),
+      tripEndDate: DateTime.tryParse(json['tripEndDate'] ?? ''),
+
+      /// Status
+      statusId: (json['statusId'] as num?)?.toInt(),
+      statusPrimaryName: json['statusPrimaryName'],
+      statusSecondaryName: json['statusSecondaryName'],
+
+      /// Driver
+      driverAVGRate: (json['driverAVGRate'] as num?)?.toDouble(),
+
+      /// Vehicle
+      manufacturingYear: (json['manufacturingYear'] as num?)?.toInt(),
+
+      manufacturerPrimaryName: json['manufacturerPrimaryName'],
+      manufacturerSecondaryName: json['manufacturerSecondaryName'],
+
+      colorPrimaryName: json['colorPrimaryName'],
+      colorSecondaryName: json['colorSecondaryName'],
+      colorCode: json['colorCode'],
+
+      vehicleImagePath: json['vehicleImagePath'],
+      vehicleImageName: json['vehicleImageName'],
+      vehicleClassImage: json['vehicleClassImage'],
+
+      vehicleClassPrimaryName: json['vehicleClassPrimaryName'],
+      vehicleClassSecondaryName: json['vehicleClassSecondaryName'],
+
+      passengersNo: (json['passengersNo'] as num?)?.toInt(),
+      suitcasesNo: (json['suitcasesNo'] as num?)?.toInt(),
+    );
+  }
+
+  /// Convert "lat,lng" string → coordinates
+  static (double lat, double lng)? parseLatLng(String? value) {
+    if (value == null || value.isEmpty) return null;
+
+    final parts = value.split(',');
+    if (parts.length != 2) return null;
+
+    final lat = double.tryParse(parts[0].trim());
+    final lng = double.tryParse(parts[1].trim());
+
+    if (lat == null || lng == null) return null;
+
+    return (lat, lng);
+  }
+
+  /// Date formatting
+  static String formatTripDateTime(DateTime? dateTime) {
+    if (dateTime == null) return '';
+    return DateFormat('d MMM yyyy, hh:mm a').format(dateTime);
+  }
+
+  static String formatTime(DateTime? dateTime) {
+    if (dateTime == null) return '';
+    return DateFormat('hh:mm a').format(dateTime);
+  }
+
+  bool get hasDropOffPlace {
+    final d = dropOffLatitude?.trim();
+    return d != null && d.isNotEmpty;
+  }
+
+  /// Route widget second row: label when drop-off exists, otherwise [Pickup].
+  String get routeDropOffSectionLabel =>
+      hasDropOffPlace ? 'Your Destination' : 'Pickup';
+
+  /// Route widget second row address.
+  String get routeDropOffSectionLocation =>
+      hasDropOffPlace ? (dropOffLatitude ?? '').trim() : (pickupLatitude ?? '');
+
+  bool get isCancellationAllowed {
+    if (cancellationBookLaterEnabled != true) return false;
+
+    if (tripDateTime != null && cancellationBookLaterFreeDurationHours != null) {
+      final expirationTime = tripDateTime!.add(
+        Duration(hours: cancellationBookLaterFreeDurationHours!),
+      );
+
+      if (DateTime.now().isAfter(expirationTime)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+}

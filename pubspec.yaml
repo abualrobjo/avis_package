@@ -1,0 +1,53 @@
+name: avis_package
+description: Avis package - trip types, flight names APIs and services.
+version: 1.0.1
+publish_to: 'none'
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  dio: ^5.4.0
+  get_it: ^9.2.0
+  provider: ^6.1.5
+  hive_flutter: ^1.1.0
+  flutter_svg: ^2.2.3
+  flutter_screenutil: ^5.9.3
+  easy_localization: ^3.0.8
+  image_picker: ^1.2.1
+  dotted_border: ^3.1.0
+  permission_handler: ^12.0.1
+  pinput: ^6.0.1
+  country_code_picker: ^3.4.1
+  google_fonts: ^8.0.0
+  firebase_core: ^4.4.0
+  firebase_auth: ^6.1.4
+  cloud_firestore: ^6.1.2
+  url_launcher: ^6.3.0
+  google_maps_flutter: ^2.14.0
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  flutter_rating_bar: ^4.0.1
+  flutter_dotenv: ^6.0.0
+  intl: ^0.20.2
+  flutter_polyline_points: ^3.1.0
+  equatable: ^2.0.8
+  uuid: ^4.5.3
+  toastification: ^3.0.3
+  connectivity_plus: ^6.0.3
+  webview_flutter: ^4.13.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  assets:
+    - assets/icons/
+    - assets/images/
+    - assets/map_styles/
+

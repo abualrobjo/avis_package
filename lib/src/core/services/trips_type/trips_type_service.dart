@@ -1,0 +1,6 @@
+import 'package:avis_package/src/core/_core.dart';
+
+abstract class TripsTypeService {
+  Future<ApiResponseModel<List<TripTypeWithConfigModel>>>
+      getTripsTypeWithConfig();
+}
