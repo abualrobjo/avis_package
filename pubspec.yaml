@@ -19,7 +19,12 @@ dependencies:
   easy_localization: ^3.0.8
   image_picker: ^1.2.2
   dotted_border: ^3.1.0
-  permission_handler:
+  permission_handependencies:
+    avis_package:
+      git:
+        url: https://github.com/abualrobjo/avis_package.git
+        ref:
+          maindler:
   pinput: ^6.0.1
   country_code_picker: ^3.4.1
   google_fonts: ^8.0.0
@@ -28,7 +33,7 @@ dependencies:
   cloud_firestore: ^6.1.2
   url_launcher: ^6.3.2
   google_maps_flutter: ^2.14.0
-  geolocator: ^14.0.2
+  geolocator:
   geocoding: ^4.0.0
   flutter_rating_bar: ^4.0.1
   flutter_dotenv: ^6.0.0
