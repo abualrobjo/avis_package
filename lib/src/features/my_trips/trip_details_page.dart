@@ -212,62 +212,84 @@ class _VehicleCard extends StatelessWidget {
         color: context.colors.infoBackground,
         borderRadius: BorderRadius.circular(AppCornerRadius.medium.r),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 80.w,
-            height: 56.w,
-            decoration: BoxDecoration(
-              color: context.colors.secondaryContainer,
-              borderRadius: BorderRadius.circular(AppCornerRadius.small.r),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppCornerRadius.small.r),
-              child: NetworkImageWidget(
-                url: data?.vehicleImagePath ?? '',
-                errorWidget: Icon(
-                  Icons.directions_car,
-                  size: 36.w,
-                  color: context.colors.tertiaryText,
+          Row(
+            children: [
+              TextWidget(
+                'Trip ID',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: context.colors.secondaryText,
                 ),
               ),
-            ),
+              SizedBox(width: 4.w),
+              TextWidget(
+                '${data!.tripId}',
+                style: AppTextStyles.bodyMediumBold.copyWith(
+                  color: context.colors.primaryText,
+                ),
+              ),
+            ],
           ),
-          TextWidget(
-            '  ${data?.vehicleClassPrimaryName} - ${data?.tripTypePrimaryName ?? ''}',
-            style: AppTextStyles.bodyMediumBold.copyWith(
-              color: context.colors.primaryText,
-            ),
-          ),
-          const Spacer(),
-
-          SizedBox(width: 12.w),
-          SvgIconWidget(
-            name: 'account',
-            width: 18.w,
-            height: 18.w,
-            color: context.colors.secondaryText,
-          ),
-          SizedBox(width: 4.w),
-          TextWidget(
-            '${data?.passengersNo}',
-            style: AppTextStyles.bodyMediumBold.copyWith(
-              color: context.colors.primaryText,
-            ),
-          ),
-          SizedBox(width: 12.w),
-          SvgIconWidget(
-            name: 'bag',
-            width: 18.w,
-            height: 18.w,
-            color: context.colors.secondaryText,
-          ),
-          SizedBox(width: 4.w),
-          TextWidget(
-            '${data?.suitcasesNo}',
-            style: AppTextStyles.bodyMediumBold.copyWith(
-              color: context.colors.primaryText,
-            ),
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              Container(
+                width: 80.w,
+                height: 56.w,
+                decoration: BoxDecoration(
+                  color: context.colors.secondaryContainer,
+                  borderRadius: BorderRadius.circular(AppCornerRadius.small.r),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppCornerRadius.small.r),
+                  child: NetworkImageWidget(
+                    url: data?.vehicleImagePath ?? '',
+                    errorWidget: Icon(
+                      Icons.directions_car,
+                      size: 36.w,
+                      color: context.colors.tertiaryText,
+                    ),
+                  ),
+                ),
+              ),
+              TextWidget(
+                '  ${data?.vehicleClassPrimaryName} - ${data?.tripTypePrimaryName ?? ''}',
+                style: AppTextStyles.bodyMediumBold.copyWith(
+                  color: context.colors.primaryText,
+                ),
+              ),
+              const Spacer(),
+              SizedBox(width: 12.w),
+              SvgIconWidget(
+                name: 'account',
+                width: 18.w,
+                height: 18.w,
+                color: context.colors.secondaryText,
+              ),
+              SizedBox(width: 4.w),
+              TextWidget(
+                '${data?.passengersNo}',
+                style: AppTextStyles.bodyMediumBold.copyWith(
+                  color: context.colors.primaryText,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              SvgIconWidget(
+                name: 'bag',
+                width: 18.w,
+                height: 18.w,
+                color: context.colors.secondaryText,
+              ),
+              SizedBox(width: 4.w),
+              TextWidget(
+                '${data?.suitcasesNo}',
+                style: AppTextStyles.bodyMediumBold.copyWith(
+                  color: context.colors.primaryText,
+                ),
+              ),
+            ],
           ),
         ],
       ),

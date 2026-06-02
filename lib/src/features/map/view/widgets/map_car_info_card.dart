@@ -8,7 +8,9 @@ import 'package:avis_package/src/core/_core.dart'
         AppContextExtension,
         AppCornerRadius,
         NetworkImageWidget,
-        CustomerTripByIdModelExtension;
+        CustomerTripByIdModelExtension,
+        SvgIconWidget,
+        TextWidget;
 
 class MapCarInfoCard extends StatelessWidget {
   const MapCarInfoCard({super.key, required this.tripInfo});
@@ -39,6 +41,24 @@ class MapCarInfoCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                children: [
+                  TextWidget(
+                    'Trip ID',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: context.colors.secondaryText,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpaces.xSmall),
+                  TextWidget(
+                    '${tripInfo.tripId}',
+                    style: AppTextStyles.bodyMediumBold.copyWith(
+                      color: context.colors.primaryText,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpaces.small),
               Text(tripInfo.plateNumber ?? '', style: AppTextStyles.h2),
               const SizedBox(height: AppSpaces.small),
               Row(
@@ -63,6 +83,38 @@ class MapCarInfoCard extends StatelessWidget {
                   Text(
                     '${tripInfo.manufacturerPrimaryName ?? ''} - ${tripInfo.colorPrimaryName ?? ''}',
                     style: AppTextStyles.bodyMedium.copyWith(
+                      color: context.colors.primaryText,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpaces.small),
+              Row(
+                children: [
+                  SvgIconWidget(
+                    name: 'account',
+                    width: 18,
+                    height: 18,
+                    color: context.colors.secondaryText,
+                  ),
+                  const SizedBox(width: AppSpaces.xSmall),
+                  TextWidget(
+                    '${tripInfo.passengersNo ?? 0}',
+                    style: AppTextStyles.bodyMediumBold.copyWith(
+                      color: context.colors.primaryText,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpaces.medium),
+                  SvgIconWidget(
+                    name: 'bag',
+                    width: 18,
+                    height: 18,
+                    color: context.colors.secondaryText,
+                  ),
+                  const SizedBox(width: AppSpaces.xSmall),
+                  TextWidget(
+                    '${tripInfo.suitcasesNo ?? 0}',
+                    style: AppTextStyles.bodyMediumBold.copyWith(
                       color: context.colors.primaryText,
                     ),
                   ),
