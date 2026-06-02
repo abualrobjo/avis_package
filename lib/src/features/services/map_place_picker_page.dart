@@ -68,8 +68,8 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
           polygonId: PolygonId('zone_$i'),
           points: list[i],
           strokeWidth: 2,
-          strokeColor: Colors.blue.withValues(alpha: 0.8),
-          fillColor: Colors.blue.withValues(alpha: 0.15),
+          strokeColor:Colors.transparent,
+          fillColor: Colors.transparent,
         ),
     };
   }
