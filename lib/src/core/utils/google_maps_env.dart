@@ -17,3 +17,9 @@ String resolveGoogleMapsApiKey() {
   if (trimmed.isNotEmpty) return trimmed;
   return '';
 }
+
+/// Restrict Google Places Autocomplete / Geocoding results to Egypt.
+const String kGooglePlacesCountryComponents = 'country:eg';
+
+/// Region bias for Places Autocomplete (ISO 3166-1 alpha-2).
+const String kGooglePlacesRegionCode = 'eg';

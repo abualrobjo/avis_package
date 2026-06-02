@@ -94,6 +94,8 @@ class PlaceSearchHelper {
             'input': query,
             'key': apiKey,
             'language': languageCode,
+            'components': kGooglePlacesCountryComponents,
+            'region': kGooglePlacesRegionCode,
           },
         );
         final data = res.data;
@@ -112,10 +114,12 @@ class PlaceSearchHelper {
       }
 
       if (next.isEmpty) {
-        final locations = await locationFromAddress(query);
-        if (locations.isNotEmpty) {
-          final loc = locations.first;
-          final latLng = LatLng(loc.latitude, loc.longitude);
+        final latLng = await _geocodeInEgypt(
+          query: query,
+          apiKey: apiKey,
+          languageCode: languageCode,
+        );
+        if (latLng != null) {
           var desc = query;
           try {
             final pm = await placemarkFromCoordinates(
@@ -168,11 +172,59 @@ class PlaceSearchHelper {
     return null;
   }
 
-  static Future<LatLng?> geocodeQuery(String query) async {
+  static Future<LatLng?> geocodeQuery(
+    String query, {
+    String languageCode = 'en',
+  }) async {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return null;
+    return _geocodeInEgypt(
+      query: trimmed,
+      apiKey: resolveGoogleMapsApiKey(),
+      languageCode: languageCode,
+    );
+  }
+
+  static Future<LatLng?> _geocodeInEgypt({
+    required String query,
+    required String apiKey,
+    required String languageCode,
+  }) async {
+    if (apiKey.isNotEmpty) {
+      try {
+        final dio = Dio(
+          BaseOptions(
+            connectTimeout: const Duration(seconds: 10),
+            receiveTimeout: const Duration(seconds: 10),
+          ),
+        );
+        final res = await dio.get<Map<String, dynamic>>(
+          'https://maps.googleapis.com/maps/api/geocode/json',
+          queryParameters: {
+            'address': query,
+            'key': apiKey,
+            'language': languageCode,
+            'components': kGooglePlacesCountryComponents,
+            'region': kGooglePlacesRegionCode,
+          },
+        );
+        final results = res.data?['results'];
+        if (results is List && results.isNotEmpty) {
+          final loc = (results.first as Map<String, dynamic>?)?['geometry']
+              ?['location'];
+          if (loc is Map<String, dynamic>) {
+            final lat = (loc['lat'] as num?)?.toDouble();
+            final lng = (loc['lng'] as num?)?.toDouble();
+            if (lat != null && lng != null) {
+              return LatLng(lat, lng);
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
     try {
-      final locations = await locationFromAddress(trimmed);
+      final locations = await locationFromAddress('$query, Egypt');
       if (locations.isEmpty) return null;
       final location = locations.first;
       return LatLng(location.latitude, location.longitude);

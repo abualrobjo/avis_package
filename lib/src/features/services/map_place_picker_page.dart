@@ -1,15 +1,14 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import 'package:avis_package/src/core/_core.dart';
 
 import 'place_picker_result.dart';
+import 'place_search_helper.dart';
 
 class _PlaceSuggestion {
   const _PlaceSuggestion({
@@ -123,9 +122,21 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
   }
 
   Future<void> _requestLocationPermission() async {
-    final status = await Permission.locationWhenInUse.request();
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      if (mounted) setState(() => _locationGranted = false);
+      return;
+    }
+
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    final granted = permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
+
     if (mounted) {
-      setState(() => _locationGranted = status.isGranted);
+      setState(() => _locationGranted = granted);
     }
   }
 
@@ -243,64 +254,23 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
     if (!mounted) return;
     setState(() => _isLoadingSuggestions = true);
 
-    final apiKey = resolveGoogleMapsApiKey();
     final locale = Localizations.localeOf(context);
     var next = <_PlaceSuggestion>[];
 
     try {
-      if (apiKey.isNotEmpty) {
-        final dio = Dio(
-          BaseOptions(
-            connectTimeout: const Duration(seconds: 10),
-            receiveTimeout: const Duration(seconds: 10),
-          ),
-        );
-        final res = await dio.get<Map<String, dynamic>>(
-          'https://maps.googleapis.com/maps/api/place/autocomplete/json',
-          queryParameters: {
-            'input': query,
-            'key': apiKey,
-            'language': locale.languageCode,
-          },
-        );
-        final data = res.data;
-        final status = data?['status'] as String?;
-        if (status == 'OK' && data?['predictions'] is List) {
-          for (final p in (data!['predictions'] as List).take(8)) {
-            if (p is Map<String, dynamic>) {
-              final desc = p['description'] as String?;
-              final pid = p['place_id'] as String?;
-              if (desc != null && pid != null) {
-                next.add(_PlaceSuggestion(description: desc, placeId: pid));
-              }
-            }
-          }
-        }
-      }
-
-      if (next.isEmpty) {
-        final locations = await locationFromAddress(query);
-        if (locations.isNotEmpty) {
-          final loc = locations.first;
-          final latLng = LatLng(loc.latitude, loc.longitude);
-          var desc = query;
-          try {
-            final pm = await placemarkFromCoordinates(
-              latLng.latitude,
-              latLng.longitude,
-            );
-            if (pm.isNotEmpty) {
-              desc = _formatPlacemark(pm.first, latLng);
-            }
-          } catch (_) {}
-          next = [
-            _PlaceSuggestion(
-              description: desc,
-              resolvedLocation: latLng,
+      final suggestions = await PlaceSearchHelper.fetchSuggestions(
+        rawQuery: query,
+        languageCode: locale.languageCode,
+      );
+      next = suggestions
+          .map(
+            (s) => _PlaceSuggestion(
+              description: s.description,
+              placeId: s.placeId,
+              resolvedLocation: s.resolvedLocation,
             ),
-          ];
-        }
-      }
+          )
+          .toList();
     } catch (_) {
       next = [];
     }
@@ -312,36 +282,6 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
         ..addAll(next);
       _isLoadingSuggestions = false;
     });
-  }
-
-  Future<LatLng?> _latLngFromPlaceId(String placeId) async {
-    final apiKey = resolveGoogleMapsApiKey();
-    if (apiKey.isEmpty) return null;
-    try {
-      final dio = Dio(
-        BaseOptions(
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
-        ),
-      );
-      final res = await dio.get<Map<String, dynamic>>(
-        'https://maps.googleapis.com/maps/api/place/details/json',
-        queryParameters: {
-          'place_id': placeId,
-          'fields': 'geometry',
-          'key': apiKey,
-        },
-      );
-      final loc = res.data?['result']?['geometry']?['location'];
-      if (loc is Map<String, dynamic>) {
-        final lat = (loc['lat'] as num?)?.toDouble();
-        final lng = (loc['lng'] as num?)?.toDouble();
-        if (lat != null && lng != null) {
-          return LatLng(lat, lng);
-        }
-      }
-    } catch (_) {}
-    return null;
   }
 
   Future<void> _moveMapToLatLng(LatLng latLng) async {
@@ -382,7 +322,7 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
         _error = null;
         _isSearching = true;
       });
-      latLng = await _latLngFromPlaceId(suggestion.placeId!);
+      latLng = await PlaceSearchHelper.latLngFromPlaceId(suggestion.placeId!);
       if (!mounted) return;
       setState(() => _isSearching = false);
     }
@@ -405,18 +345,19 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
     });
 
     try {
-      final locations = await locationFromAddress(trimmed);
+      final locale = Localizations.localeOf(context);
+      final latLng = await PlaceSearchHelper.geocodeQuery(
+        trimmed,
+        languageCode: locale.languageCode,
+      );
       if (!mounted) return;
-      if (locations.isEmpty) {
+      if (latLng == null) {
         setState(() {
           _isSearching = false;
           _error = 'No results found';
         });
         return;
       }
-
-      final location = locations.first;
-      final latLng = LatLng(location.latitude, location.longitude);
 
       setState(() => _isSearching = false);
       await _moveMapToLatLng(latLng);
