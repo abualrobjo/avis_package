@@ -19,8 +19,7 @@ dependencies:
   easy_localization: ^3.0.8
   image_picker: ^1.2.2
   dotted_border: ^3.1.0
-  permission_handependencies:
-    avis_package:
+  avis_package:
       git:
         url: https://github.com/abualrobjo/avis_package.git
         ref:
