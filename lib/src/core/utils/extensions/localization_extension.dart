@@ -86,4 +86,11 @@ extension CustomerTripDetailModelExtension on CustomerTripDetailModel {
       statusSecondaryName ?? '',
     );
   }
+
+  String tripTypeLocalized(BuildContext context) {
+    return context.localized(
+      tripTypePrimaryName ?? '',
+      tripTypeSecondaryName ?? '',
+    );
+  }
 }

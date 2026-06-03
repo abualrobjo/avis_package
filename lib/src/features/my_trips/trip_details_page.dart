@@ -175,6 +175,13 @@ class _TripDetailsPageState extends State<TripDetailsPage> {
                     ),
                   ),
                 ),
+                if (displayTrip?.showsTripHours == true) ...[
+                  SizedBox(height: 16.h),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: _TripHoursRow(hours: displayTrip!.tripHoursLabel),
+                  ),
+                ],
                 SizedBox(height: 20.h),
                 TripRouteWidget(
                   pickupLabel: 'Start Location',
@@ -219,7 +226,7 @@ class _VehicleCard extends StatelessWidget {
           Row(
             children: [
               TextWidget(
-                'Trip ID',
+                'Trip No',
                 style: AppTextStyles.bodySmall.copyWith(
                   color: context.colors.secondaryText,
                 ),
@@ -295,6 +302,40 @@ class _VehicleCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _TripHoursRow extends StatelessWidget {
+  const _TripHoursRow({required this.hours});
+
+  final String hours;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        SvgIconWidget(
+          name: 'clock',
+          width: 24.w,
+          height: 24.w,
+          color: context.colors.secondaryText,
+        ),
+        SizedBox(width: 12.w),
+        TextWidget(
+          'Trip Hours',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: context.colors.secondaryText,
+          ),
+        ),
+        SizedBox(width: 8.w),
+        TextWidget(
+          hours,
+          style: AppTextStyles.bodyMediumBold.copyWith(
+            color: context.colors.primaryText,
+          ),
+        ),
+      ],
     );
   }
 }

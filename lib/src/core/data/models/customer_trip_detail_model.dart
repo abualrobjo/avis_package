@@ -23,6 +23,8 @@ class CustomerTripDetailModel {
   final int? statusId;
   final String? statusPrimaryName;
   final String? statusSecondaryName;
+  final String? tripTypePrimaryName;
+  final String? tripTypeSecondaryName;
 
   const CustomerTripDetailModel({
     required this.tripId,
@@ -38,6 +40,8 @@ class CustomerTripDetailModel {
     this.statusId,
     this.statusPrimaryName,
     this.statusSecondaryName,
+    this.tripTypePrimaryName,
+    this.tripTypeSecondaryName,
   });
 
   factory CustomerTripDetailModel.fromJson(Map<String, dynamic> json) {
@@ -62,6 +66,8 @@ class CustomerTripDetailModel {
       statusId: (json['statusId'] as num?)?.toInt(),
       statusPrimaryName: json['statusPrimaryName'] as String?,
       statusSecondaryName: json['statusSecondaryName'] as String?,
+      tripTypePrimaryName: json['tripTypePrimaryName'] as String?,
+      tripTypeSecondaryName: json['tripTypeSecondaryName'] as String?,
     );
   }
 
@@ -95,10 +101,15 @@ class CustomerTripDetailModel {
 }
 
 
-enum MyTripTab { upcoming, finished, cancelled }
+enum MyTripTab { upcoming, active, finished, cancelled }
 
 extension CustomerTripTabFilter on CustomerTripDetailModel {
+  static const _activeStatusIds = {8, 9, 10};
+
   MyTripTab get myTripTab {
+    if (statusId != null && _activeStatusIds.contains(statusId)) {
+      return MyTripTab.active;
+    }
     final status = statusPrimaryName?.trim().toLowerCase();
     if (status == 'finished') return MyTripTab.finished;
     if (status == 'cancelled') return MyTripTab.cancelled;

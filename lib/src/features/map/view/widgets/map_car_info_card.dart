@@ -44,7 +44,7 @@ class MapCarInfoCard extends StatelessWidget {
               Row(
                 children: [
                   TextWidget(
-                    'Trip ID',
+                    'Trip No',
                     style: AppTextStyles.bodySmall.copyWith(
                       color: context.colors.secondaryText,
                     ),

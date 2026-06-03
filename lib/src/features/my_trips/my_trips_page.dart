@@ -59,13 +59,15 @@ class MyTripsPage extends StatefulWidget {
   State<MyTripsPage> createState() => _MyTripsPageState();
 }
 
-enum _MyTripsTab { upcoming, finished, cancelled }
+enum _MyTripsTab { upcoming, active, finished, cancelled }
 
 extension on _MyTripsTab {
   String get label {
     switch (this) {
       case _MyTripsTab.upcoming:
         return 'Upcoming';
+      case _MyTripsTab.active:
+        return 'Active';
       case _MyTripsTab.finished:
         return 'Finished';
       case _MyTripsTab.cancelled:
@@ -77,6 +79,8 @@ extension on _MyTripsTab {
     switch (this) {
       case _MyTripsTab.upcoming:
         return 'No upcoming trips';
+      case _MyTripsTab.active:
+        return 'No active trips';
       case _MyTripsTab.finished:
         return 'No finished trips';
       case _MyTripsTab.cancelled:
@@ -86,6 +90,7 @@ extension on _MyTripsTab {
 
   MyTripTab get filter => switch (this) {
         _MyTripsTab.upcoming => MyTripTab.upcoming,
+        _MyTripsTab.active => MyTripTab.active,
         _MyTripsTab.finished => MyTripTab.finished,
         _MyTripsTab.cancelled => MyTripTab.cancelled,
       };
@@ -290,13 +295,14 @@ class _TripsTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: _MyTripsTab.values.map((tab) {
-        final isSelected = selectedTab == tab;
-        final isLast = tab == _MyTripsTab.cancelled;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: _MyTripsTab.values.map((tab) {
+          final isSelected = selectedTab == tab;
+          final isLast = tab == _MyTripsTab.cancelled;
 
-        return Expanded(
-          child: Padding(
+          return Padding(
             padding: EdgeInsets.only(right: isLast ? 0 : 8.w),
             child: Material(
               color: Colors.transparent,
@@ -304,7 +310,10 @@ class _TripsTabBar extends StatelessWidget {
                 onTap: () => onTabSelected(tab),
                 borderRadius: BorderRadius.circular(AppCornerRadius.absolute),
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 10.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 10.h,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? context.colors.primary
@@ -333,9 +342,9 @@ class _TripsTabBar extends StatelessWidget {
                 ),
               ),
             ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 }
@@ -535,23 +544,48 @@ class _TripListItem extends StatelessWidget {
 
                   SizedBox(height: 4.h),
 
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpaces.xxSmall,
-                      horizontal: AppSpaces.xSmall,
-                    ),
-                    decoration: BoxDecoration(
-                      color: trip.statusBackgroundColor(context),
-                      borderRadius: BorderRadius.circular(
-                        AppCornerRadius.xSmall,
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpaces.xxSmall,
+                          horizontal: AppSpaces.xSmall,
+                        ),
+                        decoration: BoxDecoration(
+                          color: trip.statusBackgroundColor(context),
+                          borderRadius: BorderRadius.circular(
+                            AppCornerRadius.xSmall,
+                          ),
+                        ),
+                        child: TextWidget(
+                          trip.statusLocalized(context),
+                          style: AppTextStyles.labelBold.copyWith(
+                            color: trip.statusTextColor(context),
+                          ),
+                        ),
                       ),
-                    ),
-                    child: TextWidget(
-                      trip.statusLocalized(context),
-                      style: AppTextStyles.labelBold.copyWith(
-                        color: trip.statusTextColor(context),
-                      ),
-                    ),
+                      if (trip.tripTypeLocalized(context).isNotEmpty) ...[
+                        SizedBox(width: 8.w),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpaces.xxSmall,
+                            horizontal: AppSpaces.xSmall,
+                          ),
+                          decoration: BoxDecoration(
+                            color: context.colors.border,
+                            borderRadius: BorderRadius.circular(
+                              AppCornerRadius.xSmall,
+                            ),
+                          ),
+                          child: TextWidget(
+                            trip.tripTypeLocalized(context),
+                            style: AppTextStyles.labelBold.copyWith(
+                              color: context.colors.primaryText,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),

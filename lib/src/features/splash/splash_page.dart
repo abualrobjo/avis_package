@@ -20,9 +20,9 @@ class _SplashPageState extends State<SplashPage> {
   Future<void> _navigateToNext() async {
     await Future.delayed(const Duration(seconds: 1));
     if (mounted) {
-      Navigator.pushReplacementNamed(context, AppRoutes.servicePage);
-      // Navigator.pushReplacementNamed(context, AppRoutes.myTrips);
-      // Navigator.pushReplacementNamed(context, AppRoutes.savedLocations);
+      AvisNavigation.pushReplacement(context, AppRoutes.servicePage);
+      // AvisNavigation.pushReplacement(context, AppRoutes.myTrips);
+      // AvisNavigation.pushReplacement(context, AppRoutes.savedLocations);
     }
   }
 
