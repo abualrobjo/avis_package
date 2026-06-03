@@ -116,24 +116,47 @@ class RideRequestPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpaces.medium,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: context.colors.successBackground,
-                    borderRadius: BorderRadius.circular(
-                      AppCornerRadius.absolute,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (tripId != null)
+                    Row(
+                      children: [
+                        TextWidget(
+                          'Trip ID',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: context.colors.secondaryText,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpaces.xSmall),
+                        TextWidget(
+                          '$tripId',
+                          style: AppTextStyles.bodyMediumBold.copyWith(
+                            color: context.colors.primaryText,
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    const SizedBox.shrink(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpaces.medium,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.colors.successBackground,
+                      borderRadius: BorderRadius.circular(
+                        AppCornerRadius.absolute,
+                      ),
+                    ),
+                    child: TextWidget(
+                      'Confirmed',
+                      style: AppTextStyles.bodySmallBold,
                     ),
                   ),
-                  child: TextWidget(
-                    'Confirmed',
-                    style: AppTextStyles.bodySmallBold,
-                  ),
-                ),
+                ],
               ),
               const SizedBox(height: AppSpaces.medium),
               Container(

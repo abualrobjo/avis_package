@@ -179,16 +179,19 @@ class MapProvider extends ChangeNotifier {
     _startIcon = await BitmapDescriptor.asset(
       const ImageConfiguration(size: Size(36, 36)),
       'assets/images/start_position.png',
+      package: AppConst.packageName,
     );
 
     _destinationIcon = await BitmapDescriptor.asset(
       const ImageConfiguration(size: Size(70, 70)),
       'assets/images/customer_position.png',
+      package: AppConst.packageName,
     );
 
     _carIcon = await BitmapDescriptor.asset(
       const ImageConfiguration(size: Size(40, 40)),
       'assets/images/car_marker.png',
+      package: AppConst.packageName,
     );
   }
 
@@ -409,7 +412,7 @@ class MapProvider extends ChangeNotifier {
     if (isDark) {
       try {
         final style = await rootBundle.loadString(
-          'assets/map_styles/dark_mode.json',
+          'packages/${AppConst.packageName}/assets/map_styles/dark_mode.json',
         );
 
         _mapStyle = style;

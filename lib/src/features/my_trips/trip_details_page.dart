@@ -254,13 +254,14 @@ class _VehicleCard extends StatelessWidget {
                   ),
                 ),
               ),
-              TextWidget(
-                '  ${data?.vehicleClassPrimaryName} - ${data?.tripTypePrimaryName ?? ''}',
-                style: AppTextStyles.bodyMediumBold.copyWith(
-                  color: context.colors.primaryText,
+              Expanded(
+                child: TextWidget(
+                  '  ${data?.vehicleClassPrimaryName} - ${data?.tripTypePrimaryName ?? ''}',
+                  style: AppTextStyles.bodyMediumBold.copyWith(
+                    color: context.colors.primaryText,
+                  ),
                 ),
               ),
-              const Spacer(),
               SizedBox(width: 12.w),
               SvgIconWidget(
                 name: 'account',

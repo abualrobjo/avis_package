@@ -1,4 +1,7 @@
 class AppConst {
+  /// Pubspec [name] — use for [Image.asset], [BitmapDescriptor.asset], etc. in host apps.
+  static const String packageName = 'avis_package';
+
   static String accessToken = '';
   static String lang = 'en';
 
