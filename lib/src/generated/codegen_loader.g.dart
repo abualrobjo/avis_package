@@ -85,7 +85,7 @@ class CodegenLoader extends AssetLoader{
     "description": "Description",
     "upload_a_file": "Upload a file",
     "open_settings": "Open Settings",
-    "rate_title": "HOW WAS THE CUSTOMER BEHAVIOR?",
+    "rate_title": "HOW WAS THE DRIVER BEHAVIOR?",
     "submit": "Submit",
     "great_experience": "Great experience",
     "good": "Good",

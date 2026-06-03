@@ -1,4 +1,3 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:provider/provider.dart';
@@ -74,9 +73,21 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
   RateReasonOption? _selectedReason;
 
   String get title =>
-      widget.title ?? LocaleKeys.common_rate_title.tr();
+      widget.title ?? avisTr(LocaleKeys.common_rate_title, context: context);
   String get submitButtonText =>
-      widget.submitButtonText ?? LocaleKeys.common_submit.tr();
+      widget.submitButtonText ??
+      avisTr(LocaleKeys.common_submit, context: context);
+
+  String _ratingLabel(BuildContext context) {
+    final key = switch (_rating) {
+      1 => LocaleKeys.common_poor,
+      2 => LocaleKeys.common_could_be_better,
+      3 => LocaleKeys.common_good,
+      4 => LocaleKeys.common_average,
+      _ => LocaleKeys.common_great_experience,
+    };
+    return avisTr(key, context: context);
+  }
 
   Future<void> _submit() async {
     final rootContext = Navigator.of(context).context;
@@ -101,7 +112,12 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(LocaleKeys.common_failed_to_rate_customer.tr()),
+            content: Text(
+              avisTr(
+                LocaleKeys.common_failed_to_rate_customer,
+                context: context,
+              ),
+            ),
           ),
         );
       }
@@ -155,7 +171,10 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
                 const SizedBox(height: 24),
                 Center(
                   child: TextWidget(
-                    LocaleKeys.common_your_overall_rating.tr(),
+                    avisTr(
+                      LocaleKeys.common_your_overall_rating,
+                      context: context,
+                    ),
                     style: AppTextStyles.bodyLarge.copyWith(
                       color: context.colors.secondaryText,
                     ),
@@ -163,11 +182,21 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
                 ),
                 const SizedBox(height: 12),
                 _StarRating(onChanged: (v) => setState(() => _rating = v)),
+                const SizedBox(height: 8),
+                TextWidget(
+                  _ratingLabel(context),
+                  style: AppTextStyles.bodyMediumBold.copyWith(
+                    color: context.colors.primaryText,
+                  ),
+                ),
                 const SizedBox(height: 20),
                 AppCustomDropdown<RateReasonOption>(
                   items: reasons,
                   title: '',
-                  hintText: LocaleKeys.common_please_select_a_reason.tr(),
+                  hintText: avisTr(
+                    LocaleKeys.common_please_select_a_reason,
+                    context: context,
+                  ),
                   selectedTextStyle: _selectedReason != null
                       ? AppTextStyles.bodyMedium.copyWith(
                           color: context.colors.primaryText,
@@ -192,8 +221,14 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
                 const SizedBox(height: 24),
                 AppTextFormFieldComponent(
                   controller: _reviewController,
-                  title: LocaleKeys.common_write_your_review.tr(),
-                  hintText: LocaleKeys.common_enter_here.tr(),
+                  title: avisTr(
+                    LocaleKeys.common_write_your_review,
+                    context: context,
+                  ),
+                  hintText: avisTr(
+                    LocaleKeys.common_enter_here,
+                    context: context,
+                  ),
                   titleStyle: AppTextStyles.bodyMedium.copyWith(
                     color: context.colors.primaryText,
                   ),

@@ -10,6 +10,9 @@
 //
 // Package assets (icons, map markers, map styles) are loaded with
 // `package: avis_package` automatically; no need to copy them into the host pubspec.
+//
+// Localization: package strings use [avisTr] with a fallback to bundled
+// [CodegenLoader] when the host app does not include avis_package translations.
 
 export 'src/core/_core.dart';
 export 'src/features/_features.dart';
