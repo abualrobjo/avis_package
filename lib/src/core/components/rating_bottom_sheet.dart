@@ -26,6 +26,7 @@ class RatingBottomSheet extends StatefulWidget {
     super.key,
     required this.tripId,
     required this.driverId,
+    required this.customerId,
     this.title,
     this.submitButtonText,
     this.reasonOptions = kDefaultRateReasons,
@@ -33,6 +34,7 @@ class RatingBottomSheet extends StatefulWidget {
 
   final int tripId;
   final int driverId;
+  final int customerId;
   final String? title;
   final String? submitButtonText;
   final List<RateReasonOption>? reasonOptions;
@@ -41,6 +43,7 @@ class RatingBottomSheet extends StatefulWidget {
     BuildContext context, {
     required int tripId,
     required int driverId,
+    required int customerId,
     String? title,
     List<RateReasonOption>? reasonOptions,
     String? submitButtonText,
@@ -54,6 +57,7 @@ class RatingBottomSheet extends StatefulWidget {
         child: RatingBottomSheet(
           tripId: tripId,
           driverId: driverId,
+          customerId: customerId,
           title: title,
           reasonOptions: reasonOptions ?? kDefaultRateReasons,
           submitButtonText: submitButtonText,
@@ -71,6 +75,7 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
 
   int _rating = 3;
   RateReasonOption? _selectedReason;
+  bool _markAsFavorite = false;
 
   String get title =>
       widget.title ?? avisTr(LocaleKeys.common_rate_title, context: context);
@@ -96,9 +101,11 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
     final result = await provider.submitRating(
       tripId: widget.tripId,
       driverId: widget.driverId,
+      customerId: widget.customerId,
       rateValue: _rating,
       comment: _reviewController.text.trim(),
       lowRateReason: _selectedReason?.id,
+      markAsFavorite: _markAsFavorite,
     );
 
     if (result) {
@@ -114,7 +121,9 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
           SnackBar(
             content: Text(
               avisTr(
-                LocaleKeys.common_failed_to_rate_customer,
+                _markAsFavorite
+                    ? LocaleKeys.common_failed_to_mark_favourite_driver
+                    : LocaleKeys.common_failed_to_rate_customer,
                 context: context,
               ),
             ),
@@ -233,6 +242,35 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
                     color: context.colors.primaryText,
                   ),
                   maxLines: 4,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextWidget(
+                        avisTr(
+                          LocaleKeys.common_mark_as_favourite_driver,
+                          context: context,
+                        ),
+                        style: AppTextStyles.bodyMediumBold.copyWith(
+                          color: context.colors.primaryText,
+                        ),
+                      ),
+                    ),
+                    Transform.scale(
+                      scale: 0.8,
+                      child: Switch(
+                        value: _markAsFavorite,
+                        onChanged: (value) {
+                          setState(() => _markAsFavorite = value);
+                        },
+                        activeThumbColor: context.colors.surface,
+                        activeTrackColor: context.colors.primary,
+                        inactiveThumbColor: context.colors.surface,
+                        inactiveTrackColor: context.colors.surfaceDim,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
                 Selector<RatingProvider, bool>(

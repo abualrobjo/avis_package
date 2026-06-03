@@ -496,6 +496,7 @@ class _ServicesPageState extends State<ServicesPage> {
           context,
           tripId: result.data.tripId,
           driverId: result.data.chauffeurId,
+          customerId: result.data.customerId,
         );
       });
     }

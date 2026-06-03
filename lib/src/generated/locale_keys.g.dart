@@ -75,6 +75,8 @@ abstract class  LocaleKeys {
   static const common_could_be_better = 'common.could_be_better';
   static const common_poor = 'common.poor';
   static const common_failed_to_rate_customer = 'common.failed_to_rate_customer';
+  static const common_mark_as_favourite_driver = 'common.mark_as_favourite_driver';
+  static const common_failed_to_mark_favourite_driver = 'common.failed_to_mark_favourite_driver';
   static const common_your_overall_rating = 'common.your_overall_rating';
   static const common_please_select_a_reason = 'common.please_select_a_reason';
   static const common_write_your_review = 'common.write_your_review';

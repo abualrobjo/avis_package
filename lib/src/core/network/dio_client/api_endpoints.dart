@@ -51,6 +51,10 @@ class ApiEndpoints {
   static const String checkLatestTripRate =
       '$vehicleApi/CustomerInformation/CheckLatestTripRate';
 
+  /// POST CustomerInformation/CustomerFavoriteDrivers
+  static const String customerFavoriteDrivers =
+      '$vehicleApi/CustomerInformation/CustomerFavoriteDrivers';
+
   /// GET ChauffeurService/GetTripsTypeWithConfig (trip types with visibility/options)
   static const String getTripsTypeWithConfig =
       '$vehicleApi/ChauffeurService/GetTripsTypeWithConfig';

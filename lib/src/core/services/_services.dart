@@ -18,6 +18,10 @@ export 'customer_info/customer_info_service_impl.dart';
 export 'latest_trip_rate/latest_trip_rate_service.dart';
 export 'latest_trip_rate/latest_trip_rate_service_impl.dart';
 
+// customer favorite drivers (rate dialog: mark driver as favourite)
+export 'customer_favorite_drivers/customer_favorite_drivers_service.dart';
+export 'customer_favorite_drivers/customer_favorite_drivers_service_impl.dart';
+
 // trips type (service page tabs/config)
 export 'trips_type/trips_type_service.dart';
 export 'trips_type/trips_type_service_impl.dart';
