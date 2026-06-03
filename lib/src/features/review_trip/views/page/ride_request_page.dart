@@ -128,7 +128,7 @@ class RideRequestPage extends StatelessWidget {
                     Row(
                       children: [
                         TextWidget(
-                          'Trip ID',
+                          'Trip No',
                           style: AppTextStyles.bodySmall.copyWith(
                             color: context.colors.secondaryText,
                           ),
@@ -347,23 +347,6 @@ class RideRequestPage extends StatelessWidget {
                   const SizedBox(width: AppSpaces.small),
                   TextWidget(
                     'We’re confirming your ride',
-                    style: AppTextStyles.bodySmallBold.copyWith(
-                      color: context.colors.secondaryText,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpaces.medium),
-              Row(
-                children: [
-                  const SvgIconWidget(
-                    name: 'teenyicons_tick-circle-solid',
-                    width: 16,
-                    height: 16,
-                  ),
-                  const SizedBox(width: AppSpaces.small),
-                  TextWidget(
-                    'Driver details will appear here',
                     style: AppTextStyles.bodySmallBold.copyWith(
                       color: context.colors.secondaryText,
                     ),
