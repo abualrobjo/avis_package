@@ -30,6 +30,7 @@ class RatingProvider extends ChangeNotifier {
         CustomerFavoriteDriversParams(
           chauffeurId: driverId,
           customerId: customerId,
+          tripId: tripId,
         ),
       );
       if (!favoriteResult.isSuccess) {
