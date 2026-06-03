@@ -56,13 +56,7 @@ class SuccessBottomSheet extends StatelessWidget {
                 text: avisTr(LocaleKeys.common_done, context: context),
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  AvisNavigation.pushReplacement(
-                    context,
-                    AppRoutes.navigatorHandler,
-                  );
-                },
+                onPressed: () => Navigator.of(context).pop(),
               ),
             ],
           ),
