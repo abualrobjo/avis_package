@@ -187,6 +187,7 @@ class _TripDetailsPageState extends State<TripDetailsPage> {
                   dropOffTime: '',
                   dropOffLocation:
                       displayTrip?.routeDropOffSectionLocation ?? '',
+                  showDropOff: displayTrip?.showsDropOffSection ?? true,
                 ),
                 SizedBox(height: 32.h),
               ],

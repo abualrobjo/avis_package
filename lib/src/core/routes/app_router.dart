@@ -101,11 +101,13 @@ class AppRouter {
       case AppRoutes.rideRequest:
         ReviewTripUiModel? tripModel;
         int? tripId;
+        int? tripTypeId;
         bool fromMyTrips = false;
         final args = settings.arguments;
         if (args is Map<String, dynamic>) {
           tripModel = args['tripModel'] as ReviewTripUiModel?;
           tripId = args['tripId'] as int?;
+          tripTypeId = args['tripTypeId'] as int?;
           fromMyTrips = args['fromMyTrips'] == true;
         } else if (args is ReviewTripUiModel) {
           tripModel = args;
@@ -115,6 +117,7 @@ class AppRouter {
           RideRequestPage(
             tripModel: tripModel!,
             tripId: tripId,
+            tripTypeId: tripTypeId,
             fromMyTrips: fromMyTrips,
           ),
           settings,

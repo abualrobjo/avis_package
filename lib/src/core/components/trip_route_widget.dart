@@ -9,6 +9,7 @@ class TripRouteWidget extends StatelessWidget {
   final String? dropOffTime;
   final String dropOffLocation;
   final double horizontalPadding;
+  final bool showDropOff;
 
   const TripRouteWidget({
     super.key,
@@ -19,6 +20,7 @@ class TripRouteWidget extends StatelessWidget {
     this.dropOffTime,
     required this.dropOffLocation,
     this.horizontalPadding = 20,
+    this.showDropOff = true,
   });
 
   @override
@@ -32,21 +34,23 @@ class TripRouteWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const _TimeLineIcon(iconName: 'dot', paddingValue: 9),
-              SizedBox(
-                height: AppSpaces.large,
-                child: Padding(
-                  padding: const EdgeInsetsDirectional.only(start: 13.5),
-                  child: CustomPaint(
-                    painter: VerticalDashedBorderPainter(
-                      color: context.colors.border,
+              if (showDropOff) ...[
+                SizedBox(
+                  height: AppSpaces.large,
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.only(start: 13.5),
+                    child: CustomPaint(
+                      painter: VerticalDashedBorderPainter(
+                        color: context.colors.border,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const _TimeLineIcon(
-                iconName: 'pick-up',
-                paddingValue: AppSpaces.xSmall,
-              ),
+                const _TimeLineIcon(
+                  iconName: 'pick-up',
+                  paddingValue: AppSpaces.xSmall,
+                ),
+              ],
             ],
           ),
           const SizedBox(width: 8),
@@ -87,40 +91,42 @@ class TripRouteWidget extends StatelessWidget {
                     fontSize: 13,
                   ),
                 ),
-                const SizedBox(height: 14),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: TextWidget(
-                        dropOffLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.bodyXSmallBold.copyWith(
-                          color: context.colors.tertiaryText,
+                if (showDropOff) ...[
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: TextWidget(
+                          dropOffLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodyXSmallBold.copyWith(
+                            color: context.colors.tertiaryText,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    if (dropOffTime != null)
-                      TextWidget(
-                        dropOffTime!,
-                        style: AppTextStyles.bodyXSmallBold.copyWith(
-                          color: context.colors.primaryText,
+                      const SizedBox(width: 8),
+                      if (dropOffTime != null)
+                        TextWidget(
+                          dropOffTime!,
+                          style: AppTextStyles.bodyXSmallBold.copyWith(
+                            color: context.colors.primaryText,
+                          ),
                         ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                TextWidget(
-                  dropOffLocation,
-                  style: AppTextStyles.bodySmallBold.copyWith(
-                    color: context.colors.primaryText,
-                    fontSize: 13,
+                    ],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  const SizedBox(height: 2),
+                  TextWidget(
+                    dropOffLocation,
+                    style: AppTextStyles.bodySmallBold.copyWith(
+                      color: context.colors.primaryText,
+                      fontSize: 13,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ],
             ),
           ),

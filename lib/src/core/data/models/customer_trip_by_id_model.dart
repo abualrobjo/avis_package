@@ -53,6 +53,7 @@ class CustomerTripByIdModel {
   final String? vehicleClassPrimaryName;
   final String? vehicleClassSecondaryName;
   final String? tripTypePrimaryName;
+  final int? tripTypeId;
 
   final int? passengersNo;
   final int? suitcasesNo;
@@ -93,6 +94,7 @@ class CustomerTripByIdModel {
     this.passengersNo,
     this.suitcasesNo,
     this.tripTypePrimaryName,
+    this.tripTypeId,
   });
 
   factory CustomerTripByIdModel.fromJson(Map<String, dynamic> json) {
@@ -107,6 +109,9 @@ class CustomerTripByIdModel {
       chauffeurPhoneNumber: json['chauffeurPhoneNumber'],
       chauffeurPhoto: json['chauffeurPhoto'],
       tripTypePrimaryName: json['tripTypePrimaryName'],
+      tripTypeId: (json['tripTypeId'] as num?)?.toInt() ??
+          (json['tripType_Id'] as num?)?.toInt() ??
+          (json['TripTypeId'] as num?)?.toInt(),
 
       plateNumber: json['plateNumber'],
 
@@ -183,9 +188,13 @@ class CustomerTripByIdModel {
   }
 
   bool get hasDropOffPlace {
+    if (!showsDropOffSection) return false;
     final d = dropOffLatitude?.trim();
     return d != null && d.isNotEmpty;
   }
+
+  /// Hourly / no drop-off trip types (trip type id 2).
+  bool get showsDropOffSection => tripTypeId != 2;
 
   /// Route widget second row: label when drop-off exists, otherwise [Pickup].
   String get routeDropOffSectionLabel =>

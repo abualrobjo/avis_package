@@ -119,7 +119,11 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
     AvisNavigation.push(
       context,
       AppRoutes.rideRequest,
-      arguments: {'tripModel': result.tripModel, 'tripId': tripId},
+      arguments: {
+        'tripModel': result.tripModel,
+        'tripId': tripId,
+        'tripTypeId': provider.args?.tripTypeId,
+      },
     );
   }
 

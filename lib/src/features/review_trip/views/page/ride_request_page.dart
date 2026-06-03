@@ -25,11 +25,15 @@ class RideRequestPage extends StatelessWidget {
     super.key,
     required this.tripModel,
     this.tripId,
+    this.tripTypeId,
     this.fromMyTrips = false,
   });
   final ReviewTripUiModel tripModel;
   final int? tripId;
+  final int? tripTypeId;
   final bool fromMyTrips;
+
+  bool get _showDropOff => tripTypeId != 2;
 
   static Future<bool?> _showCancelConfirmDialog(BuildContext context) {
     return showDialog<bool>(
@@ -176,24 +180,26 @@ class RideRequestPage extends StatelessWidget {
                       children: [
                         const SizedBox(height: 6),
                         const _TimeLineIcon(iconName: 'dot', paddingValue: 9),
-                        SizedBox(
-                          height: AppSpaces.xxlarge,
-                          child: Padding(
-                            padding: const EdgeInsetsDirectional.only(
-                              start: 13.5,
-                            ),
-                            child: CustomPaint(
-                              painter: VerticalDashedBorderPainter(
-                                color: context.colors.warningBackground,
+                        if (_showDropOff) ...[
+                          SizedBox(
+                            height: AppSpaces.xxlarge,
+                            child: Padding(
+                              padding: const EdgeInsetsDirectional.only(
+                                start: 13.5,
+                              ),
+                              child: CustomPaint(
+                                painter: VerticalDashedBorderPainter(
+                                  color: context.colors.warningBackground,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const _TimeLineIcon(
-                          iconName: 'location',
-                          paddingValue: 0,
-                          isWithBacgroundColor: false,
-                        ),
+                          const _TimeLineIcon(
+                            iconName: 'location',
+                            paddingValue: 0,
+                            isWithBacgroundColor: false,
+                          ),
+                        ],
                         const SizedBox(height: 6),
                       ],
                     ),
@@ -220,28 +226,30 @@ class RideRequestPage extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: AppSpaces.medium),
-                          const HorizontalDivider(
-                            padding: EdgeInsets.zero,
-                            thickness: 1,
-                          ),
-                          const SizedBox(height: AppSpaces.medium),
-                          TextWidget(
-                            'To',
-                            style: AppTextStyles.bodyXSmallBold.copyWith(
-                              color: context.colors.tertiaryText,
+                          if (_showDropOff) ...[
+                            const SizedBox(height: AppSpaces.medium),
+                            const HorizontalDivider(
+                              padding: EdgeInsets.zero,
+                              thickness: 1,
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          TextWidget(
-                            tripModel.route.dropOffLocation,
-                            style: AppTextStyles.bodySmallBold.copyWith(
-                              color: context.colors.primaryText,
-                              fontSize: 13,
+                            const SizedBox(height: AppSpaces.medium),
+                            TextWidget(
+                              'To',
+                              style: AppTextStyles.bodyXSmallBold.copyWith(
+                                color: context.colors.tertiaryText,
+                              ),
                             ),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                            const SizedBox(height: 6),
+                            TextWidget(
+                              tripModel.route.dropOffLocation,
+                              style: AppTextStyles.bodySmallBold.copyWith(
+                                color: context.colors.primaryText,
+                                fontSize: 13,
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ],
                       ),
                     ),
