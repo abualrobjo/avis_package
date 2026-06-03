@@ -7,6 +7,7 @@ import 'package:avis_package/src/core/_core.dart'
         AppContextExtension,
         AppCornerRadius,
         AppRoutes,
+        AvisNavigation,
         AppSpaces,
         AppTextStyles,
         CancellationProvider,
@@ -143,9 +144,11 @@ class CancelTripButton extends StatelessWidget {
         context,
         message: 'Your ride has been canceled.',
         onPressed: () {
-          Navigator.of(
+          AvisNavigation.pushAndRemoveUntil(
             context,
-          ).pushNamedAndRemoveUntil(AppRoutes.myTrips, (route) => false);
+            AppRoutes.myTrips,
+            predicate: (_) => false,
+          );
         },
       );
     } else {

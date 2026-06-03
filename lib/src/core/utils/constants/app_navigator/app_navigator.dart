@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
-class AppNavigator {
-  static final GlobalKey<NavigatorState> navigatorKey =
-  GlobalKey<NavigatorState>(debugLabel: "Navigation Key");
+import 'package:avis_package/src/core/routes/avis_navigation.dart';
 
-  static BuildContext? get context => navigatorKey.currentContext;
+class AppNavigator {
+  static GlobalKey<NavigatorState> get navigatorKey =>
+      AvisNavigation.navigatorKey;
+
+  static BuildContext? get context => AvisNavigation.context;
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:avis_package/src/core/_core.dart' show ImageWidget, AppRoutes;
+import 'package:avis_package/src/core/_core.dart'
+    show AvisNavigation, AppRoutes, ImageWidget;
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});

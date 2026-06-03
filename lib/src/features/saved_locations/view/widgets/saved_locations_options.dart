@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:avis_package/src/core/_core.dart' show AppRoutes, CustomerSavedPlaceModel;
+import 'package:avis_package/src/core/_core.dart'
+    show AppRoutes, AvisNavigation, CustomerSavedPlaceModel;
 import 'package:avis_package/src/features/_features.dart'
     show SavedLocationsProvider, LocationOptionTile;
 
@@ -31,7 +32,7 @@ class SavedLocationsOptions extends StatelessWidget {
     SavedLocationsProvider provider,
     String type,
   ) {
-    Navigator.pushNamed(
+    AvisNavigation.push(
       context,
       AppRoutes.addNewPlace,
       arguments: {'type': type, 'provider': provider},

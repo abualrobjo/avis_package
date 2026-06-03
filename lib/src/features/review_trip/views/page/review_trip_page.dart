@@ -31,6 +31,7 @@ import 'package:avis_package/src/core/_core.dart'
         AppCustomDropdown,
         AppTextFormFieldComponent,
         AppRoutes,
+        AvisNavigation,
         FlightNameModel;
 
 class ReviewTripPage extends StatefulWidget {
@@ -115,7 +116,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
     if (!mounted) return;
 
     Navigator.pop(context);
-    Navigator.pushNamed(
+    AvisNavigation.push(
       context,
       AppRoutes.rideRequest,
       arguments: {'tripModel': result.tripModel, 'tripId': tripId},

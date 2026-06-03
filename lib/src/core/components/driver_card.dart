@@ -20,7 +20,7 @@ class DriverCard extends StatelessWidget {
   }
 
   void _onChat(BuildContext context) {
-    Navigator.pushNamed(
+    AvisNavigation.push(
       context,
       AppRoutes.chat,
       arguments: ChatPageArgs(

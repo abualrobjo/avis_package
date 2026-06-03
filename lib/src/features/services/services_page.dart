@@ -1071,7 +1071,7 @@ class _ServicesPageState extends State<ServicesPage> {
           _customerInfo?.minimumPointsValueForTransfer ?? 0,
       currencyCode: _selectedCurrencyCode,
     );
-    Navigator.pushNamed(context, AppRoutes.reviewTrip, arguments: args);
+    AvisNavigation.push(context, AppRoutes.reviewTrip, arguments: args);
   }
 
   /// Returns true if drop-off is allowed for the given coordinates (or no check needed).
@@ -1339,7 +1339,7 @@ class _ServicesPageState extends State<ServicesPage> {
                               SizedBox(height: 24.h),
                               AppButton.primary(
                                 // onPressed: () {
-                                //   Navigator.pushNamed(
+                                //   AvisNavigation.push(
                                 //     context,
                                 //     AppRoutes.savedLocations,
                                 //   );

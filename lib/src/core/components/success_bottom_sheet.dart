@@ -32,7 +32,7 @@ class SuccessBottomSheet extends StatelessWidget {
           AppButton.secondary(
             text: LocaleKeys.common_done.tr(),
             onPressed: () {
-              Navigator.pushReplacementNamed(
+              AvisNavigation.pushReplacement(
                 context,
                 AppRoutes.navigatorHandler,
               );

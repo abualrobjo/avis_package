@@ -9,3 +9,4 @@ export 'src/features/_features.dart';
 export 'src/core/services/di_service.dart' show sl, init;
 export 'src/core/routes/app_router.dart';
 export 'src/core/routes/app_routes.dart';
+export 'src/core/routes/avis_navigation.dart';

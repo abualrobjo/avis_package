@@ -8,6 +8,7 @@ import 'package:avis_package/src/core/_core.dart'
         AppContextExtension,
         AppTextStyles,
         AppRoutes,
+        AvisNavigation,
         TextWidget,
         SvgIconWidget;
 
@@ -148,7 +149,7 @@ class _AddNewPlacePageState extends State<AddNewPlacePage> {
         final args =
             ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
         final type = args?['type'] as String? ?? 'custom';
-        Navigator.pushNamed(
+        AvisNavigation.push(
           context,
           AppRoutes.locationPicker,
           arguments: {
@@ -278,7 +279,7 @@ class _AddNewPlacePageState extends State<AddNewPlacePage> {
                           ModalRoute.of(context)?.settings.arguments
                               as Map<String, dynamic>?;
                       final type = args?['type'] as String? ?? 'custom';
-                      Navigator.pushNamed(
+                      AvisNavigation.push(
                         context,
                         AppRoutes.locationPicker,
                         arguments: {
@@ -302,7 +303,7 @@ class _AddNewPlacePageState extends State<AddNewPlacePage> {
                       ModalRoute.of(context)?.settings.arguments
                           as Map<String, dynamic>?;
                   final type = args?['type'] as String? ?? 'custom';
-                  Navigator.pushNamed(
+                  AvisNavigation.push(
                     context,
                     AppRoutes.locationPicker,
                     arguments: {

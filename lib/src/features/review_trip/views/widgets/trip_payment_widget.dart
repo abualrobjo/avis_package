@@ -9,7 +9,8 @@ import 'package:avis_package/src/core/_core.dart'
         TextWidget,
         AppSpaces,
         AppCornerRadius,
-        AppRoutes;
+        AppRoutes,
+        AvisNavigation;
 
 class TripPaymentWidget extends StatelessWidget {
   const TripPaymentWidget({super.key});
@@ -144,7 +145,7 @@ class TripPaymentWidget extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: AppSpaces.small),
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(
+                        AvisNavigation.push(
                         context,
                         AppRoutes.addNewCard,
                         arguments: context.read<AddNewCardProvider>(),

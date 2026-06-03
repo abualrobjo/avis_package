@@ -15,13 +15,13 @@ void _navigateTripFromMyTrips(
 ) {
   final id = trip.statusId;
   if (id != null && _myTripsListDetailStatusIds.contains(id)) {
-    Navigator.pushNamed(
+    AvisNavigation.push(
       context,
       AppRoutes.tripDetails,
       arguments: trip.tripId,
     );
   } else {
-    Navigator.pushNamed(
+    AvisNavigation.push(
       context,
       AppRoutes.map,
       arguments: trip.tripId,
@@ -38,13 +38,13 @@ void _navigateRecentTripMapCard(
 ) {
   final id = trip.statusId;
   if (id != null && _myTripsListDetailStatusIds.contains(id)) {
-    Navigator.pushNamed(
+    AvisNavigation.push(
       context,
       AppRoutes.map,
       arguments: trip.tripId,
     );
   } else {
-    Navigator.pushNamed(
+    AvisNavigation.push(
       context,
       AppRoutes.tripDetails,
       arguments: trip.tripId,

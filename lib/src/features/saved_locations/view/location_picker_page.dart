@@ -13,6 +13,7 @@ import 'package:avis_package/src/core/_core.dart'
         AppTextStyles,
         TextWidget,
         AppRoutes,
+        AvisNavigation,
         BackArrowWidget;
 import 'package:avis_package/src/core/utils/app_geocoding.dart';
 import '../provider/saved_locations_provider.dart';
@@ -337,7 +338,7 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
                           ModalRoute.of(context)?.settings.arguments
                               as Map<String, dynamic>?;
                       final type = args?['type'] as String? ?? 'custom';
-                      Navigator.pushNamed(
+                      AvisNavigation.push(
                         context,
                         AppRoutes.saveDetails,
                         arguments: {
