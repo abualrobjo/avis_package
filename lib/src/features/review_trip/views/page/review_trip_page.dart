@@ -196,6 +196,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
     required String title,
     double? price,
     double? discountPercent,
+    bool showPrice = true,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -209,14 +210,14 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
               ),
             ),
           ),
-          if (provider.loadingPrice)
+          if (showPrice && provider.loadingPrice)
             TextWidget(
               '...',
               style: AppTextStyles.bodyMediumBold.copyWith(
                 color: context.colors.tertiaryText,
               ),
             )
-          else if (price != null)
+          else if (showPrice && price != null)
             TextWidget(
               provider.formatLegPriceLabel(
                 price,
@@ -443,6 +444,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
       builder: (context, provider, _) {
         final options = provider.buildOptions();
         final displayPrice = provider.displayPrice(model);
+        final isHourlyTrip = args?.tripTypeId == 2;
 
         return Scaffold(
           bottomNavigationBar: TripBottomBarWidget(
@@ -510,6 +512,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
                     provider,
                     title: model.route.pickupLabel,
                     price: provider.pickupLegPrice,
+                    showPrice: !isHourlyTrip,
                   ),
                   const SizedBox(height: AppSpaces.large),
                   TripRouteWidget(
@@ -518,6 +521,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
                     pickupLocation: model.route.pickupLocation,
                     dropOffLabel: model.route.dropOffLabel,
                     dropOffLocation: model.route.dropOffLocation,
+                    showDropOff: !isHourlyTrip,
                   ),
                   if (args?.isRoundTrip == true)
                     _buildRoundTripDetailsSection(context, provider, args!),
