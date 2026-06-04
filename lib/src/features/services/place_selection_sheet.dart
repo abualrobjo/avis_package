@@ -115,20 +115,23 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+    final viewInsets = MediaQuery.viewInsetsOf(context);
+    final sheetHeight = MediaQuery.sizeOf(context).height * 0.85;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: viewInsets.bottom),
+      child: SizedBox(
+        height: sheetHeight,
+        child: Container(
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
             SizedBox(height: 8.h),
             Center(
               child: Container(
@@ -195,9 +198,9 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: Divider(height: 1, color: context.colors.border),
             ),
-            Flexible(
+            Expanded(
               child: ListView(
-                shrinkWrap: true,
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: EdgeInsets.fromLTRB(8.w, 4.h, 8.w, 16.h),
                 children: [
                   ListTile(
@@ -327,7 +330,9 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                 ],
               ),
             ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );

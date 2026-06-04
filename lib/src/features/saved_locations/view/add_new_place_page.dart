@@ -1,23 +1,12 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
-
-import 'package:avis_package/src/core/_core.dart'
-    show
-        BackArrowWidget,
-        AppContextExtension,
-        AppTextStyles,
-        AppRoutes,
-        AvisNavigation,
-        TextWidget,
-        SvgIconWidget;
-
 import 'package:provider/provider.dart';
 
-import 'package:avis_package/src/core/data/models/customer_saved_place_model.dart';
+import 'package:avis_package/src/core/_core.dart';
+import 'package:avis_package/src/features/services/place_search_helper.dart';
+import 'package:avis_package/src/features/services/widgets/place_search_field_widget.dart';
 import '../provider/saved_locations_provider.dart';
-import 'package:avis_package/src/core/utils/app_geocoding.dart';
-
 import 'widgets/_widgets.dart';
 
 class AddNewPlacePage extends StatefulWidget {
@@ -28,25 +17,10 @@ class AddNewPlacePage extends StatefulWidget {
 }
 
 class _AddNewPlacePageState extends State<AddNewPlacePage> {
-  final TextEditingController _searchController = TextEditingController();
-  List<CustomerSavedPlaceModel> _suggestions = [];
-  Timer? _debounce;
-  bool _isSearching = false;
-
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadInitialSuggestions();
-      _fetchDistances();
-    });
-  }
-
-  void _loadInitialSuggestions() {
-    final provider = context.read<SavedLocationsProvider>();
-    setState(() {
-      _suggestions = provider.locations.toList();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchDistances());
   }
 
   Future<void> _fetchDistances() async {
@@ -58,126 +32,68 @@ class _AddNewPlacePageState extends State<AddNewPlacePage> {
                   LocationPermission.always)) {
         final pos = await Geolocator.getCurrentPosition();
         if (mounted) {
-          final provider = context.read<SavedLocationsProvider>();
-          provider.calculateDistances(pos.latitude, pos.longitude);
-          if (_searchController.text.isEmpty) {
-            _loadInitialSuggestions();
-          }
+          context.read<SavedLocationsProvider>().calculateDistances(
+                pos.latitude,
+                pos.longitude,
+              );
+          setState(() {});
         }
       }
     } catch (_) {}
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _debounce?.cancel();
-    super.dispose();
+  String get _placeType {
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    return args?['type'] as String? ?? 'custom';
   }
 
-  void _onSearchChanged(String query) {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      if (query.isNotEmpty) {
-        _searchPlaces(query);
-      } else {
-        _loadInitialSuggestions();
-      }
-    });
+  void _openLocationPicker({double? latitude, double? longitude}) {
+    final arguments = <String, dynamic>{
+      'type': _placeType,
+      'provider': context.read<SavedLocationsProvider>(),
+    };
+    if (latitude != null) arguments['latitude'] = latitude;
+    if (longitude != null) arguments['longitude'] = longitude;
+
+    AvisNavigation.push(
+      context,
+      AppRoutes.locationPicker,
+      arguments: arguments,
+    );
   }
 
-  Future<void> _searchPlaces(String query) async {
-    setState(() => _isSearching = true);
+  Future<void> _onGooglePlaceSelected(PlaceSuggestion suggestion) async {
+    final latLng = await PlaceSearchHelper.resolveSuggestion(suggestion);
+    if (!mounted) return;
 
-    final provider = context.read<SavedLocationsProvider>();
-    final localMatches = provider.locations.where((loc) {
-      final nameMatch = (loc.placePrimaryName ?? '').toLowerCase().contains(
-        query.toLowerCase(),
+    if (latLng == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not find this location. Try the map instead.'),
+        ),
       );
-      final addressMatch = (loc.placeSecondaryName ?? '')
-          .toLowerCase()
-          .contains(query.toLowerCase());
-      return nameMatch || addressMatch;
-    }).toList();
-
-    // TODO: In the future, append Google Places API results here
-
-    if (mounted && _searchController.text == query) {
-      setState(() {
-        _suggestions = localMatches;
-        _isSearching = false;
-      });
+      return;
     }
+
+    _openLocationPicker(
+      latitude: latLng.latitude,
+      longitude: latLng.longitude,
+    );
   }
 
-  Future<void> _onSearchSubmitted(String query) async {
-    if (query.isEmpty) return;
-    setState(() => _isSearching = true);
-
-    try {
-      final provider = context.read<SavedLocationsProvider>();
-      final localMatch = provider.locations
-          .where(
-            (loc) =>
-                (loc.placePrimaryName ?? '').toLowerCase() ==
-                    query.toLowerCase() ||
-                (loc.placeSecondaryName ?? '').toLowerCase() ==
-                    query.toLowerCase(),
-          )
-          .firstOrNull;
-
-      double? lat;
-      double? lng;
-
-      if (localMatch != null &&
-          localMatch.latitude != null &&
-          localMatch.longtitude != null) {
-        lat = double.tryParse(localMatch.latitude!);
-        lng = double.tryParse(localMatch.longtitude!);
-      } else {
-        final coords = await AppGeocoding.getCoordinatesFromAddress(query);
-        if (coords != null) {
-          lat = coords.latitude;
-          lng = coords.longitude;
-        }
-      }
-
-      if (!mounted) return;
-      setState(() => _isSearching = false);
-
-      if (lat != null && lng != null) {
-        final args =
-            ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-        final type = args?['type'] as String? ?? 'custom';
-        AvisNavigation.push(
-          context,
-          AppRoutes.locationPicker,
-          arguments: {
-            'type': type,
-            'latitude': lat,
-            'longitude': lng,
-            'provider': context.read<SavedLocationsProvider>(),
-          },
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Address not found. Trying picking from the map.'),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isSearching = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Error finding address.')));
-      }
-    }
+  void _onSavedPlaceTap(CustomerSavedPlaceModel place) {
+    context.read<SavedLocationsProvider>().setSelectedLocation(place);
+    _openLocationPicker(
+      latitude: double.tryParse(place.latitude ?? ''),
+      longitude: double.tryParse(place.longtitude ?? ''),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final savedPlaces = context.watch<SavedLocationsProvider>().locations;
+
     return Scaffold(
       backgroundColor: context.colors.background,
       appBar: AppBar(
@@ -196,145 +112,77 @@ class _AddNewPlacePageState extends State<AddNewPlacePage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 24),
+          SizedBox(height: 24.h),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              height: 48,
-              decoration: BoxDecoration(
-                color: context.colors.surface,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: context.colors.divider.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 16),
-                  Icon(
-                    Icons.search,
-                    color: context.colors.secondaryText,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: _onSearchChanged,
-                      onSubmitted: _onSearchSubmitted,
-                      textInputAction: TextInputAction.search,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: context.colors.primaryText,
-                      ),
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        hintText: 'Enter an address',
-                        hintStyle: AppTextStyles.bodyMedium.copyWith(
-                          color: context.colors.secondaryText,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: PlaceSearchFieldWidget(
+              hintText: 'Search for a place or address',
+              onSuggestionSelected: _onGooglePlaceSelected,
             ),
           ),
-          const SizedBox(height: 32),
-          if (_suggestions.isNotEmpty || _isSearching)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: TextWidget(
-                'Search Suggestion',
-                style: AppTextStyles.h3.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: context.colors.primaryText,
-                ),
-              ),
+          SizedBox(height: 16.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Divider(height: 1, color: context.colors.border),
+          ),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 16.h),
+              children: [
+                if (savedPlaces.isNotEmpty) ...[
+                  TextWidget(
+                    'Saved places',
+                    style: AppTextStyles.bodyXSmallBold.copyWith(
+                      color: context.colors.secondaryText,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  ...savedPlaces.map((place) {
+                    return SuggestionTile(
+                      title: (place.placePrimaryName?.isNotEmpty == true)
+                          ? place.placePrimaryName!
+                          : 'Saved Place',
+                      subtitle: place.placeSecondaryName ?? '',
+                      distance: place.distanceInKm != null
+                          ? '${place.distanceInKm!.toStringAsFixed(1)} km'
+                          : null,
+                      onTap: () => _onSavedPlaceTap(place),
+                    );
+                  }),
+                  SizedBox(height: 16.h),
+                ],
+              ],
             ),
-          if (_isSearching)
-            const Expanded(child: Center(child: CircularProgressIndicator()))
-          else
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
-                ),
-                itemCount: _suggestions.length,
-                itemBuilder: (context, index) {
-                  final place = _suggestions[index];
-                  return SuggestionTile(
-                    title: (place.placePrimaryName?.isNotEmpty == true)
-                        ? place.placePrimaryName!
-                        : 'Saved Place',
-                    subtitle: place.placeSecondaryName ?? '',
-                    distance: place.distanceInKm != null
-                        ? '${place.distanceInKm!.toStringAsFixed(1)} km'
-                        : null,
-                    onTap: () {
-                      final provider = context.read<SavedLocationsProvider>();
-                      provider.setSelectedLocation(place);
-
-                      final args =
-                          ModalRoute.of(context)?.settings.arguments
-                              as Map<String, dynamic>?;
-                      final type = args?['type'] as String? ?? 'custom';
-                      AvisNavigation.push(
-                        context,
-                        AppRoutes.locationPicker,
-                        arguments: {
-                          'type': type,
-                          'latitude': double.tryParse(place.latitude ?? ''),
-                          'longitude': double.tryParse(place.longtitude ?? ''),
-                          'provider': context.read<SavedLocationsProvider>(),
-                        },
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
+          ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: GestureDetector(
-                onTap: () {
-                  final args =
-                      ModalRoute.of(context)?.settings.arguments
-                          as Map<String, dynamic>?;
-                  final type = args?['type'] as String? ?? 'custom';
-                  AvisNavigation.push(
-                    context,
-                    AppRoutes.locationPicker,
-                    arguments: {
-                      'type': type,
-                      'provider': context.read<SavedLocationsProvider>(),
-                    },
-                  );
-                },
+                onTap: () => _openLocationPicker(),
                 child: Container(
-                  height: 48,
+                  height: 48.h,
                   width: MediaQuery.sizeOf(context).width,
                   decoration: BoxDecoration(
                     border: Border.all(
                       color: context.colors.divider.withValues(alpha: 0.2),
                     ),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        width: 26,
-                        height: 26,
-                        padding: const EdgeInsets.all(5),
+                        width: 26.w,
+                        height: 26.w,
+                        padding: EdgeInsets.all(5.w),
                         decoration: BoxDecoration(
                           color: context.colors.border,
                           shape: BoxShape.circle,
                         ),
                         child: const SvgIconWidget(name: 'location-08'),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12.w),
                       TextWidget(
                         'Set location on map',
                         style: AppTextStyles.bodyMedium.copyWith(
@@ -347,7 +195,7 @@ class _AddNewPlacePageState extends State<AddNewPlacePage> {
               ),
             ),
           ),
-          const SizedBox(height: 70),
+          SizedBox(height: 24.h),
         ],
       ),
     );

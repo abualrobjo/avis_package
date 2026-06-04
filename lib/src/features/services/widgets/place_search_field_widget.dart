@@ -116,10 +116,74 @@ class _PlaceSearchFieldWidgetState extends State<PlaceSearchFieldWidget> {
     }
   }
 
+  Widget _buildSuggestionsList({required double maxHeight}) {
+    return Material(
+      elevation: 3,
+      borderRadius: BorderRadius.circular(12.r),
+      color: context.colors.surface,
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: _loadingSuggestions && _suggestions.isEmpty
+            ? Padding(
+                padding: EdgeInsets.symmetric(vertical: 20.h),
+                child: Center(
+                  child: SizedBox(
+                    width: 24.w,
+                    height: 24.w,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: context.colors.primary,
+                    ),
+                  ),
+                ),
+              )
+            : ListView.separated(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                itemCount: _suggestions.length,
+                separatorBuilder: (_, _) => Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: context.colors.border,
+                ),
+                itemBuilder: (context, index) {
+                  final suggestion = _suggestions[index];
+                  return ListTile(
+                    dense: true,
+                    visualDensity: VisualDensity.compact,
+                    leading: Icon(
+                      Icons.place_outlined,
+                      color: context.colors.primary,
+                      size: 22.r,
+                    ),
+                    title: TextWidget(
+                      suggestion.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: context.colors.primaryText,
+                      ),
+                    ),
+                    onTap: () => _onSuggestionTap(suggestion),
+                  );
+                },
+              ),
+      ),
+    );
+  }
+
+  void _submitSearch() {
+    _debounce?.cancel();
+    _fetchSuggestions(_controller.text);
+  }
+
   @override
   Widget build(BuildContext context) {
     final showSuggestions =
         _focusNode.hasFocus && (_loadingSuggestions || _suggestions.isNotEmpty);
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final suggestionsMaxHeight = keyboardInset > 0 ? 140.h : 220.h;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -133,6 +197,7 @@ class _PlaceSearchFieldWidgetState extends State<PlaceSearchFieldWidget> {
             controller: _controller,
             focusNode: _focusNode,
             onChanged: _onTextChanged,
+            onEditingComplete: _submitSearch,
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
               hintText: widget.hintText,
@@ -198,60 +263,7 @@ class _PlaceSearchFieldWidgetState extends State<PlaceSearchFieldWidget> {
         ),
         if (showSuggestions) ...[
           SizedBox(height: 8.h),
-          Material(
-            elevation: 3,
-            borderRadius: BorderRadius.circular(12.r),
-            color: context.colors.surface,
-            clipBehavior: Clip.antiAlias,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: 220.h),
-              child: _loadingSuggestions && _suggestions.isEmpty
-                  ? Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20.h),
-                      child: Center(
-                        child: SizedBox(
-                          width: 24.w,
-                          height: 24.w,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: context.colors.primary,
-                          ),
-                        ),
-                      ),
-                    )
-                  : ListView.separated(
-                      shrinkWrap: true,
-                      padding: EdgeInsets.zero,
-                      itemCount: _suggestions.length,
-                      separatorBuilder: (_, __) => Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: context.colors.border,
-                      ),
-                      itemBuilder: (context, index) {
-                        final suggestion = _suggestions[index];
-                        return ListTile(
-                          dense: true,
-                          visualDensity: VisualDensity.compact,
-                          leading: Icon(
-                            Icons.place_outlined,
-                            color: context.colors.primary,
-                            size: 22.r,
-                          ),
-                          title: TextWidget(
-                            suggestion.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: context.colors.primaryText,
-                            ),
-                          ),
-                          onTap: () => _onSuggestionTap(suggestion),
-                        );
-                      },
-                    ),
-            ),
-          ),
+          _buildSuggestionsList(maxHeight: suggestionsMaxHeight),
         ],
       ],
     );

@@ -16,6 +16,8 @@ import 'package:avis_package/src/core/_core.dart'
         AvisNavigation,
         BackArrowWidget;
 import 'package:avis_package/src/core/utils/app_geocoding.dart';
+import 'package:avis_package/src/features/services/place_search_helper.dart';
+import 'package:avis_package/src/features/services/widgets/place_search_field_widget.dart';
 import '../provider/saved_locations_provider.dart';
 
 class LocationPickerPage extends StatefulWidget {
@@ -166,15 +168,37 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
       final pos = await Geolocator.getCurrentPosition();
       final latLng = LatLng(pos.latitude, pos.longitude);
       if (mounted) {
-        setState(() {
-          _deviceLocation = latLng;
-        });
-        if (_mapController.isCompleted) {
-          final controller = await _mapController.future;
-          controller.animateCamera(CameraUpdate.newLatLng(latLng));
-        }
+        setState(() => _deviceLocation = latLng);
+        await _moveMapTo(latLng);
       }
     }
+  }
+
+  Future<void> _moveMapTo(LatLng latLng) async {
+    if (!mounted) return;
+    setState(() => _centerPosition = latLng);
+    await _updateAddressAndDistance();
+    if (_mapController.isCompleted) {
+      final controller = await _mapController.future;
+      await controller.animateCamera(
+        CameraUpdate.newLatLngZoom(latLng, 16),
+      );
+    }
+  }
+
+  Future<void> _onGooglePlaceSelected(PlaceSuggestion suggestion) async {
+    final latLng = await PlaceSearchHelper.resolveSuggestion(suggestion);
+    if (!mounted) return;
+
+    if (latLng == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not find this location.')),
+      );
+      return;
+    }
+
+    setState(() => _currentAddress = suggestion.description);
+    await _moveMapTo(latLng);
   }
 
   @override
@@ -208,8 +232,29 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
             },
           ),
 
-          // Custom Back Button Bubble
-          Positioned(top: 63.h, left: 20.w, child: const BackArrowWidget()),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const BackArrowWidget(),
+                    SizedBox(height: 12.h),
+                    PlaceSearchFieldWidget(
+                      hintText: 'Search for a place or address',
+                      onSuggestionSelected: _onGooglePlaceSelected,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
 
           // Center Marker Pointer
           Center(
