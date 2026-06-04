@@ -44,6 +44,10 @@ class BookChauffeurRequestBody {
   final bool isPerDay;
   final String? frequentFlyerNumber;
   final String? eTicketNumber;
+  /// Selected airline id from GetFlightNames dropdown.
+  final int flightNameId;
+  /// Flight number from the flight number field.
+  final String? flightNumber;
 
   const BookChauffeurRequestBody({
     required this.companyId,
@@ -75,6 +79,8 @@ class BookChauffeurRequestBody {
     this.isPerDay = false,
     this.frequentFlyerNumber,
     this.eTicketNumber,
+    this.flightNameId = 0,
+    this.flightNumber,
   });
 
   Map<String, dynamic> toJson() => {
@@ -107,5 +113,7 @@ class BookChauffeurRequestBody {
         'IsPerDay': isPerDay,
         'FrequentFlyerNumber': frequentFlyerNumber,
         'ETicketNumber': eTicketNumber,
+        'flightName_Id': flightNameId,
+        'flightNumber': flightNumber,
       };
 }

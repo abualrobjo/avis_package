@@ -1,5 +1,17 @@
 import 'package:easy_localization/easy_localization.dart';
 
+bool? _parseNullableBool(dynamic value) {
+  if (value == null) return null;
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  if (value is String) {
+    final normalized = value.trim().toLowerCase();
+    if (normalized == 'true' || normalized == '1') return true;
+    if (normalized == 'false' || normalized == '0') return false;
+  }
+  return null;
+}
+
 class CustomerTripByIdModel {
   final int tripId;
 
@@ -117,9 +129,13 @@ class CustomerTripByIdModel {
 
       plateNumber: json['plateNumber'],
 
-      cancellationBookLaterEnabled: json['cancellationBookLaterEnabled'],
+      cancellationBookLaterEnabled: _parseNullableBool(
+        json['cancellationBookLaterEnabled'] ??
+            json['CancellationBookLaterEnabled'],
+      ),
       cancellationBookLaterFreeDurationHours:
-          (json['cancellationBookLaterFreeDurationHours'] as num?)?.toInt(),
+          (json['cancellationBookLaterFreeDurationHours'] as num?)?.toInt() ??
+          (json['CancellationBookLaterFreeDurationHours'] as num?)?.toInt(),
 
       /// Locations
       pickupLatitude: json['pickup_latitude'],
@@ -220,12 +236,14 @@ class CustomerTripByIdModel {
   bool get isCancellationAllowed {
     if (cancellationBookLaterEnabled != true) return false;
 
-    if (tripDateTime != null && cancellationBookLaterFreeDurationHours != null) {
-      final expirationTime = tripDateTime!.add(
+    if (tripDateTime != null &&
+        cancellationBookLaterFreeDurationHours != null &&
+        cancellationBookLaterFreeDurationHours! > 0) {
+      final cutoff = tripDateTime!.subtract(
         Duration(hours: cancellationBookLaterFreeDurationHours!),
       );
 
-      if (DateTime.now().isAfter(expirationTime)) {
+      if (DateTime.now().isAfter(cutoff)) {
         return false;
       }
     }

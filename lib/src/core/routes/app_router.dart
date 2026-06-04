@@ -105,12 +105,18 @@ class AppRouter {
         int? tripId;
         int? tripTypeId;
         bool fromMyTrips = false;
+        bool cancellationBookLaterEnabled = false;
         final args = settings.arguments;
         if (args is Map<String, dynamic>) {
           tripModel = args['tripModel'] as ReviewTripUiModel?;
           tripId = args['tripId'] as int?;
           tripTypeId = args['tripTypeId'] as int?;
           fromMyTrips = args['fromMyTrips'] == true;
+          final rawCancel = args['cancellationBookLaterEnabled'];
+          cancellationBookLaterEnabled = rawCancel == true ||
+              rawCancel == 1 ||
+              (rawCancel is String &&
+                  rawCancel.toLowerCase() == 'true');
         } else if (args is ReviewTripUiModel) {
           tripModel = args;
           tripId = null;
@@ -121,6 +127,7 @@ class AppRouter {
             tripId: tripId,
             tripTypeId: tripTypeId,
             fromMyTrips: fromMyTrips,
+            cancellationBookLaterEnabled: cancellationBookLaterEnabled,
           ),
           settings,
         );

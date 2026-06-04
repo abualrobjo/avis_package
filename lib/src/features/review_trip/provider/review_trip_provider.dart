@@ -10,6 +10,7 @@ class ReviewTripProvider extends ChangeNotifier {
     this._chauffeurRequestService,
     this._customerInfoService,
     this._flightNamesService,
+    this._customerTripsRepository,
   );
 
   static const int companyId = 1;
@@ -20,6 +21,7 @@ class ReviewTripProvider extends ChangeNotifier {
   final ChauffeurRequestService _chauffeurRequestService;
   final CustomerInfoService _customerInfoService;
   final FlightNamesService _flightNamesService;
+  final CustomerTripsRepository _customerTripsRepository;
 
   ReviewTripPageArgs? _args;
   ReviewTripUiModel? _model;
@@ -298,6 +300,8 @@ class ReviewTripProvider extends ChangeNotifier {
       frequentFlyerNumber:
           _trimmedTextOrNull(frequentFlyerNumberController.text),
       eTicketNumber: _trimmedTextOrNull(eTicketNumberController.text),
+      flightNameId: _selectedFlightName?.id ?? 0,
+      flightNumber: _trimmedTextOrNull(flightNumberController.text),
     );
 
     _confirming = true;
@@ -325,6 +329,19 @@ class ReviewTripProvider extends ChangeNotifier {
       tripId: tripId,
       tripModel: _tripModelForRideRequest(tripModel),
     );
+  }
+
+  /// Loads [CustomerTripByIdModel.cancellationBookLaterEnabled] after payment.
+  Future<bool> fetchCancellationBookLaterEnabled(int tripId) async {
+    final response = await _customerTripsRepository.getCustomerTripById(tripId);
+    var enabled = false;
+    response.when(
+      success: (trip) {
+        enabled = trip.cancellationBookLaterEnabled == true;
+      },
+      failure: (_) {},
+    );
+    return enabled;
   }
 
   Future<void> fetchChauffeurServicePrice() async {

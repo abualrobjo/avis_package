@@ -76,6 +76,60 @@ class _TripDetailsPageState extends State<TripDetailsPage> {
     await context.read<MyTripsProvider>().getCustomerTripById(tripId);
   }
 
+  static Future<bool?> _showCancelConfirmDialog(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancel Trip'),
+        content: const Text(
+          'Are you sure you want to cancel this trip?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onCancelTrip(
+    BuildContext context,
+    CancellationProvider provider,
+    int tripId,
+  ) async {
+    final confirmed = await _showCancelConfirmDialog(context);
+    if (confirmed != true || !context.mounted) return;
+
+    await provider.cancelRideRequest(tripId);
+    if (!context.mounted) return;
+
+    if (provider.cancellationState == CancellationState.success &&
+        provider.cancellationStatus == 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your ride has been cancelled.')),
+      );
+    } else if (provider.cancellationState == CancellationState.error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            provider.errorMessage ?? 'Something went wrong. Could not cancel.',
+          ),
+        ),
+      );
+    }
+    if (!context.mounted) return;
+    Navigator.of(context).popUntil(
+      (route) =>
+          route.settings.name == AppRoutes.myTrips || route.isFirst,
+    );
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -134,6 +188,8 @@ class _TripDetailsPageState extends State<TripDetailsPage> {
 
         final displayTrip = myTripsProvider.tripById;
         final showPayment = displayTrip?.statusId == 7;
+        final showCancel = displayTrip?.isCancellationAllowed ?? false;
+        final tripId = widget.tripId!;
 
         return Scaffold(
           backgroundColor: context.colors.background,
@@ -150,8 +206,16 @@ class _TripDetailsPageState extends State<TripDetailsPage> {
             ),
             centerTitle: true,
           ),
-          bottomNavigationBar: showPayment
-              ? _TripPaymentBottomBar(onPressed: () => _onTripPayment())
+          bottomNavigationBar: showPayment || showCancel
+              ? _TripDetailsBottomBar(
+                  showPayment: showPayment,
+                  showCancel: showCancel,
+                  onPayPressed: () => _onTripPayment(),
+                  onCancelPressed: showCancel
+                      ? (provider) =>
+                          _onCancelTrip(context, provider, tripId)
+                      : null,
+                )
               : null,
           body: SingleChildScrollView(
             child: Column(
@@ -367,10 +431,18 @@ class _ScheduledRow extends StatelessWidget {
   }
 }
 
-class _TripPaymentBottomBar extends StatelessWidget {
-  const _TripPaymentBottomBar({required this.onPressed});
+class _TripDetailsBottomBar extends StatelessWidget {
+  const _TripDetailsBottomBar({
+    required this.showPayment,
+    required this.showCancel,
+    required this.onPayPressed,
+    this.onCancelPressed,
+  });
 
-  final VoidCallback onPressed;
+  final bool showPayment;
+  final bool showCancel;
+  final VoidCallback onPayPressed;
+  final void Function(CancellationProvider provider)? onCancelPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -393,7 +465,34 @@ class _TripPaymentBottomBar extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: AppButton.primary(onPressed: onPressed, text: 'Pay Now'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (showPayment) ...[
+                AppButton.primary(onPressed: onPayPressed, text: 'Pay Now'),
+                if (showCancel) const SizedBox(height: AppSpaces.medium),
+              ],
+              if (showCancel)
+                ChangeNotifierProvider<CancellationProvider>.value(
+                  value: sl<CancellationProvider>(),
+                  child: Consumer<CancellationProvider>(
+                    builder: (context, cancellationProvider, _) {
+                      return AppButton.secondary(
+                        isLoading: cancellationProvider.cancellationState ==
+                            CancellationState.loading,
+                        onPressed: onCancelPressed == null
+                            ? null
+                            : () =>
+                                onCancelPressed!(cancellationProvider),
+                        text: 'Cancel Trip',
+                        foregroundColor: context.colors.error,
+                        customBorderColor: context.colors.error,
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

@@ -115,6 +115,10 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
     await provider.refreshCustomerInfoAfterBooking();
     if (!mounted) return;
 
+    final cancellationBookLaterEnabled =
+        await provider.fetchCancellationBookLaterEnabled(tripId);
+    if (!mounted) return;
+
     Navigator.pop(context);
     AvisNavigation.push(
       context,
@@ -123,6 +127,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
         'tripModel': result.tripModel,
         'tripId': tripId,
         'tripTypeId': provider.args?.tripTypeId,
+        'cancellationBookLaterEnabled': cancellationBookLaterEnabled,
       },
     );
   }

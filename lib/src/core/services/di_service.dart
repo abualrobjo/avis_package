@@ -188,6 +188,7 @@ Future<void> init() async {
       sl<ChauffeurRequestService>(),
       sl<CustomerInfoService>(),
       sl<FlightNamesService>(),
+      sl<CustomerTripsRepository>(),
     ),
   );
 

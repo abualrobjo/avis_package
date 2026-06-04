@@ -27,11 +27,13 @@ class RideRequestPage extends StatelessWidget {
     this.tripId,
     this.tripTypeId,
     this.fromMyTrips = false,
+    this.cancellationBookLaterEnabled = false,
   });
   final ReviewTripUiModel tripModel;
   final int? tripId;
   final int? tripTypeId;
   final bool fromMyTrips;
+  final bool cancellationBookLaterEnabled;
 
   bool get _showDropOff => tripTypeId != 2;
 
@@ -371,29 +373,33 @@ class RideRequestPage extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpaces.large,
-                ),
-                child: ChangeNotifierProvider<CancellationProvider>.value(
-                  value: sl<CancellationProvider>(),
-                  child: Consumer<CancellationProvider>(
-                    builder: (context, cancellationProvider, _) {
-                      return AppButton.secondary(
-                        isLoading:
-                            cancellationProvider.cancellationState ==
-                                CancellationState.loading,
-                        onPressed: tripId == null
-                            ? null
-                            : () => _onCancelTrip(context, cancellationProvider),
-                        text: 'Cancel Trip',
-                        foregroundColor: context.colors.error,
-                        customBorderColor: context.colors.error,
-                      );
-                    },
+              if (cancellationBookLaterEnabled)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpaces.large,
+                  ),
+                  child: ChangeNotifierProvider<CancellationProvider>.value(
+                    value: sl<CancellationProvider>(),
+                    child: Consumer<CancellationProvider>(
+                      builder: (context, cancellationProvider, _) {
+                        return AppButton.secondary(
+                          isLoading:
+                              cancellationProvider.cancellationState ==
+                                  CancellationState.loading,
+                          onPressed: tripId == null
+                              ? null
+                              : () => _onCancelTrip(
+                                    context,
+                                    cancellationProvider,
+                                  ),
+                          text: 'Cancel Trip',
+                          foregroundColor: context.colors.error,
+                          customBorderColor: context.colors.error,
+                        );
+                      },
+                    ),
                   ),
                 ),
-              ),
               const Spacer(),
             ],
           ),
