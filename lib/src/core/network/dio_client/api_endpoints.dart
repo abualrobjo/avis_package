@@ -95,9 +95,9 @@ class ApiEndpoints {
   // Saved Locations
   // ===========================================================================
 
-  /// GET Customer Saved Places "Locations"
+  /// GET CustomerInformation/GetCustomerSavedPlaces?CustomerId=
   static const String getCustomerSavedPlaces =
-      '$vehicleApi/CustomerInformation/GetCustomerSavedPlaces?CustomerId=${AppConst.fallbackCustomerId}';
+      '$vehicleApi/CustomerInformation/GetCustomerSavedPlaces';
 
   /// POST Customer Saved Places "Locations"
   static const String addCustomerSavedPlace =

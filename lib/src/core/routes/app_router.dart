@@ -8,6 +8,8 @@ import 'package:avis_package/src/generated/locale_keys.g.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
+    RouteCustomerSession.applyFromRouteArguments(settings.arguments);
+
     switch (settings.name) {
       case AppRoutes.splash:
         return _slideRoute(const SplashPage(), settings);

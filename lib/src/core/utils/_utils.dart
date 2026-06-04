@@ -6,6 +6,7 @@ export 'extensions/_extensions.dart';
 export 'app_geocoding.dart';
 export 'google_maps_env.dart';
 export 'avis_localization.dart';
+export 'route_customer_session.dart';
 export 'enums/_enums.dart';
 export 'input_formatters.dart';
 export 'payment_card_utils.dart';

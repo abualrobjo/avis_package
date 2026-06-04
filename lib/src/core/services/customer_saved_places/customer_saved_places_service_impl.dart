@@ -8,6 +8,7 @@ class CustomerSavedPlacesServiceImpl implements CustomerSavedPlacesService {
   getCustomerSavedPlaces(GetCustomerSavedPlacesParams params) async {
     return await dioClient.get<List<CustomerSavedPlaceModel>>(
       endpoint: ApiEndpoints.getCustomerSavedPlaces,
+      queryParameters: {'CustomerId': params.customerId},
       body: params.toJson(),
       parser: (json) {
         final response = ApiResponseModel.fromJson(json, (Object? raw) {
