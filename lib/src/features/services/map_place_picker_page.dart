@@ -46,6 +46,8 @@ class MapPlacePickerPage extends StatefulWidget {
 class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
   GoogleMapController? _controller;
   LatLng? _selectedPosition;
+  LatLng? _currentLocation;
+  BitmapDescriptor? _currentLocationMarkerIcon;
   bool _isLoading = false;
   String? _error;
   bool _locationGranted = false;
@@ -57,7 +59,9 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
   bool _isLoadingSuggestions = false;
 
   LatLng get _initialCamera =>
-      widget.initialPosition ?? MapPlacePickerPage._defaultPosition;
+      _currentLocation ??
+      widget.initialPosition ??
+      MapPlacePickerPage._defaultPosition;
 
   Set<Polygon> get _allowedPolygonsSet {
     final list = widget.allowedPolygons;
@@ -74,31 +78,85 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
     };
   }
 
-  /// Bounds that encompass all polygon points; null if no polygons.
-  LatLngBounds? get _polygonsBounds {
-    final list = widget.allowedPolygons;
-    if (list == null || list.isEmpty) return null;
-    double? minLat, maxLat, minLng, maxLng;
-    for (final polygon in list) {
-      for (final p in polygon) {
-        minLat = minLat == null ? p.latitude : (p.latitude < minLat ? p.latitude : minLat);
-        maxLat = maxLat == null ? p.latitude : (p.latitude > maxLat ? p.latitude : maxLat);
-        minLng = minLng == null ? p.longitude : (p.longitude < minLng ? p.longitude : minLng);
-        maxLng = maxLng == null ? p.longitude : (p.longitude > maxLng ? p.longitude : maxLng);
-      }
-    }
-    if (minLat == null || maxLat == null || minLng == null || maxLng == null) return null;
-    return LatLngBounds(
-      southwest: LatLng(minLat, minLng),
-      northeast: LatLng(maxLat, maxLng),
-    );
-  }
-
   @override
   void initState() {
     super.initState();
     _searchFocusNode.addListener(_onSearchFocusChange);
-    _requestLocationPermission();
+    unawaited(_loadCurrentLocationMarkerIcon());
+    unawaited(_requestLocationPermission());
+  }
+
+  Future<void> _loadCurrentLocationMarkerIcon() async {
+    try {
+      final icon = await BitmapDescriptor.asset(
+        const ImageConfiguration(size: Size(40, 40)),
+        'assets/images/customer_position.png',
+        package: AppConst.packageName,
+      );
+      if (mounted) setState(() => _currentLocationMarkerIcon = icon);
+    } catch (_) {}
+  }
+
+  Set<Marker> get _mapMarkers {
+    final markers = <Marker>{};
+    if (_currentLocation != null && _currentLocationMarkerIcon != null) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('current_location'),
+          position: _currentLocation!,
+          icon: _currentLocationMarkerIcon!,
+          anchor: const Offset(0.5, 0.5),
+          zIndexInt: 1,
+        ),
+      );
+    }
+    if (_selectedPosition != null) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('selected'),
+          position: _selectedPosition!,
+          zIndexInt: 2,
+        ),
+      );
+    }
+    return markers;
+  }
+
+  Future<void> _loadCurrentLocation({bool focusCamera = true}) async {
+    if (!_locationGranted) return;
+
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+        ),
+      );
+      if (!mounted) return;
+      setState(() {
+        _currentLocation = LatLng(position.latitude, position.longitude);
+      });
+      if (focusCamera) await _focusOnCurrentLocation();
+    } catch (_) {}
+  }
+
+  Future<void> _focusOnCurrentLocation() async {
+    final location = _currentLocation;
+    final controller = _controller;
+    if (location == null || controller == null) return;
+
+    await controller.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: location, zoom: 16),
+      ),
+    );
+  }
+
+  Future<void> _onCurrentLocationPressed() async {
+    if (!_locationGranted) {
+      await _requestLocationPermission();
+    }
+    if (!_locationGranted) return;
+    await _loadCurrentLocation();
   }
 
   void _onSearchFocusChange() {
@@ -137,6 +195,9 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
 
     if (mounted) {
       setState(() => _locationGranted = granted);
+    }
+    if (granted) {
+      await _loadCurrentLocation();
     }
   }
 
@@ -445,47 +506,45 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
           GoogleMap(
             initialCameraPosition: CameraPosition(
               target: _initialCamera,
-              zoom: 14,
+              zoom: 16,
             ),
             onMapCreated: (c) async {
               _controller = c;
-              final bounds = _polygonsBounds;
-              if (bounds != null && mounted) {
-                c.animateCamera(
-                  CameraUpdate.newLatLngBounds(bounds, 48),
-                );
-              } else if (mounted) {
-                // No polygons: focus on current location if available
-                try {
-                  final pos = await Geolocator.getCurrentPosition(
-                    locationSettings: const LocationSettings(
-                      accuracy: LocationAccuracy.medium,
-                    ),
-                  );
-                  if (mounted) {
-                    c.animateCamera(
-                      CameraUpdate.newLatLng(
-                        LatLng(pos.latitude, pos.longitude),
-                      ),
-                    );
-                  }
-                } catch (_) {
-                  // Keep default _initialCamera
-                }
+              if (_currentLocation != null) {
+                await _focusOnCurrentLocation();
+              } else if (_locationGranted) {
+                await _loadCurrentLocation();
               }
             },
             onTap: _onMapTap,
             myLocationEnabled: _locationGranted,
-            myLocationButtonEnabled: _locationGranted,
+            myLocationButtonEnabled: false,
             polygons: _allowedPolygonsSet,
-            markers: _selectedPosition == null
-                ? {}
-                : {
-                    Marker(
-                      markerId: const MarkerId('selected'),
-                      position: _selectedPosition!,
+            markers: _mapMarkers,
+          ),
+          Positioned(
+            right: 16,
+            bottom: _selectedPosition != null ? 96 : 24,
+            child: SafeArea(
+              child: Material(
+                elevation: 2,
+                shape: const CircleBorder(),
+                color: context.colors.surface,
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: _onCurrentLocationPressed,
+                  customBorder: const CircleBorder(),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Icon(
+                      Icons.my_location,
+                      size: 22,
+                      color: context.colors.primary,
                     ),
-                  },
+                  ),
+                ),
+              ),
+            ),
           ),
           Positioned(
             top: 16,
