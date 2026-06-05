@@ -5,12 +5,9 @@ import 'package:flutter/foundation.dart';
 import '../models/chat_message_model.dart';
 import '../repositories/chat_repository.dart';
 
-/// Customer app: "me" = customer, "contact" = driver. Uses trip id 574 for testing.
+/// Customer app: "me" = customer, "contact" = driver. Chat id = trip id.
 class ChatProvider extends ChangeNotifier {
   ChatProvider(this._chatRepository);
-
-  static const bool useTestIds = true;
-  static const String testTripId = '574';
 
   final ChatRepository _chatRepository;
 
@@ -46,8 +43,11 @@ class ChatProvider extends ChangeNotifier {
     required String driverDisplayName,
     required String contactDisplayName,
     String? contactPhone,
+    String? driverId,
+    String? customerDisplayName,
   }) {
-    final effectiveTripId = useTestIds ? testTripId : tripId;
+    final effectiveTripId = tripId.trim();
+    if (effectiveTripId.isEmpty) return;
     _tripId = effectiveTripId;
     _driverDisplayName = driverDisplayName;
     _contactDisplayName = contactDisplayName;
@@ -59,8 +59,8 @@ class ChatProvider extends ChangeNotifier {
     try {
       _chatRepository.ensureChatMetadata(
         tripId: effectiveTripId,
-        driverId: 'driver_0',
-        contactDisplayName: contactDisplayName,
+        driverId: driverId ?? '',
+        contactDisplayName: customerDisplayName ?? contactDisplayName,
         contactPhone: contactPhone,
         driverDisplayName: driverDisplayName,
       );
@@ -115,8 +115,8 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<bool> sendMessage(String text) async {
-    final tripId = useTestIds ? testTripId : (_tripId ?? testTripId);
-    if (tripId.isEmpty || text.trim().isEmpty) return false;
+    final tripId = _tripId;
+    if (tripId == null || tripId.isEmpty || text.trim().isEmpty) return false;
     _errorMessage = null;
     final trimmed = text.trim();
     final optimistic = ChatMessageModel(

@@ -14,19 +14,9 @@ class NavigatorHandlerProvider extends ChangeNotifier {
   int selectedIndex = 1;
   late Widget selectedWidget;
 
-  static const ChatPageArgs _chatArgs = ChatPageArgs(
-    tripId: '574',
-    contactDisplayName: 'Driver',
-    driverDisplayName: 'Driver',
-    contactPhone: null,
-  );
-
   Widget get _homeWidget => const ServicesPage();
 
-  Widget get _chatWidget => ChangeNotifierProvider(
-    create: (_) => sl<ChatProvider>(),
-    child: const ChatPage(args: _chatArgs),
-  );
+  Widget get _chatWidget => const ChatTabPlaceholderPage();
 
   void changeSelectedIndexValue(int newValue) {
     selectedIndex = newValue;

@@ -228,7 +228,11 @@ class _TripDetailsPageState extends State<TripDetailsPage> {
                 SizedBox(height: 16.h),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20.r),
-                  child: DriverCard(data: displayTrip),
+                  child: DriverCard(
+                    data: displayTrip,
+                    showContactActions:
+                        displayTrip?.isActiveTripSession ?? false,
+                  ),
                 ),
                 SizedBox(height: 16.h),
                 Padding(

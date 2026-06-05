@@ -4,3 +4,4 @@ export 'provider/chat_provider.dart';
 export 'repositories/chat_repository.dart';
 export 'repositories/chat_repository_impl.dart';
 export 'views/pages/chat_page.dart';
+export 'views/pages/chat_tab_placeholder_page.dart';

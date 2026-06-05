@@ -14,12 +14,20 @@ class ChatPageArgs {
     required this.contactDisplayName,
     this.contactPhone,
     required this.driverDisplayName,
+    this.driverId,
+    this.customerDisplayName,
   });
 
+  /// Trip id = Firestore chat document id (shared with driver app).
   final String tripId;
+  /// Display name of the person the user is chatting with (driver for customer app).
   final String contactDisplayName;
   final String? contactPhone;
   final String driverDisplayName;
+  /// Firestore metadata driver id, e.g. driver_19.
+  final String? driverId;
+  /// Customer name stored in chat metadata for the driver inbox.
+  final String? customerDisplayName;
 }
 
 class ChatPage extends StatefulWidget {
@@ -48,6 +56,8 @@ class _ChatPageState extends State<ChatPage> {
           driverDisplayName: args.driverDisplayName,
           contactDisplayName: args.contactDisplayName,
           contactPhone: args.contactPhone,
+          driverId: args.driverId,
+          customerDisplayName: args.customerDisplayName,
         );
       }
     });

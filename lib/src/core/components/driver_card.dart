@@ -5,9 +5,14 @@ import 'package:avis_package/src/core/_core.dart';
 import 'package:avis_package/src/features/_features.dart';
 
 class DriverCard extends StatelessWidget {
-  const DriverCard({super.key, required this.data});
+  const DriverCard({
+    super.key,
+    required this.data,
+    this.showContactActions = true,
+  });
 
   final CustomerTripByIdModel? data;
+  final bool showContactActions;
 
   Future<void> _onCall(BuildContext context) async {
     final phone = data?.chauffeurPhoneNumber?.trim() ?? '';
@@ -20,14 +25,26 @@ class DriverCard extends StatelessWidget {
   }
 
   void _onChat(BuildContext context) {
+    final tripId = data?.tripId;
+    if (tripId == null || tripId <= 0) return;
+    final driverName = data?.chauffeurNameLocalized(context) ?? '';
+    final chauffeurId = data?.chauffeurId;
+    final customerName =
+        data?.customerPrimaryName ??
+        data?.customerSecondaryname ??
+        'Customer';
     AvisNavigation.push(
       context,
       AppRoutes.chat,
       arguments: ChatPageArgs(
-        tripId: '${data?.tripId}',
-        contactDisplayName: data?.chauffeurNameLocalized(context) ?? '',
-        driverDisplayName: data?.chauffeurNameLocalized(context) ?? '',
-        contactPhone: data?.chauffeurPhoneNumber?.trim() ?? '',
+        tripId: tripId.toString(),
+        contactDisplayName: driverName,
+        driverDisplayName: driverName,
+        contactPhone: data?.chauffeurPhoneNumber?.trim(),
+        driverId: chauffeurId != null && chauffeurId > 0
+            ? 'driver_$chauffeurId'
+            : null,
+        customerDisplayName: customerName,
       ),
     );
   }
@@ -110,26 +127,28 @@ class DriverCard extends StatelessWidget {
             ],
           ),
         ),
-        _CircleIconButton(
-          onTap: () => _onCall(context),
-          iconWidget: SvgIconWidget(
-            name: 'phone',
-            width: 22,
-            height: 22,
-            color: context.colors.primaryText,
+        if (showContactActions) ...[
+          _CircleIconButton(
+            onTap: () => _onCall(context),
+            iconWidget: SvgIconWidget(
+              name: 'phone',
+              width: 22,
+              height: 22,
+              color: context.colors.primaryText,
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        _CircleIconButton(
-          onTap: () => _onChat(context),
-          badgeCount: 2,
-          iconWidget: SvgIconWidget(
-            name: 'chat',
-            width: 22,
-            height: 22,
-            color: context.colors.primaryText,
+          const SizedBox(width: 12),
+          _CircleIconButton(
+            onTap: () => _onChat(context),
+            badgeCount: 2,
+            iconWidget: SvgIconWidget(
+              name: 'chat',
+              width: 22,
+              height: 22,
+              color: context.colors.primaryText,
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

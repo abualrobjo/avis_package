@@ -46,6 +46,7 @@ class CustomerTripByIdModel {
   final String? statusSecondaryName;
 
   /// Driver
+  final int? chauffeurId;
   final double? driverAVGRate;
 
   /// Vehicle
@@ -92,6 +93,7 @@ class CustomerTripByIdModel {
     this.statusId,
     this.statusPrimaryName,
     this.statusSecondaryName,
+    this.chauffeurId,
     this.driverAVGRate,
     this.manufacturingYear,
     this.manufacturerPrimaryName,
@@ -155,6 +157,7 @@ class CustomerTripByIdModel {
       statusSecondaryName: json['statusSecondaryName'],
 
       /// Driver
+      chauffeurId: (json['chauffeurId'] as num?)?.toInt(),
       driverAVGRate: (json['driverAVGRate'] as num?)?.toDouble(),
 
       /// Vehicle
@@ -232,6 +235,12 @@ class CustomerTripByIdModel {
   /// Route widget second row address.
   String get routeDropOffSectionLocation =>
       hasDropOffPlace ? (dropOffLatitude ?? '').trim() : (pickupLatitude ?? '');
+
+  /// Status ids for an in-progress trip (driver en route, at pickup, on trip).
+  static const activeTripStatusIds = {8, 9, 10};
+
+  bool get isActiveTripSession =>
+      statusId != null && activeTripStatusIds.contains(statusId);
 
   bool get isCancellationAllowed {
     if (cancellationBookLaterEnabled != true) return false;

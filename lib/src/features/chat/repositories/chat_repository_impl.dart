@@ -84,18 +84,19 @@ class ChatRepositoryImpl implements ChatRepository {
     final now = FieldValue.serverTimestamp();
     if (!snap.exists) {
       await ref.set({
-        'driverId': driverId,
+        if (driverId.isNotEmpty) 'driverId': driverId,
         'contactDisplayName': contactDisplayName,
-        'contactPhone': ?contactPhone,
-        'driverDisplayName': ?driverDisplayName,
+        if (contactPhone != null) 'contactPhone': contactPhone,
+        if (driverDisplayName != null) 'driverDisplayName': driverDisplayName,
         'lastMessageAt': now,
       });
     } else {
-      await ref.update({
+      await ref.set({
         'contactDisplayName': contactDisplayName,
-        'contactPhone': ?contactPhone,
-        'driverDisplayName': ?driverDisplayName,
-      });
+        if (contactPhone != null) 'contactPhone': contactPhone,
+        if (driverDisplayName != null) 'driverDisplayName': driverDisplayName,
+        if (driverId.isNotEmpty) 'driverId': driverId,
+      }, SetOptions(merge: true));
     }
   }
 
