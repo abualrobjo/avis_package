@@ -82,35 +82,46 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
     }
 
     final tripId = result.tripId!;
-    final paymentUrl =
-        'http://94.249.88.254:1040/ChauffeurService/ChauffeurPayment?TripId=$tripId&f=0&RequestSource=3';
+    final isFreeRide = provider.appliedPromoDetails?.isFreeRide == true;
 
-    final isPaymentSuccess = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PaymentScreen(paymentUrl: paymentUrl),
+    if (!isFreeRide) {
+      final paymentUrl =
+          'http://94.249.88.254:1040/ChauffeurService/ChauffeurPayment?TripId=$tripId&f=0&RequestSource=3';
+
+      final isPaymentSuccess = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PaymentScreen(paymentUrl: paymentUrl),
+            ),
+          ) ??
+          false;
+
+      if (!mounted) return;
+      if (!isPaymentSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payment was not completed. Please try again.'),
           ),
-        ) ??
-        false;
+        );
+        return;
+      }
 
-    if (!mounted) return;
-    if (!isPaymentSuccess) {
+      context.read<PaymentProvider>().markPaidConfirmedFromWebView();
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Payment was not completed. Please try again.'),
+          content: Text('Payment successful! Finalizing your booking...'),
+          backgroundColor: Colors.green,
         ),
       );
-      return;
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Booking confirmed! Finalizing your ride...'),
+          backgroundColor: Colors.green,
+        ),
+      );
     }
-
-    context.read<PaymentProvider>().markPaidConfirmedFromWebView();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Payment successful! Finalizing your booking...'),
-        backgroundColor: Colors.green,
-      ),
-    );
 
     await provider.refreshCustomerInfoAfterBooking();
     if (!mounted) return;
@@ -348,6 +359,20 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
             selectedValue: provider.selectedFlightName,
             onChanged: provider.setSelectedFlightName,
             itemAsString: (f) => f.displayName,
+            enableSearch: true,
+            searchHintText: 'Search airline',
+            filterItem: (flight, query) {
+              final q = query.toLowerCase();
+              bool contains(String? value) =>
+                  value != null && value.toLowerCase().contains(q);
+              return contains(flight.displayName) ||
+                  contains(flight.airlineName) ||
+                  contains(flight.airlinePrimaryName) ||
+                  contains(flight.airlineSecondaryName) ||
+                  contains(flight.iata) ||
+                  contains(flight.icao) ||
+                  contains(flight.country);
+            },
             hintText: provider.loadingFlightNames ? 'Loading...' : 'Select Airline',
             height: 56,
             selectedTextStyle: AppTextStyles.bodyMediumBold.copyWith(
