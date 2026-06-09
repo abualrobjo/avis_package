@@ -19,8 +19,13 @@ class AppRouter {
             : null;
         final showBackButton = args?['showBackButton'] == true;
         return _slideRoute(
-          ChangeNotifierProvider(
-            create: (_) => sl<LocalizationProvider>(),
+          MultiProvider(
+            providers: [
+              ChangeNotifierProvider(create: (_) => sl<LocalizationProvider>()),
+              ChangeNotifierProvider(
+                create: (_) => sl<ServicesProvider>()..initialize(),
+              ),
+            ],
             child: ServicesPage(showBackButton: showBackButton),
           ),
           settings,

@@ -62,12 +62,14 @@ class ReviewTripPriceUiModel {
   final String currency;
   final String label;
   final double? taxAmount;
+  final bool promoApplied;
 
   ReviewTripPriceUiModel({
     required this.amount,
     required this.currency,
     required this.label,
     this.taxAmount,
+    this.promoApplied = false,
   });
 
   static String _symbolFor(String code) {
@@ -85,10 +87,14 @@ class ReviewTripPriceUiModel {
 
   String get formattedPrice => '${_symbolFor(currency)}${amount.toStringAsFixed(2)}';
 
+  bool get hasStrikethroughPrice => promoApplied;
+
   String? get formattedTaxAmount {
     if (taxAmount == null) return null;
-    return '$currency ${taxAmount!.toStringAsFixed(2)}';
+    return 'VAT ${_symbolFor(currency)}${taxAmount!.toStringAsFixed(2)}';
   }
+
+  bool get hasStrikethroughTax => promoApplied && taxAmount != null;
 }
 
 class ReviewTripOptionUiModel {
@@ -143,7 +149,7 @@ class ReviewTripUiModelFactory {
       price: ReviewTripPriceUiModel(
         amount: 85.00,
         currency: 'USD',
-        label: 'Include taxes',
+        label: 'Include',
       ),
       options: [
         ReviewTripOptionUiModel(
@@ -167,7 +173,6 @@ class ReviewTripUiModelFactory {
       ],
       actions: [
         ReviewTripActionUiModel(title: 'Promo Code', onTap: () {}),
-        ReviewTripActionUiModel(title: 'Loyalty Points', onTap: () {}),
       ],
       confirmButtonText: 'Confirm Booking',
     );

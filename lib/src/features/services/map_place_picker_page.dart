@@ -22,7 +22,7 @@ class _PlaceSuggestion {
   final LatLng? resolvedLocation;
 }
 
-/// Full-screen map. User can search or tap a point; we reverse-geocode and pop with the place name.
+/// Full-screen map. User moves the map under a fixed center pin to choose a location.
 /// If [allowedPolygons] is set, user can only select a location inside one of these polygons.
 class MapPlacePickerPage extends StatefulWidget {
   const MapPlacePickerPage({
@@ -81,6 +81,7 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
   @override
   void initState() {
     super.initState();
+    _selectedPosition = widget.initialPosition ?? MapPlacePickerPage._defaultPosition;
     _searchFocusNode.addListener(_onSearchFocusChange);
     unawaited(_loadCurrentLocationMarkerIcon());
     unawaited(_requestLocationPermission());
@@ -110,16 +111,29 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
         ),
       );
     }
-    if (_selectedPosition != null) {
-      markers.add(
-        Marker(
-          markerId: const MarkerId('selected'),
-          position: _selectedPosition!,
-          zIndexInt: 2,
-        ),
-      );
-    }
     return markers;
+  }
+
+  void _onCameraMove(CameraPosition position) {
+    _selectedPosition = position.target;
+  }
+
+  void _onCameraIdle() {
+    final position = _selectedPosition;
+    if (position == null) return;
+
+    if (widget.allowedPolygons != null &&
+        widget.allowedPolygons!.isNotEmpty &&
+        !_isWithinAllowedArea(position)) {
+      setState(() {
+        _error = 'Please select a location within the service area';
+      });
+      return;
+    }
+
+    if (_error != null) {
+      setState(() => _error = null);
+    }
   }
 
   Future<void> _loadCurrentLocation({bool focusCamera = true}) async {
@@ -229,77 +243,6 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
     return inside;
   }
 
-  Future<void> _onMapTap(LatLng position) async {
-    if (widget.allowedPolygons != null &&
-        widget.allowedPolygons!.isNotEmpty &&
-        !_isWithinAllowedArea(position)) {
-      setState(() {
-        _error =
-            'Please select a location within the service area';
-        _selectedPosition = null;
-      });
-      return;
-    }
-
-    setState(() {
-      _selectedPosition = position;
-      _error = null;
-      _isLoading = true;
-    });
-
-    try {
-      final placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
-
-      if (!mounted) return;
-      if (placemarks.isEmpty) {
-        setState(() {
-          _isLoading = false;
-          _error = 'Could not get address';
-        });
-        return;
-      }
-
-      final place = placemarks.first;
-      final address = _formatPlacemark(place, position);
-
-      setState(() => _isLoading = false);
-      if (mounted) {
-        Navigator.of(context).pop(PlacePickerResult(address: address, latLng: position));
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _error = 'Failed to get address';
-      });
-    }
-  }
-
-  /// Format address as a single line (street + locality, or first available parts).
-  String _formatPlacemark(Placemark p, LatLng fallbackPosition) {
-    final street = (p.street?.isNotEmpty ?? false)
-        ? p.street!
-        : (p.thoroughfare?.isNotEmpty ?? false)
-            ? p.thoroughfare!
-            : null;
-    final parts = <String>[
-      ...([street].whereType<String>()),
-      if (p.subLocality?.isNotEmpty ?? false) p.subLocality!,
-      if (p.locality?.isNotEmpty ?? false) p.locality!,
-      if (p.administrativeArea?.isNotEmpty ?? false) p.administrativeArea!,
-      if (p.country?.isNotEmpty ?? false) p.country!,
-    ];
-    if (parts.isEmpty && (p.name?.isNotEmpty ?? false)) parts.add(p.name!);
-    if (parts.isEmpty) {
-      return '${fallbackPosition.latitude.toStringAsFixed(4)}, ${fallbackPosition.longitude.toStringAsFixed(4)}';
-    }
-    // Keep to a single line: join with ", " and return (UI shows 1 line with ellipsis if needed)
-    return parts.join(', ');
-  }
-
   Future<void> _fetchSearchSuggestions(String rawQuery) async {
     final query = rawQuery.trim();
     if (query.isEmpty) {
@@ -355,10 +298,7 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
       return;
     }
 
-    setState(() {
-      _error = null;
-      _selectedPosition = latLng;
-    });
+    setState(() => _error = null);
 
     await _controller?.animateCamera(
       CameraUpdate.newLatLngZoom(latLng, 16),
@@ -464,14 +404,19 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
       }
 
       final place = placemarks.first;
-      final address = _formatPlacemark(place, _selectedPosition!);
+      final address = PlaceSearchHelper.formatPlacemark(place, _selectedPosition!);
+      final shortAddress =
+          PlaceSearchHelper.formatShortPlacemark(place, _selectedPosition!);
 
       setState(() => _isLoading = false);
       if (mounted) {
-        Navigator.of(context).pop(PlacePickerResult(
-          address: address,
-          latLng: _selectedPosition!,
-        ));
+        Navigator.of(context).pop(
+          PlacePickerResult(
+            address: address,
+            shortAddress: shortAddress,
+            latLng: _selectedPosition!,
+          ),
+        );
       }
     } catch (e) {
       if (!mounted) return;
@@ -515,16 +460,31 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
               } else if (_locationGranted) {
                 await _loadCurrentLocation();
               }
+              if (mounted) {
+                setState(() => _selectedPosition = _initialCamera);
+              }
             },
-            onTap: _onMapTap,
+            onCameraMove: _onCameraMove,
+            onCameraIdle: _onCameraIdle,
             myLocationEnabled: _locationGranted,
             myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
             polygons: _allowedPolygonsSet,
             markers: _mapMarkers,
           ),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 40),
+              child: Icon(
+                Icons.location_on,
+                size: 48,
+                color: context.colors.primary,
+              ),
+            ),
+          ),
           Positioned(
             right: 16,
-            bottom: _selectedPosition != null ? 96 : 24,
+            bottom: 96,
             child: SafeArea(
               child: Material(
                 elevation: 2,
@@ -667,19 +627,18 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
               ],
             ),
           ),
-          if (_selectedPosition != null)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 24,
-              child: SafeArea(
-                child: AppButton.primary(
-                  onPressed: _isLoading ? null : _confirmSelectedLocation,
-                  text: 'Use this location',
-                  height: 48,
-                ),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 24,
+            child: SafeArea(
+              child: AppButton.primary(
+                onPressed: _isLoading ? null : _confirmSelectedLocation,
+                text: 'Use this location',
+                height: 48,
               ),
             ),
+          ),
           if (_isLoading)
             Container(
               color: Colors.black26,
@@ -708,7 +667,7 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
             Positioned(
               left: 16,
               right: 16,
-              bottom: _selectedPosition != null ? 90 : 24,
+              bottom: 90,
               child: Material(
                 color: context.colors.errorBackground,
                 borderRadius: BorderRadius.circular(AppCornerRadius.medium),

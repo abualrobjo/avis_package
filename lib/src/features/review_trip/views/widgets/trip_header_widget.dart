@@ -78,13 +78,17 @@ class TripHeaderWidget extends StatelessWidget {
                     ],
                   ),
                   if (isIndividual) const SizedBox(height: 10),
-                  if (isIndividual)
+                  if (isIndividual) ...[
                     TextWidget(
                       price.formattedPrice,
                       style: AppTextStyles.bodyLargeBold.copyWith(
                         color: context.colors.primaryText,
+                        decoration: price.hasStrikethroughPrice
+                            ? TextDecoration.lineThrough
+                            : null,
                       ),
                     ),
+                  ],
                 ],
               ),
               const Spacer(),

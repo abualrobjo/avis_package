@@ -192,6 +192,20 @@ Future<void> init() async {
     ),
   );
 
+  sl.registerFactory<ServicesProvider>(
+    () => ServicesProvider(
+      sl<AuthLocalService>(),
+      sl<TripsTypeService>(),
+      sl<FlightNamesService>(),
+      sl<CustomerSavedPlacesRepository>(),
+      sl<CustomerInfoService>(),
+      sl<LatestTripRateService>(),
+      sl<AirportsService>(),
+      sl<AllowedPolygonsService>(),
+      sl<VehicleClassesPriceService>(),
+    ),
+  );
+
   sl.registerFactory<AddNewCardProvider>(
     () => AddNewCardProvider(sl<PaymentCardsLocalService>()),
   );

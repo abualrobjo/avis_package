@@ -128,12 +128,11 @@ class ReviewTripPageArgs {
       price: ReviewTripPriceUiModel(
         amount: vehicle?.total ?? 0.0,
         currency: currencyCode,
-        label: 'Include taxes',
+        label: 'Include',
       ),
       options: _buildOptions(),
       actions: [
         ReviewTripActionUiModel(title: 'Promo Code', onTap: () {}),
-        ReviewTripActionUiModel(title: 'Loyalty Points', onTap: () {}),
       ],
       confirmButtonText: 'Confirm Booking',
     );

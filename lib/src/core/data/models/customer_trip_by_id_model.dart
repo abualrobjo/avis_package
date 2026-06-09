@@ -65,6 +65,7 @@ class CustomerTripByIdModel {
 
   final String? vehicleClassPrimaryName;
   final String? vehicleClassSecondaryName;
+  final String? classMiniDesc;
   final String? tripTypePrimaryName;
   final int? tripTypeId;
 
@@ -106,6 +107,7 @@ class CustomerTripByIdModel {
     this.vehicleClassImage,
     this.vehicleClassPrimaryName,
     this.vehicleClassSecondaryName,
+    this.classMiniDesc,
     this.passengersNo,
     this.suitcasesNo,
     this.tripTypePrimaryName,
@@ -176,6 +178,7 @@ class CustomerTripByIdModel {
 
       vehicleClassPrimaryName: json['vehicleClassPrimaryName'],
       vehicleClassSecondaryName: json['vehicleClassSecondaryName'],
+      classMiniDesc: json['classMiniDesc'] as String?,
 
       passengersNo: (json['passengersNo'] as num?)?.toInt(),
       suitcasesNo: (json['suitcasesNo'] as num?)?.toInt(),
@@ -202,12 +205,12 @@ class CustomerTripByIdModel {
   /// Date formatting
   static String formatTripDateTime(DateTime? dateTime) {
     if (dateTime == null) return '';
-    return DateFormat('d MMM yyyy, hh:mm a').format(dateTime);
+    return DateFormat('d MMM yyyy, HH:mm').format(dateTime);
   }
 
   static String formatTime(DateTime? dateTime) {
     if (dateTime == null) return '';
-    return DateFormat('hh:mm a').format(dateTime);
+    return DateFormat('HH:mm').format(dateTime);
   }
 
   bool get hasDropOffPlace {

@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:avis_package/src/core/_core.dart';
 import 'package:avis_package/src/features/chat/_chat.dart';
 import 'package:avis_package/src/features/my_trips/_my_trips.dart';
-import 'package:avis_package/src/features/services/_services.dart' show ServicesPage;
+import 'package:avis_package/src/features/services/_services.dart';
 
 class NavigatorHandlerProvider extends ChangeNotifier {
   NavigatorHandlerProvider() {
@@ -14,7 +14,10 @@ class NavigatorHandlerProvider extends ChangeNotifier {
   int selectedIndex = 1;
   late Widget selectedWidget;
 
-  Widget get _homeWidget => const ServicesPage();
+  Widget get _homeWidget => ChangeNotifierProvider(
+    create: (_) => sl<ServicesProvider>()..initialize(),
+    child: const ServicesPage(),
+  );
 
   Widget get _chatWidget => const ChatTabPlaceholderPage();
 

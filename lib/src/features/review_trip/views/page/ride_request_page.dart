@@ -14,13 +14,14 @@ import 'package:avis_package/src/core/_core.dart'
         BackArrowWidget,
         CancellationProvider,
         CancellationState,
+        CustomerTripsRepository,
         SvgIconWidget,
         TextWidget,
         VerticalDashedBorderPainter,
         NetworkImageWidget,
         sl;
 
-class RideRequestPage extends StatelessWidget {
+class RideRequestPage extends StatefulWidget {
   const RideRequestPage({
     super.key,
     required this.tripModel,
@@ -35,7 +36,39 @@ class RideRequestPage extends StatelessWidget {
   final bool fromMyTrips;
   final bool cancellationBookLaterEnabled;
 
-  bool get _showDropOff => tripTypeId != 2;
+  @override
+  State<RideRequestPage> createState() => _RideRequestPageState();
+}
+
+class _RideRequestPageState extends State<RideRequestPage> {
+  String? _classMiniDesc;
+
+  bool get _showDropOff => widget.tripTypeId != 2;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadClassMiniDesc();
+  }
+
+  Future<void> _loadClassMiniDesc() async {
+    final tripId = widget.tripId;
+    if (tripId == null) return;
+
+    final response =
+        await sl<CustomerTripsRepository>().getCustomerTripById(tripId);
+    if (!mounted) return;
+
+    response.when(
+      success: (trip) {
+        final desc = trip.classMiniDesc?.trim();
+        if (desc != null && desc.isNotEmpty) {
+          setState(() => _classMiniDesc = desc);
+        }
+      },
+      failure: (_) {},
+    );
+  }
 
   static Future<bool?> _showCancelConfirmDialog(BuildContext context) {
     return showDialog<bool>(
@@ -66,7 +99,7 @@ class RideRequestPage extends StatelessWidget {
     final confirmed = await _showCancelConfirmDialog(context);
     if (confirmed != true || !context.mounted) return;
 
-    await provider.cancelRideRequest(tripId!);
+    await provider.cancelRideRequest(widget.tripId!);
     if (!context.mounted) return;
 
     if (!context.mounted) return;
@@ -88,7 +121,7 @@ class RideRequestPage extends StatelessWidget {
     Navigator.of(context).popUntil(
       (route) =>
           route.settings.name ==
-              (fromMyTrips ? AppRoutes.myTrips : AppRoutes.servicePage) ||
+              (widget.fromMyTrips ? AppRoutes.myTrips : AppRoutes.servicePage) ||
           route.isFirst,
     );
   }
@@ -104,7 +137,7 @@ class RideRequestPage extends StatelessWidget {
             Navigator.of(context).popUntil(
               (route) =>
                   route.settings.name ==
-                      (fromMyTrips ? AppRoutes.myTrips : AppRoutes.servicePage) ||
+                      (widget.fromMyTrips ? AppRoutes.myTrips : AppRoutes.servicePage) ||
                   route.isFirst,
             );
           },
@@ -126,7 +159,7 @@ class RideRequestPage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  if (tripId != null)
+                  if (widget.tripId != null)
                     Row(
                       children: [
                         TextWidget(
@@ -137,7 +170,7 @@ class RideRequestPage extends StatelessWidget {
                         ),
                         const SizedBox(width: AppSpaces.xSmall),
                         TextWidget(
-                          '$tripId',
+                          '${widget.tripId}',
                           style: AppTextStyles.bodyMediumBold.copyWith(
                             color: context.colors.primaryText,
                           ),
@@ -220,7 +253,7 @@ class RideRequestPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           TextWidget(
-                            tripModel.route.pickupLocation,
+                            widget.tripModel.route.pickupLocation,
                             style: AppTextStyles.bodySmallBold.copyWith(
                               color: context.colors.primaryText,
                               fontSize: 13,
@@ -243,7 +276,7 @@ class RideRequestPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 6),
                             TextWidget(
-                              tripModel.route.dropOffLocation,
+                              widget.tripModel.route.dropOffLocation,
                               style: AppTextStyles.bodySmallBold.copyWith(
                                 color: context.colors.primaryText,
                                 fontSize: 13,
@@ -268,112 +301,130 @@ class RideRequestPage extends StatelessWidget {
                   border: Border.all(color: context.colors.border),
                 ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     NetworkImageWidget(
-                      url: tripModel.vehicle.imageUrl,
-                      width: 159,
+                      url: widget.tripModel.vehicle.imageUrl,
+                      width: 120,
                       height: 76,
                       fit: BoxFit.contain,
                     ),
-                    const Spacer(flex: 3),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              tripModel.vehicle.name,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  widget.tripModel.vehicle.name,
+                                  style: AppTextStyles.bodyLargeBold.copyWith(
+                                    color: context.colors.primaryText,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              SvgIconWidget(
+                                name: 'profile',
+                                color: context.colors.primaryText,
+                                width: 16,
+                                height: 16,
+                              ),
+                              TextWidget(
+                                widget.tripModel.vehicle.passengerCapacity
+                                    .toString(),
+                                style: AppTextStyles.bodyXSmallBold.copyWith(
+                                  color: context.colors.primaryText,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              SvgIconWidget(
+                                name: 'bag',
+                                color: context.colors.primaryText,
+                                width: 16,
+                                height: 16,
+                              ),
+                              TextWidget(
+                                widget.tripModel.vehicle.luggageCapacity
+                                    .toString(),
+                                style: AppTextStyles.bodyXSmallBold.copyWith(
+                                  color: context.colors.primaryText,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_classMiniDesc != null) ...[
+                            const SizedBox(height: 6),
+                            TextWidget(
+                              _classMiniDesc!,
+                              style: AppTextStyles.bodyXSmall.copyWith(
+                                color: context.colors.tertiaryText,
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                          if (widget.tripModel.isIndividual)
+                            const SizedBox(height: 10),
+                          if (widget.tripModel.isIndividual)
+                            TextWidget(
+                              widget.tripModel.price.formattedPrice,
                               style: AppTextStyles.bodyLargeBold.copyWith(
                                 color: context.colors.primaryText,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(width: 12),
-                            SvgIconWidget(
-                              name: 'profile',
-                              color: context.colors.primaryText,
-                              width: 16,
-                              height: 16,
-                            ),
-                            TextWidget(
-                              tripModel.vehicle.passengerCapacity.toString(),
-                              style: AppTextStyles.bodyXSmallBold.copyWith(
-                                color: context.colors.primaryText,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            SvgIconWidget(
-                              name: 'bag',
-                              color: context.colors.primaryText,
-                              width: 16,
-                              height: 16,
-                            ),
-                            TextWidget(
-                              tripModel.vehicle.luggageCapacity.toString(),
-                              style: AppTextStyles.bodyXSmallBold.copyWith(
-                                color: context.colors.primaryText,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (tripModel.isIndividual) const SizedBox(height: 10),
-                        if (tripModel.isIndividual)
-                          TextWidget(
-                            tripModel.price.formattedPrice,
-                            style: AppTextStyles.bodyLargeBold.copyWith(
-                              color: context.colors.primaryText,
-                            ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const Spacer(),
                   ],
                 ),
               ),
               const SizedBox(height: 36),
-              TextWidget(
-                'What happens next',
-                style: AppTextStyles.bodyMediumBold.copyWith(
-                  color: context.colors.primaryText,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  const SvgIconWidget(
-                    name: 'teenyicons_tick-circle-solid',
-                    width: 16,
-                    height: 16,
-                  ),
-                  const SizedBox(width: AppSpaces.small),
-                  TextWidget(
-                    'We’re confirming your ride',
-                    style: AppTextStyles.bodySmallBold.copyWith(
-                      color: context.colors.secondaryText,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpaces.medium),
-              Row(
-                children: [
-                  const SvgIconWidget(
-                    name: 'teenyicons_tick-circle-solid',
-                    width: 16,
-                    height: 16,
-                  ),
-                  const SizedBox(width: AppSpaces.small),
-                  TextWidget(
-                    'You’ll receive a notification once confirmed',
-                    style: AppTextStyles.bodySmallBold.copyWith(
-                      color: context.colors.secondaryText,
-                    ),
-                  ),
-                ],
-              ),
+              // TextWidget(
+              //   'What happens next',
+              //   style: AppTextStyles.bodyMediumBold.copyWith(
+              //     color: context.colors.primaryText,
+              //   ),
+              // ),
+              // const SizedBox(height: 18),
+              // Row(
+              //   children: [
+              //     const SvgIconWidget(
+              //       name: 'teenyicons_tick-circle-solid',
+              //       width: 16,
+              //       height: 16,
+              //     ),
+              //     const SizedBox(width: AppSpaces.small),
+              //     TextWidget(
+              //       'We’re confirming your ride',
+              //       style: AppTextStyles.bodySmallBold.copyWith(
+              //         color: context.colors.secondaryText,
+              //       ),
+              //     ),
+              //   ],
+              // ),
+              // const SizedBox(height: AppSpaces.medium),
+              // Row(
+              //   children: [
+              //     const SvgIconWidget(
+              //       name: 'teenyicons_tick-circle-solid',
+              //       width: 16,
+              //       height: 16,
+              //     ),
+              //     const SizedBox(width: AppSpaces.small),
+              //     TextWidget(
+              //       'You’ll receive a notification once confirmed',
+              //       style: AppTextStyles.bodySmallBold.copyWith(
+              //         color: context.colors.secondaryText,
+              //       ),
+              //     ),
+              //   ],
+              // ),
               const Spacer(),
-              if (cancellationBookLaterEnabled)
+              if (widget.cancellationBookLaterEnabled)
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpaces.large,
@@ -386,7 +437,7 @@ class RideRequestPage extends StatelessWidget {
                           isLoading:
                               cancellationProvider.cancellationState ==
                                   CancellationState.loading,
-                          onPressed: tripId == null
+                          onPressed: widget.tripId == null
                               ? null
                               : () => _onCancelTrip(
                                     context,

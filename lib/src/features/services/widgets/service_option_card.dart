@@ -25,7 +25,7 @@ class ServiceOptionCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppCornerRadius.medium.r),
         child: Container(
-          width: 140.w,
+          width: double.infinity,
           padding: EdgeInsets.all(10.r),
           decoration: BoxDecoration(
             color: isSelected
@@ -45,7 +45,22 @@ class ServiceOptionCard extends StatelessWidget {
                 style: AppTextStyles.bodySmallBold.copyWith(
                   color: context.colors.primaryText,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
+              if (option.classMiniDesc != null &&
+                  option.classMiniDesc!.trim().isNotEmpty) ...[
+                SizedBox(height: 2.w),
+                TextWidget(
+                  option.classMiniDesc!.trim(),
+                  style: AppTextStyles.labelBold.copyWith(
+                    color: context.colors.tertiaryText,
+                    fontSize: 10.sp,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
               SizedBox(height: 4.w),
               Row(
                 children: [
@@ -84,12 +99,13 @@ class ServiceOptionCard extends StatelessWidget {
                       color: context.colors.primary,
                     ),
                   ),
-                  TextWidget(
-                    option.eta,
-                    style: AppTextStyles.labelBold.copyWith(
-                      color: context.colors.secondaryText,
+                  if (option.eta.isNotEmpty)
+                    TextWidget(
+                      option.eta,
+                      style: AppTextStyles.labelBold.copyWith(
+                        color: context.colors.secondaryText,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ],

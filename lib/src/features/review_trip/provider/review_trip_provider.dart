@@ -91,6 +91,7 @@ class ReviewTripProvider extends ChangeNotifier {
       _appliedPromoDetails?.isFreeRide == true;
 
   ReviewTripPriceUiModel displayPrice(ReviewTripUiModel baseModel) {
+    final hasPromo = _appliedPromoCode != null;
     return ReviewTripPriceUiModel(
       amount: _priceFromApi ?? baseModel.price.amount,
       currency: _displayPrices.isNotEmpty
@@ -98,6 +99,7 @@ class ReviewTripProvider extends ChangeNotifier {
           : baseModel.price.currency,
       label: baseModel.price.label,
       taxAmount: _priceFromApi != null ? displayTaxAmount : null,
+      promoApplied: hasPromo,
     );
   }
 
@@ -219,7 +221,18 @@ class ReviewTripProvider extends ChangeNotifier {
         (requireDropOff && pageArgs.dropOffLatLng == null)) {
       return 'Pickup and drop-off locations are required.';
     }
-    return _validatePromoBookingRequirements();
+    return _validateFlightInfoRequirements() ??
+        _validatePromoBookingRequirements();
+  }
+
+  String? _validateFlightInfoRequirements() {
+    if (!showFlightInfoFields(_args)) return null;
+
+    if (_trimmedTextOrNull(flightNumberController.text) == null) {
+      return 'Please enter flight number.';
+    }
+
+    return null;
   }
 
   String? _validatePromoBookingRequirements() {
@@ -233,9 +246,6 @@ class ReviewTripProvider extends ChangeNotifier {
     if (promo.isRelatedToFlight) {
       if (_selectedFlightName == null) {
         return 'Please select an airline for this promo code.';
-      }
-      if (_trimmedTextOrNull(frequentFlyerNumberController.text) == null) {
-        return 'Please enter Frequent Flyer Number for this promo code.';
       }
     }
 

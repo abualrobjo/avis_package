@@ -6,47 +6,45 @@ import 'package:avis_package/src/core/_core.dart';
 import 'package:avis_package/src/features/_features.dart'
     show MapPage, MyTripsProvider;
 
-/// Statuses that open trip details from the My Trips list (others open live map).
-const _myTripsListDetailStatusIds = {1, 5, 7,4};
+/// Only in-progress live trips open the map; all other statuses open trip details.
+const _myTripsMapStatusIds = {9, 10};
 
 void _navigateTripFromMyTrips(
   BuildContext context,
   CustomerTripDetailModel trip,
 ) {
   final id = trip.statusId;
-  if (id != null && _myTripsListDetailStatusIds.contains(id)) {
+  if (id != null && _myTripsMapStatusIds.contains(id)) {
     AvisNavigation.push(
       context,
-      AppRoutes.tripDetails,
+      AppRoutes.map,
       arguments: trip.tripId,
     );
   } else {
     AvisNavigation.push(
       context,
-      AppRoutes.map,
+      AppRoutes.tripDetails,
       arguments: trip.tripId,
     );
   }
 }
 
-/// Recent-trip map card: inverse of [_navigateTripFromMyTrips]. Hero row excludes
-/// statuses 2, 4, 5, 7, so among [_myTripsListDetailStatusIds] only `1` appears,
-/// yielding a single live-map case from this card.
+/// Recent-trip map card: inverse of [_navigateTripFromMyTrips].
 void _navigateRecentTripMapCard(
   BuildContext context,
   CustomerTripDetailModel trip,
 ) {
   final id = trip.statusId;
-  if (id != null && _myTripsListDetailStatusIds.contains(id)) {
+  if (id != null && _myTripsMapStatusIds.contains(id)) {
     AvisNavigation.push(
       context,
-      AppRoutes.map,
+      AppRoutes.tripDetails,
       arguments: trip.tripId,
     );
   } else {
     AvisNavigation.push(
       context,
-      AppRoutes.tripDetails,
+      AppRoutes.map,
       arguments: trip.tripId,
     );
   }
@@ -69,7 +67,7 @@ extension on _MyTripsTab {
       case _MyTripsTab.active:
         return 'Active';
       case _MyTripsTab.finished:
-        return 'Finished';
+        return 'Completed';
       case _MyTripsTab.cancelled:
         return 'Cancelled';
     }
@@ -82,7 +80,7 @@ extension on _MyTripsTab {
       case _MyTripsTab.active:
         return 'No active trips';
       case _MyTripsTab.finished:
-        return 'No finished trips';
+        return 'No Completed trips';
       case _MyTripsTab.cancelled:
         return 'No cancelled trips';
     }

@@ -28,6 +28,7 @@ class VehicleClassPriceModel {
   final int classId;
   final String name;
   final String? image;
+  final String? classMiniDesc;
   final double price;
   final double taxValue;
   final double total;
@@ -40,6 +41,7 @@ class VehicleClassPriceModel {
     required this.classId,
     required this.name,
     this.image,
+    this.classMiniDesc,
     required this.price,
     required this.taxValue,
     required this.total,
@@ -65,6 +67,7 @@ class VehicleClassPriceModel {
       classId: (json['classId'] as num).toInt(),
       name: json['name'] as String? ?? '',
       image: json['image'] as String?,
+      classMiniDesc: json['classMiniDesc'] as String?,
       price: (json['price'] as num).toDouble(),
       taxValue: (json['taxValue'] as num).toDouble(),
       total: (json['total'] as num).toDouble(),
@@ -91,6 +94,7 @@ class VehicleClassPriceModel {
       classId: classId,
       name: name,
       image: image,
+      classMiniDesc: classMiniDesc,
       price: displayPrice.price,
       taxValue: displayPrice.taxValue,
       total: displayPrice.total,

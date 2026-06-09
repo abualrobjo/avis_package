@@ -570,13 +570,6 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
                       appliedPromoCode: provider.appliedPromoCode,
                       onPromoCodeApplied: provider.applyPromoCode,
                       onPromoCodeRemoved: provider.removePromoCode,
-                      loyaltyTotalPoints: args?.totalLoyalityPoints,
-                      loyaltyMaxRedeemablePoints: args?.maxRedeemablePoints,
-                      loyaltyMinRedeemablePoints:
-                          args?.minimumPointsValueForTransfer,
-                      appliedLoyaltyCode: provider.appliedLoyaltyCode,
-                      onLoyaltyRedeemed: provider.applyLoyaltyCode,
-                      onLoyaltyRemoved: provider.removeLoyaltyCode,
                     ),
                     const SizedBox(height: AppSpaces.large),
                     if (provider.displayPrices.isNotEmpty) ...[

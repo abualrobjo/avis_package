@@ -7,6 +7,7 @@ class VehicleOption {
     required this.passengers,
     required this.bags,
     required this.imagePath,
+    this.classMiniDesc,
   });
 
   final String name;
@@ -15,4 +16,5 @@ class VehicleOption {
   final String imagePath;
   final int passengers;
   final int bags;
+  final String? classMiniDesc;
 }

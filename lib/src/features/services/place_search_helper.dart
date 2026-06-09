@@ -46,28 +46,109 @@ class PlaceSearchHelper {
     return inside;
   }
 
+  static final RegExp _plusCodePattern = RegExp(
+    r'^[23456789CFGHJMPQRVWX]{4,8}[\s\-+]+\s*[23456789CFGHJMPQRVWX]{2,3}$',
+    caseSensitive: false,
+  );
+  static final RegExp _plusCodePrefixPattern = RegExp(
+    r'^[23456789CFGHJMPQRVWX]{4,8}[\s\-+]+\s*[23456789CFGHJMPQRVWX]{2,3}\s*',
+    caseSensitive: false,
+  );
+  static final RegExp _commaSplitter = RegExp(r'[,،]');
+
+  /// Google Plus Codes (e.g. W2MV+8XR or w2mv - 8xr) are not user-friendly labels.
+  static bool isPlusCode(String? value) {
+    if (value == null) return false;
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return false;
+    if (_plusCodePattern.hasMatch(trimmed)) return true;
+    final beforeComma = trimmed.split(_commaSplitter).first.trim();
+    return _plusCodePattern.hasMatch(beforeComma);
+  }
+
+  /// Removes plus-code prefixes/segments from a combined address label.
+  static String cleanAddressLabel(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return trimmed;
+
+    final withoutPrefix = trimmed
+        .replaceFirst(_plusCodePrefixPattern, '')
+        .replaceFirst(RegExp(r'^[,،]\s*'), '')
+        .trim();
+
+    final source = withoutPrefix.isNotEmpty ? withoutPrefix : trimmed;
+    final parts = source
+        .split(_commaSplitter)
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty && !isPlusCode(part))
+        .toList();
+
+    if (parts.isNotEmpty) return parts.join(', ');
+    return withoutPrefix.isNotEmpty && !isPlusCode(withoutPrefix)
+        ? withoutPrefix
+        : trimmed;
+  }
+
+  static String? meaningfulAddressPart(String? value) {
+    if (value == null) return null;
+    final trimmed = value.trim();
+    if (trimmed.isEmpty || isPlusCode(trimmed)) return null;
+    final cleaned = cleanAddressLabel(trimmed);
+    if (cleaned.isEmpty || isPlusCode(cleaned)) return null;
+    return cleaned;
+  }
+
+  static List<String> _addressParts(List<String?> candidates) {
+    return candidates.map(meaningfulAddressPart).whereType<String>().toList();
+  }
+
   static String formatPlacemark(Placemark placemark, LatLng fallbackPosition) {
-    final street = (placemark.street?.isNotEmpty ?? false)
-        ? placemark.street!
-        : (placemark.thoroughfare?.isNotEmpty ?? false)
-            ? placemark.thoroughfare!
-            : null;
-    final parts = <String>[
-      ...([street].whereType<String>()),
-      if (placemark.subLocality?.isNotEmpty ?? false) placemark.subLocality!,
-      if (placemark.locality?.isNotEmpty ?? false) placemark.locality!,
-      if (placemark.administrativeArea?.isNotEmpty ?? false)
-        placemark.administrativeArea!,
-      if (placemark.country?.isNotEmpty ?? false) placemark.country!,
-    ];
-    if (parts.isEmpty && (placemark.name?.isNotEmpty ?? false)) {
-      parts.add(placemark.name!);
+    final street = meaningfulAddressPart(
+      (placemark.street?.isNotEmpty ?? false)
+          ? placemark.street
+          : placemark.thoroughfare,
+    );
+    final parts = _addressParts([
+      street,
+      placemark.subLocality,
+      placemark.locality,
+      placemark.administrativeArea,
+      placemark.country,
+    ]);
+    if (parts.isEmpty) {
+      final name = meaningfulAddressPart(placemark.name);
+      if (name != null) parts.add(name);
     }
     if (parts.isEmpty) {
       return '${fallbackPosition.latitude.toStringAsFixed(4)}, '
           '${fallbackPosition.longitude.toStringAsFixed(4)}';
     }
     return parts.join(', ');
+  }
+
+  /// Shorter label for UI: place name or street + area (no country/state).
+  static String formatShortPlacemark(
+    Placemark placemark,
+    LatLng fallbackPosition,
+  ) {
+    final name = meaningfulAddressPart(placemark.name);
+    final street = meaningfulAddressPart(
+      (placemark.street?.isNotEmpty ?? false)
+          ? placemark.street
+          : placemark.thoroughfare,
+    );
+
+    if (name != null && name != street) {
+      return name;
+    }
+
+    final parts = _addressParts([
+      street,
+      placemark.subLocality,
+      placemark.locality,
+    ]);
+    if (parts.isNotEmpty) return parts.join(', ');
+    return formatPlacemark(placemark, fallbackPosition);
   }
 
   static Future<List<PlaceSuggestion>> fetchSuggestions({
