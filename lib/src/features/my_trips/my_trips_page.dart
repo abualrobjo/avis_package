@@ -6,15 +6,19 @@ import 'package:avis_package/src/core/_core.dart';
 import 'package:avis_package/src/features/_features.dart'
     show MapPage, MyTripsProvider;
 
-/// Only in-progress live trips open the map; all other statuses open trip details.
-const _myTripsMapStatusIds = {9, 10};
+/// Active-tab trips with these status ids open the live map; all others open trip details.
+const _myTripsMapStatusIds = {8, 9};
 
 void _navigateTripFromMyTrips(
   BuildContext context,
-  CustomerTripDetailModel trip,
-) {
+  CustomerTripDetailModel trip, {
+  required _MyTripsTab tab,
+}) {
   final id = trip.statusId;
-  if (id != null && _myTripsMapStatusIds.contains(id)) {
+  final openMap = tab == _MyTripsTab.active &&
+      id != null &&
+      _myTripsMapStatusIds.contains(id);
+  if (openMap) {
     AvisNavigation.push(
       context,
       AppRoutes.map,
@@ -265,7 +269,11 @@ class _MyTripsPageState extends State<MyTripsPage> {
                                 return _TripListItem(
                                   trip: trip,
                                   onTap: () {
-                                    _navigateTripFromMyTrips(context, trip);
+                                    _navigateTripFromMyTrips(
+                                      context,
+                                      trip,
+                                      tab: _selectedTab,
+                                    );
                                   },
                                 );
                               },
