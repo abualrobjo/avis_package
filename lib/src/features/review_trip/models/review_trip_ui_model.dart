@@ -62,14 +62,20 @@ class ReviewTripPriceUiModel {
   final String currency;
   final String label;
   final double? taxAmount;
-  final bool promoApplied;
+  final double? originalAmount;
+  final double? originalTaxAmount;
+  final double? discountAmount;
+  final bool showZeroVat;
 
   ReviewTripPriceUiModel({
     required this.amount,
     required this.currency,
     required this.label,
     this.taxAmount,
-    this.promoApplied = false,
+    this.originalAmount,
+    this.originalTaxAmount,
+    this.discountAmount,
+    this.showZeroVat = false,
   });
 
   static String _symbolFor(String code) {
@@ -87,14 +93,37 @@ class ReviewTripPriceUiModel {
 
   String get formattedPrice => '${_symbolFor(currency)}${amount.toStringAsFixed(2)}';
 
-  bool get hasStrikethroughPrice => promoApplied;
+  bool get showOriginalPrice =>
+      originalAmount != null && (originalAmount! - amount).abs() >= 0.01;
+
+  String? get formattedOriginalPrice {
+    if (originalAmount == null) return null;
+    return '${_symbolFor(currency)}${originalAmount!.toStringAsFixed(2)}';
+  }
+
+  bool get showDiscountAmount =>
+      discountAmount != null && discountAmount!.abs() >= 0.01;
+
+  String? get formattedDiscountAmount {
+    if (!showDiscountAmount) return null;
+    return 'Discount ${_symbolFor(currency)}${discountAmount!.toStringAsFixed(2)}';
+  }
 
   String? get formattedTaxAmount {
     if (taxAmount == null) return null;
+    if (taxAmount!.abs() < 0.01 && !showZeroVat) return null;
     return 'VAT ${_symbolFor(currency)}${taxAmount!.toStringAsFixed(2)}';
   }
 
-  bool get hasStrikethroughTax => promoApplied && taxAmount != null;
+  bool get showOriginalTax =>
+      originalTaxAmount != null &&
+      taxAmount != null &&
+      (originalTaxAmount! - taxAmount!).abs() >= 0.01;
+
+  String? get formattedOriginalTaxAmount {
+    if (originalTaxAmount == null) return null;
+    return 'VAT ${_symbolFor(currency)}${originalTaxAmount!.toStringAsFixed(2)}';
+  }
 }
 
 class ReviewTripOptionUiModel {

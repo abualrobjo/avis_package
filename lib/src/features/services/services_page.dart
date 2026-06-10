@@ -362,10 +362,9 @@ class _ServicesPageState extends State<ServicesPage> {
               ...List.generate(options.length, (i) {
                 final item = options[i];
                 final selected = i == p.selectedCurrencyIndex;
-                final total = p.vehicleTotalForCurrency(item.currencyCode);
                 return ListTile(
                   title: TextWidget(
-                    '${item.currencyCode} - ${p.currencySymbol(item.currencyCode)}${total.toStringAsFixed(2)}',
+                    item.currencyCode,
                     style: AppTextStyles.bodyMediumBold.copyWith(
                       color: selected
                           ? context.colors.primary
@@ -772,7 +771,6 @@ class _ServicesPageState extends State<ServicesPage> {
 
     final selected =
         options[p.selectedCurrencyIndex.clamp(0, options.length - 1)];
-    final selectedTotal = p.selectedVehicleTotalForCurrency;
 
     return Material(
       color: context.colors.surface,
@@ -797,18 +795,7 @@ class _ServicesPageState extends State<ServicesPage> {
                   color: context.colors.secondaryText,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextWidget(
-                  selectedTotal != null
-                      ? '${p.currencySymbol(selected.currencyCode)}${selectedTotal.toStringAsFixed(2)}'
-                      : '',
-                  style: AppTextStyles.bodyMediumBold.copyWith(
-                    color: context.colors.primaryText,
-                  ),
-                  textAlign: TextAlign.end,
-                ),
-              ),
+              const Spacer(),
               Icon(
                 Icons.keyboard_arrow_down,
                 size: 24,

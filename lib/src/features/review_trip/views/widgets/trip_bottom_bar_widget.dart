@@ -44,15 +44,33 @@ class TripBottomBarWidget extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (isIndividual) ...[
+              if (price.showOriginalPrice &&
+                  price.formattedOriginalPrice != null) ...[
+                TextWidget(
+                  price.formattedOriginalPrice!,
+                  style: AppTextStyles.bodyMediumBold.copyWith(
+                    color: context.colors.tertiaryText,
+                    decoration: TextDecoration.lineThrough,
+                  ),
+                ),
+                const SizedBox(height: 4),
+              ],
               TextWidget(
                 price.formattedPrice,
                 style: AppTextStyles.h2.copyWith(
                   color: context.colors.primaryText,
-                  decoration: price.hasStrikethroughPrice
-                      ? TextDecoration.lineThrough
-                      : null,
                 ),
               ),
+              if (price.showDiscountAmount &&
+                  price.formattedDiscountAmount != null) ...[
+                const SizedBox(height: 4),
+                TextWidget(
+                  price.formattedDiscountAmount!,
+                  style: AppTextStyles.bodyXSmallBold.copyWith(
+                    color: context.colors.tertiaryText,
+                  ),
+                ),
+              ],
               const SizedBox(height: 4),
               TextWidget(
                 price.label,
@@ -60,15 +78,22 @@ class TripBottomBarWidget extends StatelessWidget {
                   color: context.colors.tertiaryText,
                 ),
               ),
+              if (price.showOriginalTax &&
+                  price.formattedOriginalTaxAmount != null) ...[
+                const SizedBox(height: 2),
+                TextWidget(
+                  price.formattedOriginalTaxAmount!,
+                  style: AppTextStyles.bodyXSmallBold.copyWith(
+                    color: context.colors.tertiaryText,
+                  ),
+                ),
+              ],
               if (price.formattedTaxAmount != null) ...[
                 const SizedBox(height: 2),
                 TextWidget(
                   price.formattedTaxAmount!,
                   style: AppTextStyles.bodyXSmallBold.copyWith(
                     color: context.colors.tertiaryText,
-                    decoration: price.hasStrikethroughTax
-                        ? TextDecoration.lineThrough
-                        : null,
                   ),
                 ),
               ],

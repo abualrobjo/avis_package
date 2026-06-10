@@ -404,16 +404,15 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
       }
 
       final place = placemarks.first;
-      final address = PlaceSearchHelper.formatPlacemark(place, _selectedPosition!);
-      final shortAddress =
-          PlaceSearchHelper.formatShortPlacemark(place, _selectedPosition!);
+      final address =
+          PlaceSearchHelper.formatPlacemark(place, _selectedPosition!);
 
       setState(() => _isLoading = false);
       if (mounted) {
         Navigator.of(context).pop(
           PlacePickerResult(
             address: address,
-            shortAddress: shortAddress,
+            shortAddress: address,
             latLng: _selectedPosition!,
           ),
         );

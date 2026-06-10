@@ -36,6 +36,8 @@ class ReviewTripProvider extends ChangeNotifier {
   double? _fallbackReturnTripPrice;
   double? _fallbackReturnTripPriceDiscount;
   double? _fallbackTaxAmount;
+  double? _promoOriginalTotalWithTax;
+  double? _promoOriginalTaxAmount;
   String? _appliedPromoCode;
   CheckPromoCodeValidityDetails? _appliedPromoDetails;
   String? _appliedLoyaltyCode;
@@ -91,15 +93,56 @@ class ReviewTripProvider extends ChangeNotifier {
       _appliedPromoDetails?.isFreeRide == true;
 
   ReviewTripPriceUiModel displayPrice(ReviewTripUiModel baseModel) {
+    final isFreeRide = _appliedPromoDetails?.isFreeRide == true;
     final hasPromo = _appliedPromoCode != null;
+    final apiAmount = _priceFromApi ?? baseModel.price.amount;
+    final apiTax = _priceFromApi != null ? displayTaxAmount : null;
+
+    var displayAmount = apiAmount;
+    double? displayTax = apiTax;
+    double? originalAmount;
+    double? originalTax;
+
+    if (hasPromo) {
+      final item = selectedDisplayPrice;
+      if (isFreeRide) {
+        originalAmount = _promoOriginalTotalWithTax ?? apiAmount;
+        displayAmount = 0;
+        displayTax = 0;
+      } else if (item != null && item.discountAmount > 0) {
+        originalAmount = item.totalWithTax + item.discountAmount;
+        displayAmount = item.totalWithTax;
+        if (item.totalWithoutTax > 0) {
+          originalTax = item.taxAmount +
+              item.discountAmount * (item.taxAmount / item.totalWithoutTax);
+          displayTax = item.taxAmount;
+        } else if (item.taxAmount > 0) {
+          originalTax = item.taxAmount + item.discountAmount;
+          displayTax = item.taxAmount;
+        }
+      } else if (_promoOriginalTotalWithTax != null) {
+        originalAmount = _promoOriginalTotalWithTax;
+        originalTax = _promoOriginalTaxAmount;
+      }
+    }
+
+    double? discountAmount;
+    if (hasPromo && !isFreeRide) {
+      final promoDiscount = selectedDisplayPrice?.discountAmount ?? 0;
+      if (promoDiscount > 0) discountAmount = promoDiscount;
+    }
+
     return ReviewTripPriceUiModel(
-      amount: _priceFromApi ?? baseModel.price.amount,
+      amount: displayAmount,
       currency: _displayPrices.isNotEmpty
           ? _displayPrices[_selectedDisplayPriceIndex].currencyCode
           : baseModel.price.currency,
       label: baseModel.price.label,
-      taxAmount: _priceFromApi != null ? displayTaxAmount : null,
-      promoApplied: hasPromo,
+      taxAmount: displayTax,
+      originalAmount: originalAmount,
+      originalTaxAmount: originalTax,
+      discountAmount: discountAmount,
+      showZeroVat: isFreeRide,
     );
   }
 
@@ -176,6 +219,7 @@ class ReviewTripProvider extends ChangeNotifier {
   }
 
   void applyPromoCode(String code, CheckPromoCodeValidityDetails details) {
+    _capturePromoOriginalPrices();
     _appliedPromoCode = code;
     _appliedPromoDetails = details;
     notifyListeners();
@@ -185,6 +229,7 @@ class ReviewTripProvider extends ChangeNotifier {
   void removePromoCode() {
     _appliedPromoCode = null;
     _appliedPromoDetails = null;
+    _clearPromoOriginalPrices();
     notifyListeners();
     fetchChauffeurServicePrice();
   }
@@ -470,6 +515,19 @@ class ReviewTripProvider extends ChangeNotifier {
     final formatted = formatLegPrice(price);
     if (discountPercent == null) return formatted;
     return '$formatted (${_formatDiscountPercent(discountPercent)})';
+  }
+
+  void _capturePromoOriginalPrices() {
+    _promoOriginalTotalWithTax = _priceFromApi ??
+        (_displayPrices.isNotEmpty
+            ? _displayPrices[_selectedDisplayPriceIndex].totalWithTax
+            : null);
+    _promoOriginalTaxAmount = displayTaxAmount;
+  }
+
+  void _clearPromoOriginalPrices() {
+    _promoOriginalTotalWithTax = null;
+    _promoOriginalTaxAmount = null;
   }
 
   String currencySymbol(String code) {

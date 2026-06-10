@@ -181,7 +181,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
                 final selected = i == provider.selectedDisplayPriceIndex;
                 return ListTile(
                   title: TextWidget(
-                    '${item.currencyCode} - ${provider.currencySymbol(item.currencyCode)}${item.totalWithTax.toStringAsFixed(2)}',
+                    item.currencyCode,
                     style: AppTextStyles.bodyMediumBold.copyWith(
                       color: selected
                           ? context.colors.primary
@@ -600,16 +600,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
                                       color: context.colors.secondaryText,
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: TextWidget(
-                                      '${provider.currencySymbol(provider.displayPrices[provider.selectedDisplayPriceIndex].currencyCode)}${(provider.priceFromApi ?? 0).toStringAsFixed(2)}',
-                                      style: AppTextStyles.bodyMediumBold.copyWith(
-                                        color: context.colors.primaryText,
-                                      ),
-                                      textAlign: TextAlign.end,
-                                    ),
-                                  ),
+                                  const Spacer(),
                                   Icon(
                                     Icons.keyboard_arrow_down,
                                     size: 24,

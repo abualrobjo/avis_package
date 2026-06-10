@@ -126,6 +126,29 @@ class PlaceSearchHelper {
     return parts.join(', ');
   }
 
+  /// Street name only for map pin confirmation.
+  static String formatStreetPlacemark(
+    Placemark placemark,
+    LatLng fallbackPosition,
+  ) {
+    final street = meaningfulAddressPart(
+      (placemark.street?.isNotEmpty ?? false)
+          ? placemark.street
+          : placemark.thoroughfare,
+    );
+    if (street != null) return street;
+
+    final fallbacks = _addressParts([
+      placemark.subLocality,
+      placemark.locality,
+      placemark.name,
+    ]);
+    if (fallbacks.isNotEmpty) return fallbacks.first;
+
+    return '${fallbackPosition.latitude.toStringAsFixed(4)}, '
+        '${fallbackPosition.longitude.toStringAsFixed(4)}';
+  }
+
   /// Shorter label for UI: place name or street + area (no country/state).
   static String formatShortPlacemark(
     Placemark placemark,

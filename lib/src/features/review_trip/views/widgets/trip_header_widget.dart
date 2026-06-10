@@ -79,15 +79,33 @@ class TripHeaderWidget extends StatelessWidget {
                   ),
                   if (isIndividual) const SizedBox(height: 10),
                   if (isIndividual) ...[
+                    if (price.showOriginalPrice &&
+                        price.formattedOriginalPrice != null) ...[
+                      TextWidget(
+                        price.formattedOriginalPrice!,
+                        style: AppTextStyles.bodyMediumBold.copyWith(
+                          color: context.colors.tertiaryText,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
                     TextWidget(
                       price.formattedPrice,
                       style: AppTextStyles.bodyLargeBold.copyWith(
                         color: context.colors.primaryText,
-                        decoration: price.hasStrikethroughPrice
-                            ? TextDecoration.lineThrough
-                            : null,
                       ),
                     ),
+                    if (price.showDiscountAmount &&
+                        price.formattedDiscountAmount != null) ...[
+                      const SizedBox(height: 4),
+                      TextWidget(
+                        price.formattedDiscountAmount!,
+                        style: AppTextStyles.bodyXSmallBold.copyWith(
+                          color: context.colors.tertiaryText,
+                        ),
+                      ),
+                    ],
                   ],
                 ],
               ),
