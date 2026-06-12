@@ -22,7 +22,7 @@ class ApiEndpoints {
   // ===========================================================================
 
   /// Base URL for the API.
-  static const String baseUrl = 'http://94.249.88.254:1045/';
+  static const String baseUrl = 'https://avisbudget.fleetexpress.me/';
   static const String vehicleApi = 'VehicleAPI';
   static const String vehicleApi2 = 'vehicleapi';
   static const String erpApi = 'ERPAPI';

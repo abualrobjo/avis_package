@@ -827,7 +827,7 @@ class _ServicesPageState extends State<ServicesPage> {
         if (p.vehicleClasses.isEmpty && !p.loadingVehicleClasses)
           AppButton.primary(
             onPressed: () => _loadVehicleClasses(p),
-            text: 'LOAD VEHICLE OPTIONS',
+            text: 'Choose Your Vehicle',
           )
         else if (p.loadingVehicleClasses)
           Padding(
