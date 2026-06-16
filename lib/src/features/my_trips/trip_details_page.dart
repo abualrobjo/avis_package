@@ -40,7 +40,7 @@ class _TripDetailsPageState extends State<TripDetailsPage> {
     if (tripId == null || tripId <= 0) return;
 
     final paymentUrl =
-        'http://94.249.88.254:1040/ChauffeurService/ChauffeurPayment?TripId=$tripId&f=0&RequestSource=3';
+        'https://chauffeurdriven.avis.eg/ChauffeurService/ChauffeurPayment?TripId=$tripId&f=0&RequestSource=3';
 
     if (!mounted) return;
     final isPaymentSuccess = await Navigator.of(context).push<bool>(

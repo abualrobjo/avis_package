@@ -86,7 +86,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
 
     if (!isFreeRide) {
       final paymentUrl =
-          'http://94.249.88.254:1040/ChauffeurService/ChauffeurPayment?TripId=$tripId&f=0&RequestSource=3';
+          'https://chauffeurdriven.avis.eg/ChauffeurService/ChauffeurPayment?TripId=$tripId&f=0&RequestSource=3';
 
       final isPaymentSuccess = await Navigator.push(
             context,

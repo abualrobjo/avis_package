@@ -14,7 +14,7 @@ class ReviewTripProvider extends ChangeNotifier {
   );
 
   static const int companyId = 1;
-  static const String termsUrl = 'http://94.249.88.254:1040/TermsAndConditions';
+  static const String termsUrl = 'https://chauffeurdriven.avis.eg/TermsAndConditions';
 
   final AuthLocalService _authLocalService;
   final ChauffeurServicePricesService _chauffeurServicePricesService;
