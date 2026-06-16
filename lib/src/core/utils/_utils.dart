@@ -11,3 +11,4 @@ export 'enums/_enums.dart';
 export 'input_formatters.dart';
 export 'payment_card_utils.dart';
 export 'toast_notification.dart';
+export 'terms_pdf_helper.dart';

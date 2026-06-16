@@ -276,6 +276,32 @@ class PlaceSearchHelper {
     return null;
   }
 
+  static Future<String?> formattedAddressFromPlaceId(String placeId) async {
+    final apiKey = resolveGoogleMapsApiKey();
+    if (apiKey.isEmpty) return null;
+    try {
+      final dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      );
+      final res = await dio.get<Map<String, dynamic>>(
+        'https://maps.googleapis.com/maps/api/place/details/json',
+        queryParameters: {
+          'place_id': placeId,
+          'fields': 'formatted_address',
+          'key': apiKey,
+        },
+      );
+      final formatted = res.data?['result']?['formatted_address'] as String?;
+      if (formatted != null && formatted.trim().isNotEmpty) {
+        return formatted.trim();
+      }
+    } catch (_) {}
+    return null;
+  }
+
   static Future<LatLng?> geocodeQuery(
     String query, {
     String languageCode = 'en',

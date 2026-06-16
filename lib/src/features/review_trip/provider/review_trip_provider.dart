@@ -11,10 +11,10 @@ class ReviewTripProvider extends ChangeNotifier {
     this._customerInfoService,
     this._flightNamesService,
     this._customerTripsRepository,
+    this._termsAndConditionsService,
   );
 
   static const int companyId = 1;
-  static const String termsUrl = 'https://chauffeurdriven.avis.eg/TermsAndConditions';
 
   final AuthLocalService _authLocalService;
   final ChauffeurServicePricesService _chauffeurServicePricesService;
@@ -22,6 +22,7 @@ class ReviewTripProvider extends ChangeNotifier {
   final CustomerInfoService _customerInfoService;
   final FlightNamesService _flightNamesService;
   final CustomerTripsRepository _customerTripsRepository;
+  final TermsAndConditionsService _termsAndConditionsService;
 
   ReviewTripPageArgs? _args;
   ReviewTripUiModel? _model;
@@ -211,6 +212,34 @@ class ReviewTripProvider extends ChangeNotifier {
   void setAcceptedTerms(bool value) {
     _acceptedTerms = value;
     notifyListeners();
+  }
+
+  Future<TermsAndConditionsPdfResult> downloadTermsAndConditionsPdf() async {
+    final response = await _termsAndConditionsService.getTermsAndConditions();
+    if (!response.isSuccess) {
+      return TermsAndConditionsPdfResult.failure(
+        response.errorMessage ?? 'Could not load Terms & Conditions.',
+      );
+    }
+
+    final pdfTerms =
+        response.data.where((item) => item.isPdfContent).toList();
+    if (pdfTerms.isEmpty) {
+      return TermsAndConditionsPdfResult.failure(
+        'Terms & Conditions PDF is not available.',
+      );
+    }
+
+    final pdfUrl = _resolvePdfUrl(pdfTerms.first.termsAndConditionsPdfUrl!);
+    return TermsAndConditionsPdfResult.success(pdfUrl);
+  }
+
+  String _resolvePdfUrl(String url) {
+    final trimmed = url.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    return '${ApiEndpoints.baseUrl}$trimmed';
   }
 
   void setSelectedFlightName(FlightNameModel? value) {
@@ -642,5 +671,31 @@ class ReviewTripBookingResult {
   final bool success;
   final int? tripId;
   final ReviewTripUiModel? tripModel;
+  final String? errorMessage;
+}
+
+class TermsAndConditionsPdfResult {
+  const TermsAndConditionsPdfResult._({
+    required this.success,
+    this.pdfUrl,
+    this.errorMessage,
+  });
+
+  factory TermsAndConditionsPdfResult.success(String pdfUrl) {
+    return TermsAndConditionsPdfResult._(
+      success: true,
+      pdfUrl: pdfUrl,
+    );
+  }
+
+  factory TermsAndConditionsPdfResult.failure(String message) {
+    return TermsAndConditionsPdfResult._(
+      success: false,
+      errorMessage: message,
+    );
+  }
+
+  final bool success;
+  final String? pdfUrl;
   final String? errorMessage;
 }

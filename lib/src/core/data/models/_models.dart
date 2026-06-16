@@ -20,3 +20,4 @@ export 'book_chauffeur_request_body.dart';
 export 'book_chauffeur_request_response.dart';
 export 'chauffeur_service_prices_by_request_body.dart';
 export 'chauffeur_service_prices_response.dart';
+export 'terms_and_conditions_model.dart';

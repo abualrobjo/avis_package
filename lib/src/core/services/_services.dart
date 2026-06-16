@@ -58,6 +58,10 @@ export 'chauffeur_service_prices/chauffeur_service_prices_service_impl.dart';
 export 'chauffeur_request/chauffeur_request_service.dart';
 export 'chauffeur_request/chauffeur_request_service_impl.dart';
 
+// terms and conditions (review trip: open T&C PDF)
+export 'terms_and_conditions/terms_and_conditions_service.dart';
+export 'terms_and_conditions/terms_and_conditions_service_impl.dart';
+
 // local database services
 export 'local_database/hive_service.dart';
 export 'local_database/settings_local_service.dart';

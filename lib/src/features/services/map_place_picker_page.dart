@@ -44,6 +44,8 @@ class MapPlacePickerPage extends StatefulWidget {
 }
 
 class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
+  static const double _searchPinMoveThresholdMeters = 30;
+
   GoogleMapController? _controller;
   LatLng? _selectedPosition;
   LatLng? _currentLocation;
@@ -57,6 +59,9 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
   Timer? _suggestionsDebounce;
   final List<_PlaceSuggestion> _searchSuggestions = [];
   bool _isLoadingSuggestions = false;
+  String? _searchPickedAddress;
+  LatLng? _searchPickedPosition;
+  LatLng? _programmaticCameraTarget;
 
   LatLng get _initialCamera =>
       _currentLocation ??
@@ -115,10 +120,51 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
   }
 
   void _onCameraMove(CameraPosition position) {
+    if (_programmaticCameraTarget != null) return;
     _selectedPosition = position.target;
   }
 
+  void _clearSearchPinSelection() {
+    _searchPickedAddress = null;
+    _searchPickedPosition = null;
+  }
+
+  void _clearSearchPinSelectionIfMoved(LatLng position) {
+    final picked = _searchPickedPosition;
+    if (picked == null) return;
+    final distance = Geolocator.distanceBetween(
+      picked.latitude,
+      picked.longitude,
+      position.latitude,
+      position.longitude,
+    );
+    if (distance > _searchPinMoveThresholdMeters) {
+      _clearSearchPinSelection();
+    }
+  }
+
+  bool _hasActiveSearchPick() =>
+      _searchPickedAddress != null && _searchPickedPosition != null;
+
+  void _rememberSearchSelection({
+    required String address,
+    required LatLng position,
+  }) {
+    _searchPickedAddress = address;
+    _searchPickedPosition = position;
+  }
+
   void _onCameraIdle() {
+    if (_programmaticCameraTarget != null) {
+      _selectedPosition = _programmaticCameraTarget;
+      _programmaticCameraTarget = null;
+    } else {
+      final position = _selectedPosition;
+      if (position != null) {
+        _clearSearchPinSelectionIfMoved(position);
+      }
+    }
+
     final position = _selectedPosition;
     if (position == null) return;
 
@@ -158,6 +204,8 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
     final controller = _controller;
     if (location == null || controller == null) return;
 
+    _programmaticCameraTarget = location;
+    _selectedPosition = location;
     await controller.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(target: location, zoom: 16),
@@ -170,6 +218,7 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
       await _requestLocationPermission();
     }
     if (!_locationGranted) return;
+    _clearSearchPinSelection();
     await _loadCurrentLocation();
   }
 
@@ -211,7 +260,7 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
       setState(() => _locationGranted = granted);
     }
     if (granted) {
-      await _loadCurrentLocation();
+      await _loadCurrentLocation(focusCamera: !_hasActiveSearchPick());
     }
   }
 
@@ -300,7 +349,12 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
 
     setState(() => _error = null);
 
-    await _controller?.animateCamera(
+    _selectedPosition = latLng;
+    _programmaticCameraTarget = latLng;
+    final controller = _controller;
+    if (controller == null) return;
+
+    await controller.animateCamera(
       CameraUpdate.newLatLngZoom(latLng, 16),
     );
   }
@@ -333,6 +387,10 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
       return;
     }
 
+    _rememberSearchSelection(
+      address: suggestion.description,
+      position: latLng,
+    );
     await _moveMapToLatLng(latLng);
   }
 
@@ -361,6 +419,10 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
       }
 
       setState(() => _isSearching = false);
+      _rememberSearchSelection(
+        address: trimmed,
+        position: latLng,
+      );
       await _moveMapToLatLng(latLng);
     } catch (e) {
       if (!mounted) return;
@@ -372,11 +434,13 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
   }
 
   Future<void> _confirmSelectedLocation() async {
-    if (_selectedPosition == null) return;
+    final hasSearchPick = _hasActiveSearchPick();
+    final position = hasSearchPick ? _searchPickedPosition! : _selectedPosition;
+    if (position == null) return;
 
     if (widget.allowedPolygons != null &&
         widget.allowedPolygons!.isNotEmpty &&
-        !_isWithinAllowedArea(_selectedPosition!)) {
+        !_isWithinAllowedArea(position)) {
       setState(() {
         _error = 'Please select a location within the service area';
       });
@@ -389,31 +453,37 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
     });
 
     try {
-      final placemarks = await placemarkFromCoordinates(
-        _selectedPosition!.latitude,
-        _selectedPosition!.longitude,
-      );
+      String address;
 
-      if (!mounted) return;
-      if (placemarks.isEmpty) {
-        setState(() {
-          _isLoading = false;
-          _error = 'Could not get address';
-        });
-        return;
+      if (hasSearchPick) {
+        final fromSearchField = _searchController.text.trim();
+        address = PlaceSearchHelper.cleanAddressLabel(
+          fromSearchField.isNotEmpty ? fromSearchField : _searchPickedAddress!,
+        );
+      } else {
+        final placemarks = await placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        );
+
+        if (!mounted) return;
+        if (placemarks.isEmpty) {
+          setState(() {
+            _isLoading = false;
+            _error = 'Could not get address';
+          });
+          return;
+        }
+
+        address = PlaceSearchHelper.formatPlacemark(placemarks.first, position);
       }
-
-      final place = placemarks.first;
-      final address =
-          PlaceSearchHelper.formatPlacemark(place, _selectedPosition!);
 
       setState(() => _isLoading = false);
       if (mounted) {
         Navigator.of(context).pop(
           PlacePickerResult(
             address: address,
-            shortAddress: address,
-            latLng: _selectedPosition!,
+            latLng: position,
           ),
         );
       }
@@ -454,13 +524,29 @@ class _MapPlacePickerPageState extends State<MapPlacePickerPage> {
             ),
             onMapCreated: (c) async {
               _controller = c;
+
+              if (_searchPickedPosition != null) {
+                final target = _searchPickedPosition!;
+                _selectedPosition = target;
+                _programmaticCameraTarget = target;
+                await c.animateCamera(
+                  CameraUpdate.newLatLngZoom(target, 16),
+                );
+                return;
+              }
+
               if (_currentLocation != null) {
                 await _focusOnCurrentLocation();
               } else if (_locationGranted) {
                 await _loadCurrentLocation();
               }
-              if (mounted) {
-                setState(() => _selectedPosition = _initialCamera);
+
+              if (mounted && !_hasActiveSearchPick()) {
+                setState(() {
+                  _selectedPosition = _currentLocation ??
+                      widget.initialPosition ??
+                      MapPlacePickerPage._defaultPosition;
+                });
               }
             },
             onCameraMove: _onCameraMove,

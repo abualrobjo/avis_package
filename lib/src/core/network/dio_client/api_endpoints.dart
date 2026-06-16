@@ -138,4 +138,8 @@ class ApiEndpoints {
   /// Check payment status
   static const String checkPaymentStatus =
       '$vehicleApi/ChauffeurService/CheckIFChauffeurServiceRequestPaid';
+
+  /// GET TermsAndConditions/TermsAndConditions_GetAll
+  static const String termsAndConditionsGetAll =
+      '$vehicleApi/TermsAndConditions/TermsAndConditions_GetAll';
 }

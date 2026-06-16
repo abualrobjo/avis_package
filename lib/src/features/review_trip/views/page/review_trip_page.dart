@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:avis_package/src/features/_features.dart'
     show
@@ -19,20 +18,7 @@ import 'package:avis_package/src/features/_features.dart'
 import 'package:avis_package/src/features/payment/views/payment_screen.dart';
 
 import 'package:avis_package/src/core/_core.dart'
-    show
-        AppContextExtension,
-        AppTextStyles,
-        SvgIconWidget,
-        TextWidget,
-        BackArrowWidget,
-        AppSpaces,
-        HorizontalDivider,
-        TripRouteWidget,
-        AppCustomDropdown,
-        AppTextFormFieldComponent,
-        AppRoutes,
-        AvisNavigation,
-        FlightNameModel;
+    show AppContextExtension, AppTextStyles, SvgIconWidget, TextWidget, BackArrowWidget, AppSpaces, HorizontalDivider, TripRouteWidget, AppCustomDropdown, AppTextFormFieldComponent, AppRoutes, AvisNavigation, FlightNameModel, TermsPdfHelper, TermsPdfOpenOutcome;
 
 class ReviewTripPage extends StatefulWidget {
   const ReviewTripPage({super.key});
@@ -144,11 +130,49 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
   }
 
   Future<void> _openTermsAndConditions() async {
-    final uri = Uri.parse(ReviewTripProvider.termsUrl);
-    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!launched && mounted) {
+    final provider = context.read<ReviewTripProvider>();
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PopScope(
+        canPop: false,
+        child: Center(child: CircularProgressIndicator()),
+      ),
+    );
+
+    final result = await provider.downloadTermsAndConditionsPdf();
+    if (mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+    if (!mounted) return;
+
+    if (!result.success || result.pdfUrl == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open Terms & Conditions.')),
+        SnackBar(
+          content: Text(
+            result.errorMessage ?? 'Could not open Terms & Conditions.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final outcome = await TermsPdfHelper.downloadAndOpen(result.pdfUrl!);
+      if (!mounted) return;
+      if (outcome == TermsPdfOpenOutcome.failed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open Terms & Conditions PDF.'),
+          ),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open Terms & Conditions PDF.'),
+        ),
       );
     }
   }

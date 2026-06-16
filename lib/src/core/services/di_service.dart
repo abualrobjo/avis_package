@@ -125,6 +125,10 @@ Future<void> init() async {
     () => ChauffeurRequestServiceImpl(sl<DioClient>()),
   );
 
+  sl.registerLazySingleton<TermsAndConditionsService>(
+    () => TermsAndConditionsServiceImpl(sl<DioClient>()),
+  );
+
   sl.registerLazySingleton<CancellationService>(
     () => CancellationServiceImpl(),
   );
@@ -189,6 +193,7 @@ Future<void> init() async {
       sl<CustomerInfoService>(),
       sl<FlightNamesService>(),
       sl<CustomerTripsRepository>(),
+      sl<TermsAndConditionsService>(),
     ),
   );
 

@@ -14,9 +14,5 @@ class PlacePickerResult {
   final String shortAddress;
   final LatLng latLng;
 
-  String get placeName {
-    final short = shortAddress.trim();
-    final raw = short.isNotEmpty ? short : address;
-    return PlaceSearchHelper.cleanAddressLabel(raw);
-  }
+  String get placeName => PlaceSearchHelper.cleanAddressLabel(address);
 }
