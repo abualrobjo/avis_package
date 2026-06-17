@@ -14,6 +14,13 @@ enum TermsPdfOpenOutcome {
 class TermsPdfHelper {
   TermsPdfHelper._();
 
+  static Future<String?> downloadToTempFile(String pdfUrl) async {
+    final savePath =
+        '${Directory.systemTemp.path}/terms_and_conditions_${DateTime.now().millisecondsSinceEpoch}.pdf';
+    final downloaded = await _downloadPdf(pdfUrl, savePath);
+    return downloaded ? savePath : null;
+  }
+
   static Future<TermsPdfOpenOutcome> downloadAndOpen(String pdfUrl) async {
     final savePath =
         '${Directory.systemTemp.path}/terms_and_conditions_${DateTime.now().millisecondsSinceEpoch}.pdf';

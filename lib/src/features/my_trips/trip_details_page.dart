@@ -40,7 +40,7 @@ class _TripDetailsPageState extends State<TripDetailsPage> {
     if (tripId == null || tripId <= 0) return;
 
     final paymentUrl =
-        'https://chauffeurdriven.avis.eg/ChauffeurService/ChauffeurPayment?TripId=$tripId&f=0&RequestSource=3';
+        '${AppConst.paymentBaseUrl}?TripId=$tripId&f=0&RequestSource=3';
 
     if (!mounted) return;
     final isPaymentSuccess = await Navigator.of(context).push<bool>(

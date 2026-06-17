@@ -1,5 +1,5 @@
 
-import 'package:avis_package/avis_package.dart';
+import '../../utils/constants/app_const/app_const.dart';
 
 /// API endpoint constants that mirror the existing ApiUrls class.
 ///
@@ -22,11 +22,11 @@ class ApiEndpoints {
   // ===========================================================================
 
   /// Base URL for the API.
-  static const String baseUrl = 'https://avisbudget.fleetexpress.me/';
+  static String get baseUrl => AppConst.apiBaseUrl;
   static const String vehicleApi = 'VehicleAPI';
   static const String vehicleApi2 = 'vehicleapi';
   static const String erpApi = 'ERPAPI';
-  static const String imagePath = '${baseUrl}Vehicle/Content/VehicleFiles/';
+  static String get imagePath => '${baseUrl}Vehicle/Content/VehicleFiles/';
 
   /// OAuth token endpoint.
   static const String token = '$vehicleApi/token';

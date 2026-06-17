@@ -15,10 +15,12 @@ import 'package:avis_package/src/features/_features.dart'
         TripActionsWidget,
         PaymentProvider;
 
+import 'package:avis_package/src/features/review_trip/views/page/terms_and_conditions_pdf_page.dart';
+
 import 'package:avis_package/src/features/payment/views/payment_screen.dart';
 
 import 'package:avis_package/src/core/_core.dart'
-    show AppContextExtension, AppTextStyles, SvgIconWidget, TextWidget, BackArrowWidget, AppSpaces, HorizontalDivider, TripRouteWidget, AppCustomDropdown, AppTextFormFieldComponent, AppRoutes, AvisNavigation, FlightNameModel, TermsPdfHelper, TermsPdfOpenOutcome;
+    show AppConst, AppContextExtension, AppTextStyles, SvgIconWidget, TextWidget, BackArrowWidget, AppSpaces, HorizontalDivider, TripRouteWidget, AppCustomDropdown, AppTextFormFieldComponent, AppRoutes, AvisNavigation, FlightNameModel;
 
 class ReviewTripPage extends StatefulWidget {
   const ReviewTripPage({super.key});
@@ -72,7 +74,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
 
     if (!isFreeRide) {
       final paymentUrl =
-          'https://chauffeurdriven.avis.eg/ChauffeurService/ChauffeurPayment?TripId=$tripId&f=0&RequestSource=3';
+          '${AppConst.paymentBaseUrl}?TripId=$tripId&f=0&RequestSource=3';
 
       final isPaymentSuccess = await Navigator.push(
             context,
@@ -157,24 +159,11 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
       return;
     }
 
-    try {
-      final outcome = await TermsPdfHelper.downloadAndOpen(result.pdfUrl!);
-      if (!mounted) return;
-      if (outcome == TermsPdfOpenOutcome.failed) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not open Terms & Conditions PDF.'),
-          ),
-        );
-      }
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not open Terms & Conditions PDF.'),
-        ),
-      );
-    }
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => TermsAndConditionsPdfPage(pdfUrl: result.pdfUrl!),
+      ),
+    );
   }
 
   void _showCurrencyPicker(BuildContext context, ReviewTripProvider provider) {

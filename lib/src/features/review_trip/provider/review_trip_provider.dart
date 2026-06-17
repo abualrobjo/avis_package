@@ -89,9 +89,7 @@ class ReviewTripProvider extends ChangeNotifier {
       _fallbackReturnTripPriceDiscount;
 
   bool showFlightInfoFields(ReviewTripPageArgs? pageArgs) =>
-      pageArgs?.tripTypeId == 1 ||
-      _appliedPromoDetails?.isRelatedToFlight == true ||
-      _appliedPromoDetails?.isFreeRide == true;
+      pageArgs?.tripTypeId == 1;
 
   ReviewTripPriceUiModel displayPrice(ReviewTripUiModel baseModel) {
     final isFreeRide = _appliedPromoDetails?.isFreeRide == true;
@@ -312,6 +310,7 @@ class ReviewTripProvider extends ChangeNotifier {
   String? _validatePromoBookingRequirements() {
     final promo = _appliedPromoDetails;
     if (_appliedPromoCode == null || promo == null) return null;
+    if (!showFlightInfoFields(_args)) return null;
 
     if (promo.isFreeRide && _trimmedTextOrNull(eTicketNumberController.text) == null) {
       return 'Please enter E-ticket number for this promo code.';
