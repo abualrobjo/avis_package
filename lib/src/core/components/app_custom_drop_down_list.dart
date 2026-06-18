@@ -40,11 +40,9 @@ class AppCustomDropdown<T> extends StatefulWidget {
   State<AppCustomDropdown<T>> createState() => _AppCustomDropdownState<T>();
 }
 
-class _AppCustomDropdownState<T> extends State<AppCustomDropdown<T>>
-    with WidgetsBindingObserver {
+class _AppCustomDropdownState<T> extends State<AppCustomDropdown<T>> {
   final LayerLink _layerLink = LayerLink();
   final GlobalKey _dropdownKey = GlobalKey();
-  final TextEditingController _searchController = TextEditingController();
 
   OverlayEntry? _overlayEntry;
   bool isOpen = false;
@@ -53,25 +51,13 @@ class _AppCustomDropdownState<T> extends State<AppCustomDropdown<T>>
   @override
   void initState() {
     selected = widget.selectedValue;
-    _searchController.addListener(_onSearchChanged);
-    WidgetsBinding.instance.addObserver(this);
     super.initState();
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _searchController.removeListener(_onSearchChanged);
-    _searchController.dispose();
     _overlayEntry?.remove();
     super.dispose();
-  }
-
-  @override
-  void didChangeMetrics() {
-    if (isOpen) {
-      _overlayEntry?.markNeedsBuild();
-    }
   }
 
   @override
@@ -81,274 +67,75 @@ class _AppCustomDropdownState<T> extends State<AppCustomDropdown<T>>
       selected = widget.selectedValue;
     }
     if (isOpen &&
+        !widget.enableSearch &&
         (widget.items != oldWidget.items ||
             widget.enableSearch != oldWidget.enableSearch)) {
       _overlayEntry?.markNeedsBuild();
     }
   }
 
-  void _onSearchChanged() {
-    _overlayEntry?.markNeedsBuild();
-  }
-
   void _toggleDropdown() {
     isOpen ? _closeDropdown() : _openDropdown();
   }
 
-  void _openDropdown() {
-    _searchController.clear();
-    _overlayEntry = _createOverlay();
+  Future<void> _openDropdown() async {
+    if (widget.enableSearch) {
+      await _openSearchBottomSheet();
+      return;
+    }
+
+    _overlayEntry = OverlayEntry(
+      builder: (overlayContext) => _DropdownOverlayPanel<T>(
+        dropdownKey: _dropdownKey,
+        layerLink: _layerLink,
+        items: widget.items,
+        itemAsString: widget.itemAsString,
+        borderColor: widget.borderColor,
+        borderRadius: widget.borderRadius,
+        onClose: _closeDropdown,
+        onSelect: _selectItem,
+      ),
+    );
     Overlay.of(context).insert(_overlayEntry!);
     setState(() => isOpen = true);
   }
 
+  Future<void> _openSearchBottomSheet() async {
+    setState(() => isOpen = true);
+
+    final result = await showModalBottomSheet<T>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => _SearchableDropdownSheet<T>(
+        title: widget.title,
+        items: widget.items,
+        itemAsString: widget.itemAsString,
+        filterItem: widget.filterItem,
+        searchHintText: widget.searchHintText,
+        selectedValue: selected,
+      ),
+    );
+
+    if (!mounted) return;
+    setState(() => isOpen = false);
+
+    if (result != null) {
+      _selectItem(result);
+    }
+  }
+
+  void _selectItem(T item) {
+    setState(() => selected = item);
+    widget.onChanged(item);
+    _closeDropdown();
+  }
+
   void _closeDropdown() {
-    _searchController.clear();
     _overlayEntry?.remove();
     _overlayEntry = null;
-    setState(() => isOpen = false);
-  }
-
-  bool _matchesSearch(T item, String query) {
-    if (query.isEmpty) return true;
-    if (widget.filterItem != null) {
-      return widget.filterItem!(item, query);
-    }
-    final itemText =
-        widget.itemAsString?.call(item) ?? item.toString();
-    return itemText.toLowerCase().contains(query);
-  }
-
-  List<T> _filteredItems() {
-    final query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) return widget.items;
-    return widget.items
-        .where((item) => _matchesSearch(item, query))
-        .toList();
-  }
-
-  ({
-    bool openUpward,
-    double maxHeight,
-    double width,
-  }) _overlayLayout(BuildContext context) {
-    final renderBox =
-        _dropdownKey.currentContext!.findRenderObject() as RenderBox;
-    final width = renderBox.size.width;
-    final position = renderBox.localToGlobal(Offset.zero);
-    final dropdownTop = position.dy;
-    final dropdownBottom = dropdownTop + renderBox.size.height;
-    final mediaQuery = MediaQuery.of(context);
-    final keyboardTop = mediaQuery.size.height - mediaQuery.viewInsets.bottom;
-    final topPadding = mediaQuery.padding.top;
-
-    const minHeight = 120.0;
-    final maxPreferred = widget.enableSearch ? 280.h : 200.h;
-    const searchFieldHeight = 64.0;
-
-    final spaceBelow = keyboardTop - dropdownBottom - 8.w;
-    final spaceAbove = dropdownTop - topPadding - 8.w;
-
-    var openUpward = false;
-    var available = spaceBelow;
-
-    if (widget.enableSearch && spaceBelow < minHeight + searchFieldHeight) {
-      if (spaceAbove > spaceBelow) {
-        openUpward = true;
-        available = spaceAbove;
-      }
-    } else if (spaceBelow < minHeight && spaceAbove > spaceBelow) {
-      openUpward = true;
-      available = spaceAbove;
-    }
-
-    final maxHeight = available.clamp(minHeight, maxPreferred);
-
-    return (
-      openUpward: openUpward,
-      maxHeight: maxHeight,
-      width: width,
-    );
-  }
-
-  Widget _buildSearchField(BuildContext overlayContext) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-      child: TextField(
-        controller: _searchController,
-        autofocus: true,
-        style: AppTextStyles.bodyMedium.copyWith(
-          color: overlayContext.colors.primaryText,
-        ),
-        decoration: InputDecoration(
-          hintText: widget.searchHintText,
-          hintStyle: AppTextStyles.bodyMedium.copyWith(
-            color: overlayContext.colors.tertiaryText,
-          ),
-          prefixIcon: Icon(
-            Icons.search,
-            size: 20,
-            color: overlayContext.colors.secondaryText,
-          ),
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 10,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: overlayContext.colors.inputBorder,
-            ),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: overlayContext.colors.inputBorder,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: overlayContext.colors.primary,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildItemsList(
-    BuildContext overlayContext,
-    List<T> filteredItems,
-  ) {
-    if (filteredItems.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: TextWidget(
-            'No results found',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: overlayContext.colors.secondaryText,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return ListView.separated(
-      padding: EdgeInsets.zero,
-      itemCount: filteredItems.length,
-      separatorBuilder: (_, _) => Divider(
-        height: 1,
-        thickness: 1,
-        color: overlayContext.colors.divider,
-      ),
-      itemBuilder: (context, index) {
-        final item = filteredItems[index];
-        final itemText =
-            widget.itemAsString?.call(item) ?? item.toString();
-
-        return InkWell(
-          onTap: () {
-            setState(() => selected = item);
-            widget.onChanged(item);
-            _closeDropdown();
-          },
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-            alignment: Alignment.centerLeft,
-            child: TextWidget(
-              itemText,
-              textAlign: TextAlign.start,
-              style: AppTextStyles.bodyMedium,
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  OverlayEntry _createOverlay() {
-    return OverlayEntry(
-      builder: (overlayContext) {
-        final layout = _overlayLayout(overlayContext);
-        final filteredItems = _filteredItems();
-        final openUpward = layout.openUpward;
-
-        return Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: _closeDropdown,
-            child: Stack(
-              children: [
-                CompositedTransformFollower(
-                  link: _layerLink,
-                  showWhenUnlinked: false,
-                  targetAnchor: openUpward
-                      ? Alignment.topCenter
-                      : Alignment.bottomCenter,
-                  followerAnchor: openUpward
-                      ? Alignment.bottomCenter
-                      : Alignment.topCenter,
-                  offset: Offset(0, openUpward ? -6.w : 6.w),
-                  child: GestureDetector(
-                    onTap: () {},
-                    child: Material(
-                      elevation: 8,
-                      borderRadius: widget.borderRadius,
-                      child: Container(
-                        width: layout.width,
-                        height: layout.maxHeight,
-                        decoration: BoxDecoration(
-                          color: overlayContext.colors.surface,
-                          borderRadius: widget.borderRadius,
-                          border: Border.all(
-                            color: widget.borderColor ??
-                                overlayContext.colors.inputBorder,
-                            width: 1.2,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            if (widget.enableSearch && !openUpward) ...[
-                              _buildSearchField(overlayContext),
-                              Divider(
-                                height: 1,
-                                thickness: 1,
-                                color: overlayContext.colors.divider,
-                              ),
-                            ],
-                            Expanded(
-                              child: _buildItemsList(
-                                overlayContext,
-                                filteredItems,
-                              ),
-                            ),
-                            if (widget.enableSearch && openUpward) ...[
-                              Divider(
-                                height: 1,
-                                thickness: 1,
-                                color: overlayContext.colors.divider,
-                              ),
-                              _buildSearchField(overlayContext),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+    if (mounted) setState(() => isOpen = false);
   }
 
   @override
@@ -421,6 +208,325 @@ class _AppCustomDropdownState<T> extends State<AppCustomDropdown<T>>
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchableDropdownSheet<T> extends StatefulWidget {
+  const _SearchableDropdownSheet({
+    required this.title,
+    required this.items,
+    required this.itemAsString,
+    required this.filterItem,
+    required this.searchHintText,
+    required this.selectedValue,
+  });
+
+  final String title;
+  final List<T> items;
+  final String Function(T)? itemAsString;
+  final bool Function(T item, String query)? filterItem;
+  final String searchHintText;
+  final T? selectedValue;
+
+  @override
+  State<_SearchableDropdownSheet<T>> createState() =>
+      _SearchableDropdownSheetState<T>();
+}
+
+class _SearchableDropdownSheetState<T> extends State<_SearchableDropdownSheet<T>> {
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() => setState(() {}));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _searchFocusNode.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  bool _matchesSearch(T item, String query) {
+    if (query.isEmpty) return true;
+    if (widget.filterItem != null) {
+      return widget.filterItem!(item, query);
+    }
+    final itemText =
+        widget.itemAsString?.call(item) ?? item.toString();
+    return itemText.toLowerCase().contains(query);
+  }
+
+  List<T> _filteredItems() {
+    final query = _searchController.text.trim().toLowerCase();
+    if (query.isEmpty) return widget.items;
+    return widget.items
+        .where((item) => _matchesSearch(item, query))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final sheetHeight = (screenHeight * 0.75).clamp(320.0, screenHeight - 48);
+    final filteredItems = _filteredItems();
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboardInset),
+      child: Container(
+        height: sheetHeight,
+        decoration: BoxDecoration(
+          color: context.colors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: AppSpaces.medium),
+            const Center(child: BottomSheetHandle()),
+            if (widget.title.isNotEmpty) ...[
+              const SizedBox(height: AppSpaces.medium),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextWidget(
+                    widget.title,
+                    style: AppTextStyles.bodyLargeBold.copyWith(
+                      color: context.colors.primaryText,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: TextField(
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: context.colors.primaryText,
+                ),
+                decoration: InputDecoration(
+                  hintText: widget.searchHintText,
+                  hintStyle: AppTextStyles.bodyMedium.copyWith(
+                    color: context.colors.tertiaryText,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 20,
+                    color: context.colors.secondaryText,
+                  ),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: context.colors.inputBorder,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: context.colors.inputBorder,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: context.colors.primary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: filteredItems.isEmpty
+                  ? Center(
+                      child: TextWidget(
+                        'No results found',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: context.colors.secondaryText,
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.manual,
+                      itemCount: filteredItems.length,
+                      separatorBuilder: (_, _) => Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: context.colors.divider,
+                      ),
+                      itemBuilder: (context, index) {
+                        final item = filteredItems[index];
+                        final itemText = widget.itemAsString?.call(item) ??
+                            item.toString();
+                        final isSelected = widget.selectedValue == item;
+
+                        return InkWell(
+                          onTap: () => Navigator.of(context).pop(item),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 14,
+                            ),
+                            color: isSelected
+                                ? context.colors.primary.withValues(alpha: 0.08)
+                                : null,
+                            alignment: Alignment.centerLeft,
+                            child: TextWidget(
+                              itemText,
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DropdownOverlayPanel<T> extends StatelessWidget {
+  const _DropdownOverlayPanel({
+    required this.dropdownKey,
+    required this.layerLink,
+    required this.items,
+    required this.itemAsString,
+    required this.borderColor,
+    required this.borderRadius,
+    required this.onClose,
+    required this.onSelect,
+  });
+
+  final GlobalKey dropdownKey;
+  final LayerLink layerLink;
+  final List<T> items;
+  final String Function(T)? itemAsString;
+  final Color? borderColor;
+  final BorderRadius borderRadius;
+  final VoidCallback onClose;
+  final ValueChanged<T> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final renderBox =
+        dropdownKey.currentContext!.findRenderObject() as RenderBox;
+    final width = renderBox.size.width;
+    final position = renderBox.localToGlobal(Offset.zero);
+    final dropdownTop = position.dy;
+    final dropdownBottom = dropdownTop + renderBox.size.height;
+    final mediaQuery = MediaQuery.of(context);
+    final keyboardTop = mediaQuery.size.height - mediaQuery.viewInsets.bottom;
+    final topPadding = mediaQuery.padding.top;
+
+    const minHeight = 120.0;
+    final maxPreferred = 200.h;
+
+    final spaceBelow = keyboardTop - dropdownBottom - 8.w;
+    final spaceAbove = dropdownTop - topPadding - 8.w;
+
+    var openUpward = false;
+    var available = spaceBelow;
+
+    if (spaceBelow < minHeight && spaceAbove > spaceBelow) {
+      openUpward = true;
+      available = spaceAbove;
+    }
+
+    final maxHeight = available.clamp(minHeight, maxPreferred);
+
+    return Positioned.fill(
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: onClose,
+        child: Stack(
+          children: [
+            CompositedTransformFollower(
+              link: layerLink,
+              showWhenUnlinked: false,
+              targetAnchor: openUpward
+                  ? Alignment.topCenter
+                  : Alignment.bottomCenter,
+              followerAnchor: openUpward
+                  ? Alignment.bottomCenter
+                  : Alignment.topCenter,
+              offset: Offset(0, openUpward ? -6.w : 6.w),
+              child: GestureDetector(
+                onTap: () {},
+                child: Material(
+                  elevation: 8,
+                  borderRadius: borderRadius,
+                  child: Container(
+                    width: width,
+                    height: maxHeight,
+                    decoration: BoxDecoration(
+                      color: context.colors.surface,
+                      borderRadius: borderRadius,
+                      border: Border.all(
+                        color: borderColor ?? context.colors.inputBorder,
+                        width: 1.2,
+                      ),
+                    ),
+                    child: ListView.separated(
+                      padding: EdgeInsets.zero,
+                      itemCount: items.length,
+                      separatorBuilder: (_, _) => Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: context.colors.divider,
+                      ),
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        final itemText =
+                            itemAsString?.call(item) ?? item.toString();
+
+                        return InkWell(
+                          onTap: () => onSelect(item),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            alignment: Alignment.centerLeft,
+                            child: TextWidget(
+                              itemText,
+                              textAlign: TextAlign.start,
+                              style: AppTextStyles.bodyMedium,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

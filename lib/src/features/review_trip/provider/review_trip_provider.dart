@@ -542,7 +542,7 @@ class ReviewTripProvider extends ChangeNotifier {
   String formatLegPriceLabel(double price, {double? discountPercent}) {
     final formatted = formatLegPrice(price);
     if (discountPercent == null) return formatted;
-    return '$formatted (${_formatDiscountPercent(discountPercent)})';
+    return '$formatted ( - ${_formatDiscountPercent(discountPercent)})';
   }
 
   void _capturePromoOriginalPrices() {
