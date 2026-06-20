@@ -47,11 +47,17 @@ class ReviewTripProvider extends ChangeNotifier {
   FlightNameModel? _selectedFlightName;
   CustomerInfoModel? _cachedCustomerInfo;
   bool _acceptedTerms = false;
+  bool _bookForOther = false;
+  BookForOtherTitle? _selectedOtherTitle;
 
   final TextEditingController flightNumberController = TextEditingController();
   final TextEditingController frequentFlyerNumberController =
       TextEditingController();
   final TextEditingController eTicketNumberController = TextEditingController();
+  final TextEditingController otherFirstNameController = TextEditingController();
+  final TextEditingController otherLastNameController = TextEditingController();
+  final TextEditingController otherEmailController = TextEditingController();
+  final TextEditingController otherPhoneController = TextEditingController();
 
   ReviewTripPageArgs? get args => _args;
   ReviewTripUiModel? get model => _model;
@@ -66,6 +72,8 @@ class ReviewTripProvider extends ChangeNotifier {
   bool get loadingFlightNames => _loadingFlightNames;
   FlightNameModel? get selectedFlightName => _selectedFlightName;
   bool get acceptedTerms => _acceptedTerms;
+  bool get bookForOther => _bookForOther;
+  BookForOtherTitle? get selectedOtherTitle => _selectedOtherTitle;
   double? get priceFromApi => _priceFromApi;
 
   DisplayPriceItem? get selectedDisplayPrice {
@@ -212,6 +220,23 @@ class ReviewTripProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setBookForOther(bool value) {
+    _bookForOther = value;
+    if (!value) {
+      _selectedOtherTitle = null;
+      otherFirstNameController.clear();
+      otherLastNameController.clear();
+      otherEmailController.clear();
+      otherPhoneController.clear();
+    }
+    notifyListeners();
+  }
+
+  void setSelectedOtherTitle(BookForOtherTitle? value) {
+    _selectedOtherTitle = value;
+    notifyListeners();
+  }
+
   Future<TermsAndConditionsPdfResult> downloadTermsAndConditionsPdf() async {
     final response = await _termsAndConditionsService.getTermsAndConditions();
     if (!response.isSuccess) {
@@ -294,6 +319,7 @@ class ReviewTripProvider extends ChangeNotifier {
       return 'Pickup and drop-off locations are required.';
     }
     return _validateFlightInfoRequirements() ??
+        _validateBookForOtherRequirements() ??
         _validatePromoBookingRequirements();
   }
 
@@ -305,6 +331,36 @@ class ReviewTripProvider extends ChangeNotifier {
     }
 
     return null;
+  }
+
+  String? _validateBookForOtherRequirements() {
+    if (!_bookForOther) return null;
+
+    if (_selectedOtherTitle == null) {
+      return 'Please select title.';
+    }
+    if (_trimmedTextOrNull(otherFirstNameController.text) == null) {
+      return 'Please enter first name.';
+    }
+    if (_trimmedTextOrNull(otherLastNameController.text) == null) {
+      return 'Please enter last name.';
+    }
+    final email = _trimmedTextOrNull(otherEmailController.text);
+    if (email == null) {
+      return 'Please enter email.';
+    }
+    if (!_isValidEmail(email)) {
+      return 'Please enter a valid email.';
+    }
+    if (_trimmedTextOrNull(otherPhoneController.text) == null) {
+      return 'Please enter phone number.';
+    }
+
+    return null;
+  }
+
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(email);
   }
 
   String? _validatePromoBookingRequirements() {
@@ -385,6 +441,18 @@ class ReviewTripProvider extends ChangeNotifier {
       eTicketNumber: _trimmedTextOrNull(eTicketNumberController.text),
       flightNameId: _selectedFlightName?.id ?? 0,
       flightNumber: _trimmedTextOrNull(flightNumberController.text),
+      isBookForOther: _bookForOther,
+      otherTitle: _bookForOther ? _selectedOtherTitle?.id : null,
+      otherFirstName: _bookForOther
+          ? _trimmedTextOrNull(otherFirstNameController.text)
+          : null,
+      otherLastName: _bookForOther
+          ? _trimmedTextOrNull(otherLastNameController.text)
+          : null,
+      otherEmail:
+          _bookForOther ? _trimmedTextOrNull(otherEmailController.text) : null,
+      otherPhone:
+          _bookForOther ? _trimmedTextOrNull(otherPhoneController.text) : null,
     );
 
     _confirming = true;
@@ -637,6 +705,10 @@ class ReviewTripProvider extends ChangeNotifier {
     flightNumberController.dispose();
     frequentFlyerNumberController.dispose();
     eTicketNumberController.dispose();
+    otherFirstNameController.dispose();
+    otherLastNameController.dispose();
+    otherEmailController.dispose();
+    otherPhoneController.dispose();
     super.dispose();
   }
 }

@@ -28,7 +28,8 @@ class _TermsAndConditionsPdfPageState extends State<TermsAndConditionsPdfPage> {
           onPageFinished: (_) {
             if (mounted) setState(() => _isLoading = false);
           },
-          onWebResourceError: (_) {
+          onWebResourceError: (WebResourceError error) {
+            if (error.isForMainFrame == false) return;
             if (!mounted || _errorMessage != null) return;
             setState(() {
               _isLoading = false;
@@ -46,15 +47,15 @@ class _TermsAndConditionsPdfPageState extends State<TermsAndConditionsPdfPage> {
       _errorMessage = null;
     });
 
-    final localPath = await TermsPdfHelper.downloadToTempFile(widget.pdfUrl);
-    if (!mounted) return;
-
-    if (localPath != null) {
-      await _controller.loadRequest(Uri.file(localPath));
-      return;
+    try {
+      await TermsPdfHelper.loadPdfInWebView(_controller, widget.pdfUrl);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Could not load Terms & Conditions PDF.';
+      });
     }
-
-    await _controller.loadRequest(Uri.parse(widget.pdfUrl));
   }
 
   @override

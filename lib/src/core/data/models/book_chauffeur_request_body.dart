@@ -48,6 +48,13 @@ class BookChauffeurRequestBody {
   final int flightNameId;
   /// Flight number from the flight number field.
   final String? flightNumber;
+  final bool isBookForOther;
+  /// 1 = Mr, 2 = Ms
+  final int? otherTitle;
+  final String? otherFirstName;
+  final String? otherLastName;
+  final String? otherEmail;
+  final String? otherPhone;
 
   const BookChauffeurRequestBody({
     required this.companyId,
@@ -81,6 +88,12 @@ class BookChauffeurRequestBody {
     this.eTicketNumber,
     this.flightNameId = 0,
     this.flightNumber,
+    this.isBookForOther = false,
+    this.otherTitle,
+    this.otherFirstName,
+    this.otherLastName,
+    this.otherEmail,
+    this.otherPhone,
   });
 
   Map<String, dynamic> toJson() => {
@@ -115,5 +128,11 @@ class BookChauffeurRequestBody {
         'ETicketNumber': eTicketNumber,
         'flightName_Id': flightNameId,
         'flightNumber': flightNumber,
+        'IsBookForOther': isBookForOther,
+        'OtherTitle': otherTitle,
+        'OtherFirstName': otherFirstName,
+        'OtherLastName': otherLastName,
+        'OtherEmail': otherEmail,
+        'OtherPhone': otherPhone,
       };
 }

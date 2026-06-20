@@ -151,8 +151,14 @@ class _AppCustomDropdownState<T> extends State<AppCustomDropdown<T>> {
         child: Container(
           key: _dropdownKey,
           width: double.infinity,
-          height: widget.height.w,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          height: widget.title.isEmpty ? widget.height.w : null,
+          constraints: widget.title.isEmpty
+              ? null
+              : BoxConstraints(minHeight: widget.height.w),
+          padding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: widget.title.isEmpty ? 10 : 12,
+          ),
           decoration: BoxDecoration(
             borderRadius: widget.borderRadius,
             border: Border.all(

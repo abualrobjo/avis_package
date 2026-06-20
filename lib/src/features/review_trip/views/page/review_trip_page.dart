@@ -13,7 +13,8 @@ import 'package:avis_package/src/features/_features.dart'
         TripHeaderWidget,
         TripOptionsWidget,
         TripActionsWidget,
-        PaymentProvider;
+        PaymentProvider,
+        BookForOtherTitle;
 
 import 'package:avis_package/src/features/review_trip/views/page/terms_and_conditions_pdf_page.dart';
 
@@ -251,6 +252,104 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
                 color: context.colors.primary,
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookForOtherSection(
+    BuildContext context,
+    ReviewTripProvider provider,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Checkbox(
+                value: provider.bookForOther,
+                onChanged: (v) => provider.setBookForOther(v ?? false),
+                activeColor: context.colors.primary,
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: TextWidget(
+                    'Book for someone else',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: context.colors.primaryText,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (provider.bookForOther) ...[
+            TextWidget(
+              'Title',
+              style: AppTextStyles.labelBold.copyWith(
+                color: context.colors.secondaryText,
+              ),
+            ),
+            const SizedBox(height: AppSpaces.xSmall),
+            AppCustomDropdown<BookForOtherTitle>(
+              title: '',
+              items: BookForOtherTitle.values,
+              selectedValue: provider.selectedOtherTitle,
+              onChanged: provider.setSelectedOtherTitle,
+              itemAsString: (title) => title.label,
+              hintText: 'Select title',
+              height: 56,
+              selectedTextStyle: AppTextStyles.bodyMediumBold.copyWith(
+                color: context.colors.primaryText,
+              ),
+            ),
+            const SizedBox(height: AppSpaces.medium),
+            AppTextFormFieldComponent(
+              controller: provider.otherFirstNameController,
+              hintText: 'First name',
+              focusedBorderSameAsEnabled: true,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: AppSpaces.onSides,
+                horizontal: AppSpaces.medium,
+              ),
+            ),
+            const SizedBox(height: AppSpaces.medium),
+            AppTextFormFieldComponent(
+              controller: provider.otherLastNameController,
+              hintText: 'Last name',
+              focusedBorderSameAsEnabled: true,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: AppSpaces.onSides,
+                horizontal: AppSpaces.medium,
+              ),
+            ),
+            const SizedBox(height: AppSpaces.medium),
+            AppTextFormFieldComponent(
+              controller: provider.otherEmailController,
+              hintText: 'Email',
+              keyboardType: TextInputType.emailAddress,
+              focusedBorderSameAsEnabled: true,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: AppSpaces.onSides,
+                horizontal: AppSpaces.medium,
+              ),
+            ),
+            const SizedBox(height: AppSpaces.medium),
+            AppTextFormFieldComponent(
+              controller: provider.otherPhoneController,
+              hintText: 'Phone number',
+              keyboardType: TextInputType.phone,
+              focusedBorderSameAsEnabled: true,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: AppSpaces.onSides,
+                horizontal: AppSpaces.medium,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -577,6 +676,8 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
                       _buildMeetAssistFlightSection(context, provider),
                       const SizedBox(height: AppSpaces.large),
                     ],
+                    // _buildBookForOtherSection(context, provider),
+                    // const SizedBox(height: AppSpaces.large),
                     TripActionsWidget(
                       actions: model.actions,
                       tripTypeId: args?.tripTypeId ?? 7,

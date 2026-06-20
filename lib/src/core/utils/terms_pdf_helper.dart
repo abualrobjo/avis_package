@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:open_file/open_file.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 enum TermsPdfOpenOutcome {
   openedLocally,
@@ -19,6 +20,45 @@ class TermsPdfHelper {
         '${Directory.systemTemp.path}/terms_and_conditions_${DateTime.now().millisecondsSinceEpoch}.pdf';
     final downloaded = await _downloadPdf(pdfUrl, savePath);
     return downloaded ? savePath : null;
+  }
+
+  /// Android WebView cannot render PDFs from [file://] URIs like iOS WebKit.
+  static Future<void> loadPdfInWebView(
+    WebViewController controller,
+    String pdfUrl,
+  ) async {
+    if (Platform.isAndroid) {
+      final uri = Uri.tryParse(pdfUrl);
+      if (uri != null && uri.scheme == 'https') {
+        final viewerUrl =
+            'https://docs.google.com/gview?embedded=true&url=${Uri.encodeComponent(pdfUrl)}';
+        await controller.loadRequest(Uri.parse(viewerUrl));
+        return;
+      }
+
+      final localPath = await downloadToTempFile(pdfUrl);
+      if (localPath != null) {
+        final bytes = await File(localPath).readAsBytes();
+        await controller.loadRequest(
+          Uri.dataFromBytes(
+            bytes,
+            mimeType: 'application/pdf',
+          ),
+        );
+        return;
+      }
+
+      await controller.loadRequest(Uri.parse(pdfUrl));
+      return;
+    }
+
+    final localPath = await downloadToTempFile(pdfUrl);
+    if (localPath != null) {
+      await controller.loadRequest(Uri.file(localPath));
+      return;
+    }
+
+    await controller.loadRequest(Uri.parse(pdfUrl));
   }
 
   static Future<TermsPdfOpenOutcome> downloadAndOpen(String pdfUrl) async {
