@@ -21,16 +21,19 @@ class AddPromoCodeBottomSheet extends StatefulWidget {
   const AddPromoCodeBottomSheet({
     super.key,
     required this.tripTypeId,
+    required this.pickupDateTime,
     this.onPromoApplied,
   });
 
   final int tripTypeId;
+  final String pickupDateTime;
   final void Function(String code, CheckPromoCodeValidityDetails details)?
       onPromoApplied;
 
   static Future<void> show(
     BuildContext context, {
     required int tripTypeId,
+    required String pickupDateTime,
     void Function(String code, CheckPromoCodeValidityDetails details)?
         onPromoApplied,
   }) async {
@@ -39,6 +42,7 @@ class AddPromoCodeBottomSheet extends StatefulWidget {
       isScrollControlled: true,
       builder: (context) => AddPromoCodeBottomSheet(
         tripTypeId: tripTypeId,
+        pickupDateTime: pickupDateTime,
         onPromoApplied: onPromoApplied,
       ),
     );
@@ -100,6 +104,7 @@ class _AddPromoCodeBottomSheetState extends State<AddPromoCodeBottomSheet> {
       companyId: _companyId,
       tripTypeId: widget.tripTypeId,
       branchId: branchId,
+      pickupDateTime: widget.pickupDateTime,
     );
     final response = await sl<PromoCodeService>().checkPromoCodeValidity(request);
     if (!mounted) return;

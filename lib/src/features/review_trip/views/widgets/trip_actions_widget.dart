@@ -14,6 +14,7 @@ import 'package:avis_package/src/core/_core.dart'
 class TripActionsWidget extends StatelessWidget {
   final List<ReviewTripActionUiModel> actions;
   final int tripTypeId;
+  final String pickupDateTime;
   final String? appliedPromoCode;
   final void Function(String code, CheckPromoCodeValidityDetails details)?
       onPromoCodeApplied;
@@ -29,6 +30,7 @@ class TripActionsWidget extends StatelessWidget {
     super.key,
     required this.actions,
     required this.tripTypeId,
+    required this.pickupDateTime,
     this.appliedPromoCode,
     this.onPromoCodeApplied,
     this.onPromoCodeRemoved,
@@ -62,6 +64,7 @@ class TripActionsWidget extends StatelessWidget {
                 AddPromoCodeBottomSheet.show(
                   context,
                   tripTypeId: tripTypeId,
+                  pickupDateTime: pickupDateTime,
                   onPromoApplied: onPromoCodeApplied,
                 );
               }

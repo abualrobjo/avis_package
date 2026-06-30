@@ -6,11 +6,13 @@ class CheckPromoCodeValidityRequest {
   final int branchId;
   final int lineOfBusiness;
   final int tripTypeId;
+  final String pickupDateTime;
 
   const CheckPromoCodeValidityRequest({
     required this.promoCode,
     required this.companyId,
     required this.tripTypeId,
+    required this.pickupDateTime,
     this.applicableApplication = 2,
     required this.branchId,
     this.lineOfBusiness = 5,
@@ -23,5 +25,6 @@ class CheckPromoCodeValidityRequest {
         'BranchId': branchId,
         'LineOfBusiness': lineOfBusiness,
         'TripTypeId': tripTypeId,
+        'PickupDateTime': pickupDateTime,
       };
 }

@@ -79,6 +79,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
 
   Future<void> _handleSavedPlace({
     required String name,
+    required String? savedAddress,
     required LatLng? coord,
     required bool fromAirportList,
   }) async {
@@ -105,8 +106,21 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
       if (!allowed) return;
     }
 
+    var displayName = name;
+    if (!fromAirportList) {
+      final geocoded = await PlaceSearchHelper.addressFromCoordinates(coord);
+      final geocodedAddress =
+          PlaceSearchHelper.meaningfulAddressPart(geocoded);
+      if (geocodedAddress != null) {
+        displayName = geocodedAddress;
+      } else {
+        final fallback = PlaceSearchHelper.meaningfulAddressPart(savedAddress);
+        if (fallback != null) displayName = fallback;
+      }
+    }
+
     await widget.onPlaceSelected(
-      name: name,
+      name: displayName,
       latLng: coord,
       fromAirportList: fromAirportList,
     );
@@ -243,9 +257,10 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                       ),
                     ),
                     ...widget.savedPlaces.map((place) {
-                      final name = place.placePrimaryName?.isNotEmpty == true
+                      final nickname = place.placePrimaryName?.isNotEmpty == true
                           ? place.placePrimaryName!
-                          : (place.placeSecondaryName ?? '');
+                          : 'Saved place';
+                      final address = place.placeSecondaryName ?? '';
                       final lat = double.tryParse(place.latitude ?? '');
                       final lng = double.tryParse(place.longtitude ?? '');
                       final coord = (lat != null && lng != null)
@@ -266,13 +281,24 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                           ),
                         ),
                         title: TextWidget(
-                          name,
+                          nickname,
                           style: AppTextStyles.bodyMedium,
-                          maxLines: 2,
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
+                        subtitle: address.isNotEmpty
+                            ? TextWidget(
+                                address,
+                                style: AppTextStyles.bodyXSmall.copyWith(
+                                  color: context.colors.secondaryText,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              )
+                            : null,
                         onTap: () => _handleSavedPlace(
-                          name: name,
+                          name: nickname,
+                          savedAddress: address,
                           coord: coord,
                           fromAirportList: false,
                         ),
@@ -321,6 +347,7 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
                         ),
                         onTap: () => _handleSavedPlace(
                           name: name,
+                          savedAddress: null,
                           coord: coord,
                           fromAirportList: true,
                         ),

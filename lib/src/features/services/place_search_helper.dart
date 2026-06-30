@@ -373,4 +373,19 @@ class PlaceSearchHelper {
     }
     return geocodeQuery(suggestion.description);
   }
+
+  /// Reverse-geocode coordinates into a user-facing address label.
+  static Future<String> addressFromCoordinates(LatLng position) async {
+    try {
+      final placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+      if (placemarks.isNotEmpty) {
+        return formatPlacemark(placemarks.first, position);
+      }
+    } catch (_) {}
+    return '${position.latitude.toStringAsFixed(4)}, '
+        '${position.longitude.toStringAsFixed(4)}';
+  }
 }
