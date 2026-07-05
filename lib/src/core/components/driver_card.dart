@@ -140,7 +140,6 @@ class DriverCard extends StatelessWidget {
           const SizedBox(width: 12),
           _CircleIconButton(
             onTap: () => _onChat(context),
-            badgeCount: 2,
             iconWidget: SvgIconWidget(
               name: 'chat',
               width: 22,
