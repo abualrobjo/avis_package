@@ -70,6 +70,22 @@ extension CustomerTripByIdModelExtension on CustomerTripByIdModel {
       vehicleClassSecondaryName ?? '',
     );
   }
+
+  String tripTypeLocalized(BuildContext context) {
+    return context.localized(
+      tripTypePrimaryName ?? '',
+      tripTypeSecondaryName ?? '',
+    );
+  }
+
+  String assignedVehicleLine(BuildContext context) {
+    final make = manufacturerLocalized(context).trim();
+    final color = colorLocalized(context).trim();
+    if (make.isEmpty && color.isEmpty) return '';
+    if (make.isEmpty) return color;
+    if (color.isEmpty) return make;
+    return '$make - $color';
+  }
 }
 
 extension CustomerTripDetailModelExtension on CustomerTripDetailModel {

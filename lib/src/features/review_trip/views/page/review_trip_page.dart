@@ -21,7 +21,7 @@ import 'package:avis_package/src/features/review_trip/views/page/terms_and_condi
 import 'package:avis_package/src/features/payment/views/payment_screen.dart';
 
 import 'package:avis_package/src/core/_core.dart'
-    show AppConst, AppContextExtension, AppTextStyles, SvgIconWidget, TextWidget, BackArrowWidget, AppSpaces, HorizontalDivider, TripRouteWidget, AppCustomDropdown, AppTextFormFieldComponent, AppRoutes, AvisNavigation, FlightNameModel;
+    show AppConst, AppContextExtension, AppTextStyles, SvgIconWidget, TextWidget, BackArrowWidget, AppSpaces, HorizontalDivider, TripRouteWidget, AppCustomDropdown, AppTextFormFieldComponent, AppRoutes, AvisNavigation, FlightNameModel, KeyboardDoneToolbar;
 
 class ReviewTripPage extends StatefulWidget {
   const ReviewTripPage({super.key});
@@ -343,6 +343,8 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
               controller: provider.otherPhoneController,
               hintText: 'Phone number',
               keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
               focusedBorderSameAsEnabled: true,
               contentPadding: const EdgeInsets.symmetric(
                 vertical: AppSpaces.onSides,
@@ -596,8 +598,13 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
                 ? null
                 : () => _onConfirm(context, provider, model),
           ),
-          body: CustomScrollView(
-            slivers: [
+          body: Column(
+            children: [
+              Expanded(
+                child: CustomScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  slivers: [
               SliverAppBar(
                 leading: const BackArrowWidget(),
                 title: Text(
@@ -734,6 +741,10 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
                   ],
                 ]),
               ),
+            ],
+          ),
+        ),
+              const KeyboardDoneToolbar(),
             ],
           ),
         );

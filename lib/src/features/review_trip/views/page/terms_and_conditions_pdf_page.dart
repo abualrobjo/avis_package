@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'package:avis_package/src/core/utils/terms_pdf_helper.dart';
+import 'package:avis_package/src/core/components/app_web_view_app_bar.dart';
 
 class TermsAndConditionsPdfPage extends StatefulWidget {
   const TermsAndConditionsPdfPage({super.key, required this.pdfUrl});
@@ -61,14 +62,9 @@ class _TermsAndConditionsPdfPageState extends State<TermsAndConditionsPdfPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Terms & Conditions'),
-        bottom: _isLoading
-            ? const PreferredSize(
-                preferredSize: Size.fromHeight(2),
-                child: LinearProgressIndicator(minHeight: 2),
-              )
-            : null,
+      appBar: AppWebViewAppBar(
+        title: 'Terms & Conditions',
+        isLoading: _isLoading,
       ),
       body: _errorMessage != null
           ? Center(

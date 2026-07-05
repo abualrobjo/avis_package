@@ -67,6 +67,7 @@ class CustomerTripByIdModel {
   final String? vehicleClassSecondaryName;
   final String? classMiniDesc;
   final String? tripTypePrimaryName;
+  final String? tripTypeSecondaryName;
   final int? tripTypeId;
 
   final int? passengersNo;
@@ -111,6 +112,7 @@ class CustomerTripByIdModel {
     this.passengersNo,
     this.suitcasesNo,
     this.tripTypePrimaryName,
+    this.tripTypeSecondaryName,
     this.tripTypeId,
     this.tripHours,
   });
@@ -127,6 +129,7 @@ class CustomerTripByIdModel {
       chauffeurPhoneNumber: json['chauffeurPhoneNumber'],
       chauffeurPhoto: json['chauffeurPhoto'],
       tripTypePrimaryName: json['tripTypePrimaryName'],
+      tripTypeSecondaryName: json['tripTypeSecondaryName'],
       tripTypeId: (json['tripTypeId'] as num?)?.toInt() ??
           (json['tripType_Id'] as num?)?.toInt() ??
           (json['TripTypeId'] as num?)?.toInt(),
@@ -231,6 +234,55 @@ class CustomerTripByIdModel {
     return hours == 1 ? '1 hour' : '$hours hours';
   }
 
+  /// Class image from [vehicleClassImage].
+  String get vehicleClassImageUrl {
+    final classImage = vehicleClassImage?.trim();
+    if (classImage == null || classImage.isEmpty) return '';
+    return classImage.replaceAll('\\', '/');
+  }
+
+  /// Assigned vehicle photo when available.
+  String get assignedVehicleImageUrl {
+    final imageName = vehicleImageName?.trim();
+    if (imageName == null || imageName.isEmpty) return '';
+
+    final folder = vehicleImagePath?.trim().replaceAll('\\', '/');
+    if (folder != null && folder.isNotEmpty) {
+      if (folder.contains('.') &&
+          !RegExp(r'^[0-9a-f-]{36}$', caseSensitive: false).hasMatch(folder)) {
+        return folder;
+      }
+      return '$folder/$imageName';
+    }
+    return imageName;
+  }
+
+  /// Preferred vehicle image for UI.
+  String get displayVehicleImage {
+    final assigned = assignedVehicleImageUrl;
+    if (assigned.isNotEmpty) return assigned;
+    return vehicleClassImageUrl;
+  }
+
+  /// Secondary image when the primary fails to load.
+  String get fallbackVehicleImage {
+    final assigned = assignedVehicleImageUrl;
+    final classImage = vehicleClassImageUrl;
+    if (assigned.isNotEmpty &&
+        classImage.isNotEmpty &&
+        assigned != classImage) {
+      return classImage;
+    }
+    return '';
+  }
+
+  bool get hasAssignedVehicle {
+    final plate = plateNumber?.trim();
+    if (plate != null && plate.isNotEmpty) return true;
+    final make = manufacturerPrimaryName?.trim();
+    return make != null && make.isNotEmpty;
+  }
+
   /// Route widget second row: label when drop-off exists, otherwise [Pickup].
   String get routeDropOffSectionLabel =>
       hasDropOffPlace ? 'Your Destination' : 'Pickup';
@@ -239,8 +291,8 @@ class CustomerTripByIdModel {
   String get routeDropOffSectionLocation =>
       hasDropOffPlace ? (dropOffLatitude ?? '').trim() : (pickupLatitude ?? '');
 
-  /// Status ids for an in-progress trip (driver en route, at pickup, on trip).
-  static const activeTripStatusIds = {8, 9, 10};
+  /// Status ids when driver contact (call/chat) is available.
+  static const activeTripStatusIds = {2, 8, 9, 10};
 
   bool get isActiveTripSession =>
       statusId != null && activeTripStatusIds.contains(statusId);

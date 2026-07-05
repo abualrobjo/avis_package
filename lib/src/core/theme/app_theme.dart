@@ -144,6 +144,7 @@ class AppTheme {
       extensions: extensions,
       scaffoldBackgroundColor: api.background,
       appBarTheme: AppBarTheme(
+        toolbarHeight: kToolbarHeight,
         backgroundColor: api.background,
         elevation: 0,
         iconTheme: IconThemeData(color: api.primaryText),

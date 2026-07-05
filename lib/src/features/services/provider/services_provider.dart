@@ -1001,8 +1001,8 @@ class ServicesProvider extends ChangeNotifier {
 
   String iconNameForTabIndex(int index, int count) {
     if (count <= 3) {
-      if (index == 0) return 'city to city';
-      if (index == 1) return 'Airport';
+      if (index == 0) return 'Airport';
+      if (index == 1) return 'city to city';
       return 'Hourly';
     }
     final list = visibleRootTripTypes;

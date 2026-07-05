@@ -22,6 +22,7 @@ class AppTextFormFieldComponent extends StatelessWidget {
     this.obscureText = false,
     this.obscuringCharacter = '•',
     this.keyboardType,
+    this.textInputAction,
     this.inputFormatters,
     this.textFieldTextStyle,
     this.suffix,
@@ -56,6 +57,7 @@ class AppTextFormFieldComponent extends StatelessWidget {
   final bool obscureText;
   final String obscuringCharacter;
   final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
   final List<TextInputFormatter>? inputFormatters;
   final TextStyle? textFieldTextStyle;
 
@@ -131,6 +133,7 @@ class AppTextFormFieldComponent extends StatelessWidget {
       obscureText: obscureText,
       obscuringCharacter: obscuringCharacter,
       keyboardType: keyboardType,
+      textInputAction: textInputAction,
       inputFormatters: inputFormatters,
       style:
           textFieldTextStyle ??

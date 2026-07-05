@@ -282,6 +282,14 @@ class _VehicleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (data == null) return const SizedBox.shrink();
+
+    final trip = data!;
+    final classMiniDesc = trip.classMiniDesc?.trim();
+    final tripType = trip.tripTypeLocalized(context).trim();
+    final plateNumber = trip.plateNumber?.trim();
+    final assignedVehicleLine = trip.assignedVehicleLine(context).trim();
+    final hasAssignedVehicle = trip.hasAssignedVehicle;
+
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -301,7 +309,7 @@ class _VehicleCard extends StatelessWidget {
               ),
               SizedBox(width: 4.w),
               TextWidget(
-                '${data!.tripId}',
+                '${trip.tripId}',
                 style: AppTextStyles.bodyMediumBold.copyWith(
                   color: context.colors.primaryText,
                 ),
@@ -310,66 +318,234 @@ class _VehicleCard extends StatelessWidget {
           ),
           SizedBox(height: 12.h),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 80.w,
-                height: 56.w,
+                width: 100.w,
+                height: 60.w,
                 decoration: BoxDecoration(
                   color: context.colors.secondaryContainer,
                   borderRadius: BorderRadius.circular(AppCornerRadius.small.r),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(AppCornerRadius.small.r),
-                  child: NetworkImageWidget(
-                    url: data?.vehicleImagePath ?? '',
-                    errorWidget: Icon(
-                      Icons.directions_car,
-                      size: 36.w,
-                      color: context.colors.tertiaryText,
-                    ),
+                  child: _VehicleImage(
+                    primaryUrl: trip.displayVehicleImage,
+                    fallbackUrl: trip.fallbackVehicleImage,
                   ),
                 ),
               ),
+              SizedBox(width: 12.w),
               Expanded(
-                child: TextWidget(
-                  '  ${data?.vehicleClassPrimaryName} - ${data?.tripTypePrimaryName ?? ''}',
-                  style: AppTextStyles.bodyMediumBold.copyWith(
-                    color: context.colors.primaryText,
-                  ),
-                ),
-              ),
-              SizedBox(width: 12.w),
-              SvgIconWidget(
-                name: 'account',
-                width: 18.w,
-                height: 18.w,
-                color: context.colors.secondaryText,
-              ),
-              SizedBox(width: 4.w),
-              TextWidget(
-                '${data?.passengersNo}',
-                style: AppTextStyles.bodyMediumBold.copyWith(
-                  color: context.colors.primaryText,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              SvgIconWidget(
-                name: 'bag',
-                width: 18.w,
-                height: 18.w,
-                color: context.colors.secondaryText,
-              ),
-              SizedBox(width: 4.w),
-              TextWidget(
-                '${data?.suitcasesNo}',
-                style: AppTextStyles.bodyMediumBold.copyWith(
-                  color: context.colors.primaryText,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (hasAssignedVehicle &&
+                        plateNumber != null &&
+                        plateNumber.isNotEmpty) ...[
+                      TextWidget(
+                        plateNumber,
+                        style: AppTextStyles.bodyLargeBold.copyWith(
+                          color: context.colors.primaryText,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (assignedVehicleLine.isNotEmpty) ...[
+                        SizedBox(height: 4.h),
+                        Row(
+                          children: [
+                            if (trip.colorCode != null &&
+                                trip.colorCode!.startsWith('#')) ...[
+                              Container(
+                                width: 12.w,
+                                height: 12.w,
+                                decoration: BoxDecoration(
+                                  color: Color(
+                                    int.parse(
+                                      trip.colorCode!.replaceAll('#', '0xFF'),
+                                    ),
+                                  ),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              SizedBox(width: 6.w),
+                            ],
+                            Expanded(
+                              child: TextWidget(
+                                assignedVehicleLine,
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: context.colors.primaryText,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      SizedBox(height: 4.h),
+                    ],
+                    TextWidget(
+                      trip.vehicleClassLocalized(context),
+                      style: AppTextStyles.bodyMediumBold.copyWith(
+                        color: context.colors.primaryText,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (tripType.isNotEmpty) ...[
+                      SizedBox(height: 2.h),
+                      TextWidget(
+                        tripType,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: context.colors.secondaryText,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    if (classMiniDesc != null && classMiniDesc.isNotEmpty) ...[
+                      SizedBox(height: 4.h),
+                      TextWidget(
+                        classMiniDesc,
+                        style: AppTextStyles.bodyXSmall.copyWith(
+                          color: context.colors.tertiaryText,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    SizedBox(height: 8.h),
+                    Row(
+                      children: [
+                        SvgIconWidget(
+                          name: 'account',
+                          width: 18.w,
+                          height: 18.w,
+                          color: context.colors.secondaryText,
+                        ),
+                        SizedBox(width: 4.w),
+                        TextWidget(
+                          '${trip.passengersNo ?? 0}',
+                          style: AppTextStyles.bodyMediumBold.copyWith(
+                            color: context.colors.primaryText,
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        SvgIconWidget(
+                          name: 'bag',
+                          width: 18.w,
+                          height: 18.w,
+                          color: context.colors.secondaryText,
+                        ),
+                        SizedBox(width: 4.w),
+                        TextWidget(
+                          '${trip.suitcasesNo ?? 0}',
+                          style: AppTextStyles.bodyMediumBold.copyWith(
+                            color: context.colors.primaryText,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _VehicleImage extends StatefulWidget {
+  const _VehicleImage({
+    required this.primaryUrl,
+    required this.fallbackUrl,
+  });
+
+  final String primaryUrl;
+  final String fallbackUrl;
+
+  @override
+  State<_VehicleImage> createState() => _VehicleImageState();
+}
+
+class _VehicleImageState extends State<_VehicleImage> {
+  late String _currentUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentUrl = _initialUrl();
+  }
+
+  @override
+  void didUpdateWidget(covariant _VehicleImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.primaryUrl != widget.primaryUrl ||
+        oldWidget.fallbackUrl != widget.fallbackUrl) {
+      _currentUrl = _initialUrl();
+    }
+  }
+
+  String _initialUrl() {
+    final primary = widget.primaryUrl.trim();
+    if (primary.isNotEmpty) return primary;
+    return widget.fallbackUrl.trim();
+  }
+
+  void _switchToFallback() {
+    final fallback = widget.fallbackUrl.trim();
+    if (fallback.isEmpty || _currentUrl == fallback) return;
+    setState(() => _currentUrl = fallback);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NetworkImageWidget(
+      url: _currentUrl,
+      fit: BoxFit.contain,
+      errorWidget: _VehicleImageError(
+        onUseFallback: _switchToFallback,
+        canFallback: widget.fallbackUrl.trim().isNotEmpty &&
+            _currentUrl != widget.fallbackUrl.trim(),
+      ),
+    );
+  }
+}
+
+class _VehicleImageError extends StatefulWidget {
+  const _VehicleImageError({
+    required this.onUseFallback,
+    required this.canFallback,
+  });
+
+  final VoidCallback onUseFallback;
+  final bool canFallback;
+
+  @override
+  State<_VehicleImageError> createState() => _VehicleImageErrorState();
+}
+
+class _VehicleImageErrorState extends State<_VehicleImageError> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.canFallback) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onUseFallback();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      Icons.directions_car,
+      size: 36.w,
+      color: context.colors.tertiaryText,
     );
   }
 }

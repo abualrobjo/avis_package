@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'package:avis_package/src/core/utils/constants/app_const/app_const.dart';
+import 'package:avis_package/src/core/components/app_web_view_app_bar.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String paymentUrl;
@@ -259,14 +260,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Complete Payment'),
-        bottom: _isLoading
-            ? const PreferredSize(
-                preferredSize: Size.fromHeight(2),
-                child: LinearProgressIndicator(minHeight: 2),
-              )
-            : null,
+      appBar: AppWebViewAppBar(
+        title: 'Complete Payment',
+        isLoading: _isLoading,
       ),
       body: WebViewWidget(controller: _controller),
     );

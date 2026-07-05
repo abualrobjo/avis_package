@@ -95,25 +95,27 @@ class TripActionsWidget extends StatelessWidget {
                       children: [
                         TextWidget(
                           action.title,
-                          style: AppTextStyles.bodyMediumBold.copyWith(
-                            color: context.colors.tertiaryText,
+                          style: AppTextStyles.h3.copyWith(
+                            color: context.colors.primaryText,
                           ),
                         ),
                         if (hasPromoApplied) ...[
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           TextWidget(
                             appliedPromoCode!,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: context.colors.primary,
+                            style: AppTextStyles.bodySmallBold.copyWith(
+                              color: context.colors.primaryText,
+                              fontSize: 13,
                             ),
                           ),
                         ],
                         if (hasLoyaltyApplied) ...[
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           TextWidget(
                             appliedLoyaltyCode!,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: context.colors.primary,
+                            style: AppTextStyles.bodySmallBold.copyWith(
+                              color: context.colors.primaryText,
+                              fontSize: 13,
                             ),
                           ),
                         ],

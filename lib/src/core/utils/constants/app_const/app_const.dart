@@ -6,7 +6,7 @@ class AppConst {
   static String lang = 'en';
 
   /// Default customer id when the user is not logged in; host may override via route `customerId`.
-  static int fallbackCustomerId = 6756;
+  static int fallbackCustomerId = 2761;
 
   /// `true` for test servers, `false` for live.
   static const bool isTestEnvironment = false;
