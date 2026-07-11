@@ -25,6 +25,7 @@ class CustomerTripDetailModel {
   final String? statusSecondaryName;
   final String? tripTypePrimaryName;
   final String? tripTypeSecondaryName;
+  final bool showMap;
 
   const CustomerTripDetailModel({
     required this.tripId,
@@ -42,6 +43,7 @@ class CustomerTripDetailModel {
     this.statusSecondaryName,
     this.tripTypePrimaryName,
     this.tripTypeSecondaryName,
+    this.showMap = false,
   });
 
   factory CustomerTripDetailModel.fromJson(Map<String, dynamic> json) {
@@ -68,7 +70,19 @@ class CustomerTripDetailModel {
       statusSecondaryName: json['statusSecondaryName'] as String?,
       tripTypePrimaryName: json['tripTypePrimaryName'] as String?,
       tripTypeSecondaryName: json['tripTypeSecondaryName'] as String?,
+      showMap: _parseBool(json['showMap']),
     );
+  }
+
+  static bool _parseBool(dynamic value) {
+    if (value == null) return false;
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == 'true' || normalized == '1';
+    }
+    return false;
   }
 
   /// Formats tripDateTime for UI

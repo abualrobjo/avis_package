@@ -19,12 +19,16 @@ class ServiceOptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSoldOut = option.isSoldOut;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
+        onTap: isSoldOut ? null : onTap,
         borderRadius: BorderRadius.circular(AppCornerRadius.medium.r),
-        child: Container(
+        child: Opacity(
+          opacity: isSoldOut ? 0.55 : 1,
+          child: Container(
           width: double.infinity,
           padding: EdgeInsets.all(10.r),
           decoration: BoxDecoration(
@@ -94,12 +98,14 @@ class ServiceOptionCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   TextWidget(
-                    option.price,
+                    isSoldOut ? 'Sold Out' : option.price,
                     style: AppTextStyles.bodySmallBold.copyWith(
-                      color: context.colors.primary,
+                      color: isSoldOut
+                          ? context.colors.error
+                          : context.colors.primary,
                     ),
                   ),
-                  if (option.eta.isNotEmpty)
+                  if (!isSoldOut && option.eta.isNotEmpty)
                     TextWidget(
                       option.eta,
                       style: AppTextStyles.labelBold.copyWith(
@@ -110,6 +116,7 @@ class ServiceOptionCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

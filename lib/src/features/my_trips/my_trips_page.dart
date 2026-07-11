@@ -9,16 +9,23 @@ import 'package:avis_package/src/features/_features.dart'
 /// Active-tab trips with these status ids open the live map; all others open trip details.
 const _myTripsMapStatusIds = {8, 9};
 
+bool _shouldOpenLiveMap(
+  CustomerTripDetailModel trip, {
+  required _MyTripsTab tab,
+}) {
+  final id = trip.statusId;
+  return trip.showMap ||
+      (tab == _MyTripsTab.active &&
+          id != null &&
+          _myTripsMapStatusIds.contains(id));
+}
+
 void _navigateTripFromMyTrips(
   BuildContext context,
   CustomerTripDetailModel trip, {
   required _MyTripsTab tab,
 }) {
-  final id = trip.statusId;
-  final openMap = tab == _MyTripsTab.active &&
-      id != null &&
-      _myTripsMapStatusIds.contains(id);
-  if (openMap) {
+  if (_shouldOpenLiveMap(trip, tab: tab)) {
     AvisNavigation.push(
       context,
       AppRoutes.map,
@@ -38,8 +45,7 @@ void _navigateRecentTripMapCard(
   BuildContext context,
   CustomerTripDetailModel trip,
 ) {
-  final id = trip.statusId;
-  if (id != null && _myTripsMapStatusIds.contains(id)) {
+  if (_shouldOpenLiveMap(trip, tab: _MyTripsTab.active)) {
     AvisNavigation.push(
       context,
       AppRoutes.tripDetails,

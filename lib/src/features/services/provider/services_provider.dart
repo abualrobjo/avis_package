@@ -572,8 +572,17 @@ class ServicesProvider extends ChangeNotifier {
   }
 
   void selectVehicleClassIndex(int index) {
+    if (index < 0 || index >= vehicleClasses.length) return;
+    if (vehicleClasses[index].isSoldOut) return;
     selectedVehicleClassIndex = index;
     _notify();
+  }
+
+  int _firstAvailableVehicleClassIndex() {
+    for (var i = 0; i < vehicleClasses.length; i++) {
+      if (!vehicleClasses[i].isSoldOut) return i;
+    }
+    return -1;
   }
 
   void selectCurrencyIndex(int index) {
@@ -893,7 +902,7 @@ class ServicesProvider extends ChangeNotifier {
     dropZoneId = newDropZoneId;
     if (result.isSuccess && result.data.isNotEmpty) {
       vehicleClasses = result.data;
-      selectedVehicleClassIndex = 0;
+      selectedVehicleClassIndex = _firstAvailableVehicleClassIndex();
       selectedCurrencyIndex = 0;
       _notify();
       return null;

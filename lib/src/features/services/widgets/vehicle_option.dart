@@ -8,6 +8,7 @@ class VehicleOption {
     required this.bags,
     required this.imagePath,
     this.classMiniDesc,
+    this.isSoldOut = false,
   });
 
   final String name;
@@ -17,4 +18,5 @@ class VehicleOption {
   final int passengers;
   final int bags;
   final String? classMiniDesc;
+  final bool isSoldOut;
 }

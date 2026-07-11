@@ -35,6 +35,8 @@ class VehicleClassPriceModel {
   final double tax;
   final int passengersNo;
   final int suitcasesNo;
+  final bool stopSale;
+  final bool soldOut;
   final List<VehicleClassDisplayPrice> displayPrices;
 
   const VehicleClassPriceModel({
@@ -48,8 +50,12 @@ class VehicleClassPriceModel {
     required this.tax,
     required this.passengersNo,
     required this.suitcasesNo,
+    this.stopSale = false,
+    this.soldOut = false,
     this.displayPrices = const [],
   });
+
+  bool get isSoldOut => stopSale || soldOut;
 
   factory VehicleClassPriceModel.fromJson(Map<String, dynamic> json) {
     final rawList = json['displayPrices'] as List<dynamic>?;
@@ -74,8 +80,21 @@ class VehicleClassPriceModel {
       tax: (json['tax'] as num).toDouble(),
       passengersNo: (json['passengersNo'] as num?)?.toInt() ?? 0,
       suitcasesNo: (json['suitcasesNo'] as num?)?.toInt() ?? 0,
+      stopSale: _parseBool(json['stopSale']),
+      soldOut: _parseBool(json['soldOut']),
       displayPrices: displayPrices,
     );
+  }
+
+  static bool _parseBool(dynamic value) {
+    if (value == null) return false;
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == 'true' || normalized == '1';
+    }
+    return false;
   }
 
   VehicleClassDisplayPrice? priceForCurrency(String currencyCode) {
@@ -101,6 +120,8 @@ class VehicleClassPriceModel {
       tax: displayPrice.taxValue,
       passengersNo: passengersNo,
       suitcasesNo: suitcasesNo,
+      stopSale: stopSale,
+      soldOut: soldOut,
       displayPrices: displayPrices,
     );
   }

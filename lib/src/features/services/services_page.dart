@@ -855,11 +855,12 @@ class _ServicesPageState extends State<ServicesPage> {
                 bags: v.suitcasesNo,
                 imagePath: v.image ?? '',
                 classMiniDesc: v.classMiniDesc,
+                isSoldOut: v.isSoldOut,
               );
               final isSelected = p.selectedVehicleClassIndex == index;
               return ServiceOptionCard(
                 option: option,
-                isSelected: isSelected,
+                isSelected: isSelected && !v.isSoldOut,
                 onTap: () => p.selectVehicleClassIndex(index),
               );
             },
