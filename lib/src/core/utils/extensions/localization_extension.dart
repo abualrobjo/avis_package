@@ -6,7 +6,8 @@ import 'package:avis_package/src/core/_core.dart'
         LocalizationProvider,
         AvailableVehicleModel,
         CustomerTripByIdModel,
-        CustomerTripDetailModel;
+        CustomerTripDetailModel,
+        LookupModel;
 
 extension LocalizationUtils on BuildContext {
   bool get isArabic => read<LocalizationProvider>().isArabic;
@@ -108,5 +109,11 @@ extension CustomerTripDetailModelExtension on CustomerTripDetailModel {
       tripTypePrimaryName ?? '',
       tripTypeSecondaryName ?? '',
     );
+  }
+}
+
+extension LookupItemExtension on LookupModel {
+  String localizedName(BuildContext context) {
+    return context.localized(primaryName, secondaryName);
   }
 }

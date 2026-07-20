@@ -1,25 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:provider/provider.dart';
 
 import 'package:avis_package/src/core/_core.dart';
 import 'package:avis_package/src/generated/locale_keys.g.dart';
-
-/// Simple reason option for low rating (no lookup API).
-class RateReasonOption {
-  const RateReasonOption(this.id, this.label);
-  final int id;
-  final String label;
-}
-
-/// Static options for "reason for low rating" dropdown.
-const List<RateReasonOption> kDefaultRateReasons = [
-  RateReasonOption(1, 'Other'),
-  RateReasonOption(2, 'Late'),
-  RateReasonOption(3, 'Rude'),
-  RateReasonOption(4, 'Vehicle condition'),
-  RateReasonOption(5, 'Unsafe driving'),
-];
 
 class RatingBottomSheet extends StatefulWidget {
   const RatingBottomSheet({
@@ -29,7 +14,6 @@ class RatingBottomSheet extends StatefulWidget {
     required this.customerId,
     this.title,
     this.submitButtonText,
-    this.reasonOptions = kDefaultRateReasons,
   });
 
   final int tripId;
@@ -37,7 +21,6 @@ class RatingBottomSheet extends StatefulWidget {
   final int customerId;
   final String? title;
   final String? submitButtonText;
-  final List<RateReasonOption>? reasonOptions;
 
   static Future<void> show(
     BuildContext context, {
@@ -45,7 +28,6 @@ class RatingBottomSheet extends StatefulWidget {
     required int driverId,
     required int customerId,
     String? title,
-    List<RateReasonOption>? reasonOptions,
     String? submitButtonText,
   }) {
     return showModalBottomSheet<void>(
@@ -59,7 +41,6 @@ class RatingBottomSheet extends StatefulWidget {
           driverId: driverId,
           customerId: customerId,
           title: title,
-          reasonOptions: reasonOptions ?? kDefaultRateReasons,
           submitButtonText: submitButtonText,
         ),
       ),
@@ -74,24 +55,20 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
   final _reviewController = TextEditingController();
 
   int _rating = 3;
-  RateReasonOption? _selectedReason;
+  LookupModel? _selectedReason;
   bool _markAsFavorite = false;
 
   String get title =>
-      widget.title ?? avisTr(LocaleKeys.common_rate_title, context: context);
+      widget.title ?? LocaleKeys.common_rate_title.tr();
   String get submitButtonText =>
-      widget.submitButtonText ??
-      avisTr(LocaleKeys.common_submit, context: context);
+      widget.submitButtonText ?? LocaleKeys.common_submit.tr();
 
-  String _ratingLabel(BuildContext context) {
-    final key = switch (_rating) {
-      1 => LocaleKeys.common_poor,
-      2 => LocaleKeys.common_could_be_better,
-      3 => LocaleKeys.common_good,
-      4 => LocaleKeys.common_average,
-      _ => LocaleKeys.common_great_experience,
-    };
-    return avisTr(key, context: context);
+  Future<void> _loadRateReasons() async {
+    final provider = context.read<RatingProvider>();
+    await provider.getLookupByCategoryId(
+      categoryId: rateReasonLookupCategoryId,
+      language: context.locale.languageCode,
+    );
   }
 
   Future<void> _submit() async {
@@ -104,7 +81,7 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
       customerId: widget.customerId,
       rateValue: _rating,
       comment: _reviewController.text.trim(),
-      lowRateReason: _selectedReason?.id,
+      lowRateReason: _rating < 3 ? _selectedReason?.id : null,
       markAsFavorite: _markAsFavorite,
     );
 
@@ -120,17 +97,22 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              avisTr(
-                _markAsFavorite
-                    ? LocaleKeys.common_failed_to_mark_favourite_driver
-                    : LocaleKeys.common_failed_to_rate_customer,
-                context: context,
-              ),
+              _markAsFavorite
+                  ? LocaleKeys.common_failed_to_mark_favourite_driver.tr()
+                  : LocaleKeys.common_failed_to_rate_customer.tr(),
             ),
           ),
         );
       }
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadRateReasons();
+    });
   }
 
   @override
@@ -141,7 +123,6 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final reasons = widget.reasonOptions ?? kDefaultRateReasons;
     return Container(
       decoration: BoxDecoration(
         color: context.colors.surface,
@@ -180,64 +161,68 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
                 const SizedBox(height: 24),
                 Center(
                   child: TextWidget(
-                    avisTr(
-                      LocaleKeys.common_your_overall_rating,
-                      context: context,
-                    ),
+                    LocaleKeys.common_your_overall_rating.tr(),
                     style: AppTextStyles.bodyLarge.copyWith(
                       color: context.colors.secondaryText,
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
-                _StarRating(onChanged: (v) => setState(() => _rating = v)),
-                const SizedBox(height: 8),
-                TextWidget(
-                  _ratingLabel(context),
-                  style: AppTextStyles.bodyMediumBold.copyWith(
-                    color: context.colors.primaryText,
-                  ),
+                _StarRating(
+                  onChanged: (v) => setState(() {
+                    _rating = v;
+                    if (_rating >= 3) _selectedReason = null;
+                  }),
                 ),
-                const SizedBox(height: 20),
-                AppCustomDropdown<RateReasonOption>(
-                  items: reasons,
-                  title: '',
-                  hintText: avisTr(
-                    LocaleKeys.common_please_select_a_reason,
-                    context: context,
-                  ),
-                  selectedTextStyle: _selectedReason != null
-                      ? AppTextStyles.bodyMedium.copyWith(
-                          color: context.colors.primaryText,
-                        )
-                      : AppTextStyles.bodySmall.copyWith(
-                          color: context.colors.secondaryText,
+                if (_rating < 3) ...[
+                  const SizedBox(height: 20),
+                  Selector<RatingProvider, List<LookupModel>>(
+                    selector: (context, provider) => provider.lookupData,
+                    builder: (context, lookupData, child) {
+                      final isLoadingLookup =
+                          context.watch<RatingProvider>().isLoadingLookup;
+                      if (isLoadingLookup && lookupData.isEmpty) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+                      return AppCustomDropdown<LookupModel>(
+                        items: lookupData,
+                        title: '',
+                        hintText:
+                            LocaleKeys.common_please_select_a_reason.tr(),
+                        selectedTextStyle: _selectedReason != null
+                            ? AppTextStyles.bodyMedium.copyWith(
+                                color: context.colors.primaryText,
+                              )
+                            : AppTextStyles.bodySmall.copyWith(
+                                color: context.colors.secondaryText,
+                              ),
+                        height: 48,
+                        selectedValue: _selectedReason,
+                        itemAsString: (item) => item.localizedName(context),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedReason = value;
+                          });
+                        },
+                        borderColor: context.colors.inputBorder,
+                        borderRadius: BorderRadius.circular(
+                          AppCornerRadius.xSmall,
                         ),
-                  height: 48,
-                  selectedValue: _selectedReason,
-                  itemAsString: (item) => item.label,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedReason = value;
-                    });
-                  },
-                  borderColor: context.colors.inputBorder,
-                  borderRadius: BorderRadius.circular(
-                    AppCornerRadius.xSmall,
+                        iconWidget: const SvgIconWidget(name: 'arrow-down'),
+                      );
+                    },
                   ),
-                  iconWidget: const SvgIconWidget(name: 'arrow-down'),
-                ),
+                ],
                 const SizedBox(height: 24),
                 AppTextFormFieldComponent(
                   controller: _reviewController,
-                  title: avisTr(
-                    LocaleKeys.common_write_your_review,
-                    context: context,
-                  ),
-                  hintText: avisTr(
-                    LocaleKeys.common_enter_here,
-                    context: context,
-                  ),
+                  title: LocaleKeys.common_write_your_review.tr(),
+                  hintText: LocaleKeys.common_enter_here.tr(),
                   titleStyle: AppTextStyles.bodyMedium.copyWith(
                     color: context.colors.primaryText,
                   ),
@@ -248,10 +233,7 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
                   children: [
                     Expanded(
                       child: TextWidget(
-                        avisTr(
-                          LocaleKeys.common_mark_as_favourite_driver,
-                          context: context,
-                        ),
+                        LocaleKeys.common_mark_as_favourite_driver.tr(),
                         style: AppTextStyles.bodyMediumBold.copyWith(
                           color: context.colors.primaryText,
                         ),

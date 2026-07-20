@@ -89,6 +89,12 @@ Future<void> init() async {
     () => CustomerFavoriteDriversServiceImpl(sl<DioClient>()),
   );
 
+  sl.registerLazySingleton<CustomerRateDriverService>(
+    () => CustomerRateDriverServiceImpl(sl<DioClient>()),
+  );
+
+  sl.registerLazySingleton<LookupService>(() => LookupServiceImpl());
+
   sl.registerLazySingleton<TripsTypeService>(
     () => TripsTypeServiceImpl(sl<DioClient>()),
   );
@@ -154,6 +160,10 @@ Future<void> init() async {
     () => CancellationRepositoryImpl(sl<CancellationService>()),
   );
 
+  sl.registerLazySingleton<LookupRepository>(
+    () => LookupRepositoryImpl(sl<LookupService>()),
+  );
+
   sl.registerLazySingleton<PaymentRepository>(
     () => PaymentRepositoryImpl(sl<PaymentService>()),
   );
@@ -174,7 +184,11 @@ Future<void> init() async {
   );
 
   sl.registerFactory<RatingProvider>(
-    () => RatingProvider(sl<CustomerFavoriteDriversService>()),
+    () => RatingProvider(
+      sl<CustomerFavoriteDriversService>(),
+      sl<CustomerRateDriverService>(),
+      sl<LookupRepository>(),
+    ),
   );
 
   sl.registerFactory<MapProvider>(

@@ -16,12 +16,16 @@ class TripDetailsPage extends StatefulWidget {
 }
 
 class _TripDetailsPageState extends State<TripDetailsPage> {
+  late final CancellationProvider _cancellationProvider;
+
   @override
   void initState() {
     super.initState();
+    _cancellationProvider = sl<CancellationProvider>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _fetchTripById();
+        _cancellationProvider.fetchCancelationCategories();
       }
     });
   }
@@ -76,37 +80,26 @@ class _TripDetailsPageState extends State<TripDetailsPage> {
     await context.read<MyTripsProvider>().getCustomerTripById(tripId);
   }
 
-  static Future<bool?> _showCancelConfirmDialog(BuildContext context) {
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Cancel Trip'),
-        content: const Text(
-          'Are you sure you want to cancel this trip?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('No'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Yes'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _onCancelTrip(
     BuildContext context,
     CancellationProvider provider,
     int tripId,
   ) async {
-    final confirmed = await _showCancelConfirmDialog(context);
-    if (confirmed != true || !context.mounted) return;
+    if (provider.cancelationCategories.isEmpty) {
+      await provider.fetchCancelationCategories();
+      if (!context.mounted) return;
+    }
 
-    await provider.cancelRideRequest(tripId);
+    final reason = await CancelTripReasonDialog.show(
+      context,
+      categories: provider.cancelationCategories,
+    );
+    if (reason == null || !context.mounted) return;
+
+    await provider.cancelRideRequest(
+      tripId,
+      cancelationReasonId: reason.id,
+    );
     if (!context.mounted) return;
 
     if (provider.cancellationState == CancellationState.success &&
@@ -210,6 +203,7 @@ class _TripDetailsPageState extends State<TripDetailsPage> {
               ? _TripDetailsBottomBar(
                   showPayment: showPayment,
                   showCancel: showCancel,
+                  cancellationProvider: _cancellationProvider,
                   onPayPressed: () => _onTripPayment(),
                   onCancelPressed: showCancel
                       ? (provider) =>
@@ -232,6 +226,7 @@ class _TripDetailsPageState extends State<TripDetailsPage> {
                     data: displayTrip,
                     showContactActions:
                         displayTrip?.isActiveTripSession ?? false,
+                    showRate: false,
                   ),
                 ),
                 SizedBox(height: 16.h),
@@ -616,12 +611,14 @@ class _TripDetailsBottomBar extends StatelessWidget {
     required this.showPayment,
     required this.showCancel,
     required this.onPayPressed,
+    required this.cancellationProvider,
     this.onCancelPressed,
   });
 
   final bool showPayment;
   final bool showCancel;
   final VoidCallback onPayPressed;
+  final CancellationProvider cancellationProvider;
   final void Function(CancellationProvider provider)? onCancelPressed;
 
   @override
@@ -654,7 +651,7 @@ class _TripDetailsBottomBar extends StatelessWidget {
               ],
               if (showCancel)
                 ChangeNotifierProvider<CancellationProvider>.value(
-                  value: sl<CancellationProvider>(),
+                  value: cancellationProvider,
                   child: Consumer<CancellationProvider>(
                     builder: (context, cancellationProvider, _) {
                       return AppButton.secondary(

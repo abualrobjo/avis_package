@@ -17,10 +17,55 @@ class CancellationProvider extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  Future<void> cancelRideRequest(int id) async {
-    _cancellationState = CancellationState.loading;
+  List<CancelationCategoryModel> _cancelationCategories = [];
+  List<CancelationCategoryModel> get cancelationCategories =>
+      _cancelationCategories;
 
-    final response = await _cancellationRepository.cancelRideRequest(id);
+  bool _loadingCategories = false;
+  bool get loadingCategories => _loadingCategories;
+
+  String? _categoriesErrorMessage;
+  String? get categoriesErrorMessage => _categoriesErrorMessage;
+
+  Future<void> fetchCancelationCategories({
+    int categoryId = 77,
+    bool all = false,
+  }) async {
+    _loadingCategories = true;
+    _categoriesErrorMessage = null;
+    notifyListeners();
+
+    final response = await _cancellationRepository.getCancelationCategories(
+      categoryId: categoryId,
+      all: all,
+    );
+
+    response.when(
+      success: (categories) {
+        _cancelationCategories = categories;
+        _loadingCategories = false;
+        notifyListeners();
+      },
+      failure: (failure) {
+        _categoriesErrorMessage = failure.message;
+        _cancelationCategories = [];
+        _loadingCategories = false;
+        notifyListeners();
+      },
+    );
+  }
+
+  Future<void> cancelRideRequest(
+    int id, {
+    required int cancelationReasonId,
+  }) async {
+    _cancellationState = CancellationState.loading;
+    notifyListeners();
+
+    final response = await _cancellationRepository.cancelRideRequest(
+      id,
+      cancelationReasonId: cancelationReasonId,
+    );
 
     await response.when(
       success: (succes) {

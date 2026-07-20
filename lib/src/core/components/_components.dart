@@ -23,6 +23,7 @@ export 'rating_bottom_sheet.dart';
 export 'vertical_dashed_border_painter.dart';
 export 'success_bottom_sheet.dart';
 export 'success_dialog.dart';
+export 'cancel_trip_reason_dialog.dart';
 export 'add_promo_code_bottom_sheet.dart';
 export 'redeem_loyalty_points_bottom_sheet.dart';
 export 'counter_widget.dart';

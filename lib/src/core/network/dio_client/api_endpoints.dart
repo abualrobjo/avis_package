@@ -55,6 +55,14 @@ class ApiEndpoints {
   static const String customerFavoriteDrivers =
       '$vehicleApi/CustomerInformation/CustomerFavoriteDrivers';
 
+  /// POST CustomerInformation/CustomerRateDriver
+  static const String customerRateDriver =
+      '$vehicleApi/CustomerInformation/CustomerRateDriver';
+
+  /// GET LookupManagement/GetByCategoryId?language=&categoryId=
+  static const String lookupByCategory =
+      '$vehicleApi/LookupManagement/GetByCategoryId';
+
   /// GET ChauffeurService/GetTripsTypeWithConfig (trip types with visibility/options)
   static const String getTripsTypeWithConfig =
       '$vehicleApi/ChauffeurService/GetTripsTypeWithConfig';
@@ -134,6 +142,14 @@ class ApiEndpoints {
   /// GET ChauffeurService/CancelChauffeurServiceResquest?id=&CreatedBy=0 (call after validate when responseDetails == 1)
   static const String cancelChauffeurServiceRequest =
       '$vehicleApi/ChauffeurService/CancelChauffeurServiceResquest';
+
+  /// GET ChauffeurService/GetCancelationCategories?CategoryId=&All=
+  static const String getCancelationCategories =
+      '$vehicleApi/ChauffeurService/GetCancelationCategories';
+
+  /// POST ChauffeurService/TripCancelationReason (body: TripId, CancelationReason)
+  static const String tripCancelationReason =
+      '$vehicleApi/ChauffeurService/TripCancelationReason';
 
   /// Check payment status
   static const String checkPaymentStatus =

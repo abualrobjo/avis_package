@@ -6,7 +6,25 @@ class CancellationRepositoryImpl implements CancellationRepository {
   const CancellationRepositoryImpl(this._cancellationService);
 
   @override
-  Future<Result<int?, NetworkException>> cancelRideRequest(int id) async {
-    return await _cancellationService.cancelRideRequest(id);
+  Future<Result<int?, NetworkException>> cancelRideRequest(
+    int id, {
+    required int cancelationReasonId,
+  }) async {
+    return await _cancellationService.cancelRideRequest(
+      id,
+      cancelationReasonId: cancelationReasonId,
+    );
+  }
+
+  @override
+  Future<Result<List<CancelationCategoryModel>, NetworkException>>
+      getCancelationCategories({
+    int categoryId = 77,
+    bool all = false,
+  }) async {
+    return _cancellationService.getCancelationCategories(
+      categoryId: categoryId,
+      all: all,
+    );
   }
 }

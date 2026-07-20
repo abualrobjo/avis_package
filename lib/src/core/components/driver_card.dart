@@ -9,10 +9,14 @@ class DriverCard extends StatelessWidget {
     super.key,
     required this.data,
     this.showContactActions = true,
+    this.showRate = true,
+    this.showDriverImage = true,
   });
 
   final CustomerTripByIdModel? data;
   final bool showContactActions;
+  final bool showRate;
+  final bool showDriverImage;
 
   Future<void> _onCall(BuildContext context) async {
     final phone = data?.chauffeurPhoneNumber?.trim() ?? '';
@@ -33,7 +37,7 @@ class DriverCard extends StatelessWidget {
         data?.customerPrimaryName ??
         data?.customerSecondaryname ??
         'Customer';
-    AvisNavigation.push(
+    Navigator.pushNamed(
       context,
       AppRoutes.chat,
       arguments: ChatPageArgs(
@@ -56,58 +60,66 @@ class DriverCard extends StatelessWidget {
 
     return Row(
       children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: context.colors.border,
-              child: (data?.chauffeurPhoto != null)
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(
-                        AppCornerRadius.absolute,
+        if (showDriverImage)
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: context.colors.border,
+                child: (data?.chauffeurPhoto != null)
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(
+                          AppCornerRadius.absolute,
+                        ),
+                        child: NetworkImageWidget(url: data!.chauffeurPhoto!),
+                      )
+                    : TextWidget(
+                        driverName.isNotEmpty
+                            ? driverName[0].toUpperCase()
+                            : '?',
+                        style: AppTextStyles.bodyLargeBold.copyWith(
+                          color: context.colors.primaryText,
+                        ),
                       ),
-                      child: NetworkImageWidget(url: data!.chauffeurPhoto!),
-                    )
-                  : TextWidget(
-                      driverName.isNotEmpty ? driverName[0].toUpperCase() : '?',
-                      style: AppTextStyles.bodyLargeBold.copyWith(
-                        color: context.colors.primaryText,
-                      ),
-                    ),
-            ),
-            Positioned(
-              left: 4,
-              bottom: -7,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: context.colors.background,
-                  borderRadius: BorderRadius.circular(AppCornerRadius.absolute),
-                  border: Border.all(color: context.colors.border),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.star,
-                      size: AppSpaces.medium,
-                      color: AppColors.orange500,
-                    ),
-                    const SizedBox(width: 2),
-                    TextWidget(
-                      data?.driverAVGRate?.toStringAsFixed(1) ?? '',
-                      style: AppTextStyles.bodyXSmallBold.copyWith(
-                        color: context.colors.primaryText,
-                      ),
-                    ),
-                  ],
-                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 16),
+              if (showRate)
+                Positioned(
+                  left: 4,
+                  bottom: -7,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.colors.background,
+                      borderRadius:
+                          BorderRadius.circular(AppCornerRadius.absolute),
+                      border: Border.all(color: context.colors.border),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.star,
+                          size: AppSpaces.medium,
+                          color: AppColors.orange500,
+                        ),
+                        const SizedBox(width: 2),
+                        TextWidget(
+                          data?.driverAVGRate?.toStringAsFixed(1) ?? '',
+                          style: AppTextStyles.bodyXSmallBold.copyWith(
+                            color: context.colors.primaryText,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        if (showDriverImage) const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,12 +130,6 @@ class DriverCard extends StatelessWidget {
                   color: context.colors.primaryText,
                 ),
               ),
-              // TextWidget(
-              //   tripInfo?.driverInfo ?? '',
-              //   style: AppTextStyles.bodySmall.copyWith(
-              //     color: context.colors.secondaryText,
-              //   ),
-              // ),
             ],
           ),
         ),

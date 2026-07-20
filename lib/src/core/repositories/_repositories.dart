@@ -9,3 +9,7 @@ export 'customer_trips/customer_trips_repository_impl.dart';
 // cancellation
 export 'cancellation/cancellation_repository.dart';
 export 'cancellation/cancellation_repository_impl.dart';
+
+// lookup
+export 'lookup_repository/lookup_repository.dart';
+export 'lookup_repository/lookup_repository_impl.dart';

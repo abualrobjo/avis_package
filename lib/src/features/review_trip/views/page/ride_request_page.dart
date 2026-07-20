@@ -12,6 +12,7 @@ import 'package:avis_package/src/core/_core.dart'
         AppSpaces,
         AppTextStyles,
         BackArrowWidget,
+        CancelTripReasonDialog,
         CancellationProvider,
         CancellationState,
         CustomerTripsRepository,
@@ -42,13 +43,18 @@ class RideRequestPage extends StatefulWidget {
 
 class _RideRequestPageState extends State<RideRequestPage> {
   String? _classMiniDesc;
+  late final CancellationProvider _cancellationProvider;
 
   bool get _showDropOff => widget.tripTypeId != 2;
 
   @override
   void initState() {
     super.initState();
+    _cancellationProvider = sl<CancellationProvider>();
     _loadClassMiniDesc();
+    if (widget.cancellationBookLaterEnabled) {
+      _cancellationProvider.fetchCancelationCategories();
+    }
   }
 
   Future<void> _loadClassMiniDesc() async {
@@ -70,36 +76,25 @@ class _RideRequestPageState extends State<RideRequestPage> {
     );
   }
 
-  static Future<bool?> _showCancelConfirmDialog(BuildContext context) {
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Cancel Trip'),
-        content: const Text(
-          'Are you sure you want to cancel this trip?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('No'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Yes'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _onCancelTrip(
     BuildContext context,
     CancellationProvider provider,
   ) async {
-    final confirmed = await _showCancelConfirmDialog(context);
-    if (confirmed != true || !context.mounted) return;
+    if (provider.cancelationCategories.isEmpty) {
+      await provider.fetchCancelationCategories();
+      if (!context.mounted) return;
+    }
 
-    await provider.cancelRideRequest(widget.tripId!);
+    final reason = await CancelTripReasonDialog.show(
+      context,
+      categories: provider.cancelationCategories,
+    );
+    if (reason == null || !context.mounted) return;
+
+    await provider.cancelRideRequest(
+      widget.tripId!,
+      cancelationReasonId: reason.id,
+    );
     if (!context.mounted) return;
 
     if (!context.mounted) return;
@@ -430,7 +425,7 @@ class _RideRequestPageState extends State<RideRequestPage> {
                     horizontal: AppSpaces.large,
                   ),
                   child: ChangeNotifierProvider<CancellationProvider>.value(
-                    value: sl<CancellationProvider>(),
+                    value: _cancellationProvider,
                     child: Consumer<CancellationProvider>(
                       builder: (context, cancellationProvider, _) {
                         return AppButton.secondary(

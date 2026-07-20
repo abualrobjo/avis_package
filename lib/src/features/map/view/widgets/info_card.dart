@@ -10,6 +10,7 @@ import 'package:avis_package/src/core/_core.dart'
         AvisNavigation,
         AppSpaces,
         AppTextStyles,
+        CancelTripReasonDialog,
         CancellationProvider,
         CancellationState,
         CustomerTripByIdModelExtension,
@@ -135,7 +136,21 @@ class CancelTripButton extends StatelessWidget {
     BuildContext context,
     CancellationProvider provider,
   ) async {
-    await provider.cancelRideRequest(trip.tripId);
+    if (provider.cancelationCategories.isEmpty) {
+      await provider.fetchCancelationCategories();
+      if (!context.mounted) return;
+    }
+
+    final reason = await CancelTripReasonDialog.show(
+      context,
+      categories: provider.cancelationCategories,
+    );
+    if (reason == null || !context.mounted) return;
+
+    await provider.cancelRideRequest(
+      trip.tripId,
+      cancelationReasonId: reason.id,
+    );
 
     if (!context.mounted) return;
 
