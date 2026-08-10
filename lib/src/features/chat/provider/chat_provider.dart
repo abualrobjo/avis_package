@@ -2,14 +2,22 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:avis_package/src/core/services/app_auth/auth_local_service.dart';
+import 'package:avis_package/src/core/services/firebase_chat_auth_service.dart';
 import '../models/chat_message_model.dart';
 import '../repositories/chat_repository.dart';
 
 /// Customer app: "me" = customer, "contact" = driver. Chat id = trip id.
 class ChatProvider extends ChangeNotifier {
-  ChatProvider(this._chatRepository);
+  ChatProvider(
+    this._chatRepository,
+    this._authLocalService,
+    this._firebaseChatAuth,
+  );
 
   final ChatRepository _chatRepository;
+  final AuthLocalService _authLocalService;
+  final FirebaseChatAuthService _firebaseChatAuth;
 
   StreamSubscription<List<ChatMessageModel>>? _messagesSub;
   StreamSubscription<String?>? _typingSub;
@@ -17,6 +25,7 @@ class ChatProvider extends ChangeNotifier {
   String? _tripId;
   String? _driverDisplayName;
   String? _contactDisplayName;
+  String _customerSenderId = 'customer';
 
   String? get driverDisplayName => _driverDisplayName;
 
@@ -33,19 +42,22 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  static const String _customerSenderId = 'customer';
+  bool get isContactTyping {
+    final id = _typingParticipantId;
+    if (id == null || id.isEmpty) return false;
+    if (id == _customerSenderId || id == 'customer') return false;
+    if (id.startsWith('customer_')) return false;
+    return true;
+  }
 
-  bool get isContactTyping =>
-      _typingParticipantId != null && _typingParticipantId != _customerSenderId;
-
-  void startChat({
+  Future<void> startChat({
     required String tripId,
     required String driverDisplayName,
     required String contactDisplayName,
     String? contactPhone,
     String? driverId,
     String? customerDisplayName,
-  }) {
+  }) async {
     final effectiveTripId = tripId.trim();
     if (effectiveTripId.isEmpty) return;
     _tripId = effectiveTripId;
@@ -53,13 +65,28 @@ class ChatProvider extends ChangeNotifier {
     _contactDisplayName = contactDisplayName;
     _messages = [];
     _typingParticipantId = null;
-    _messagesSub?.cancel();
-    _typingSub?.cancel();
+    _errorMessage = null;
+    await _messagesSub?.cancel();
+    await _typingSub?.cancel();
+    _messagesSub = null;
+    _typingSub = null;
+
+    final customerId = _authLocalService.getCustomerId();
+    if (customerId == null) {
+      _errorMessage = 'Login required for chat';
+      notifyListeners();
+      return;
+    }
+
+    _customerSenderId = FirebaseChatAuthService.customerUid(customerId);
 
     try {
-      _chatRepository.ensureChatMetadata(
+      await _firebaseChatAuth.ensureCustomerSignedIn(customerId);
+
+      await _chatRepository.ensureChatMetadata(
         tripId: effectiveTripId,
         driverId: driverId ?? '',
+        customerId: _customerSenderId,
         contactDisplayName: customerDisplayName ?? contactDisplayName,
         contactPhone: contactPhone,
         driverDisplayName: driverDisplayName,

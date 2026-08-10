@@ -75,6 +75,9 @@ export 'local_database/hive_service.dart';
 export 'local_database/settings_local_service.dart';
 export 'local_database/payment_cards_local_service.dart';
 
+// firebase chat auth (custom token -> FirebaseAuth uid)
+export 'firebase_chat_auth_service.dart';
+
 // service locator
 export 'di_service.dart';
 

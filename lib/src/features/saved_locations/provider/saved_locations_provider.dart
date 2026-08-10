@@ -16,13 +16,13 @@ class SavedLocationsProvider extends ChangeNotifier {
 
   SavedLocationsProvider(this._customerSavedPlacesRepository);
 
-  int getCustomerId() {
-    // TODO: Save user id from response !
-    return sl<AuthLocalService>().getUserId() ?? AppConst.fallbackCustomerId;
+  int? getCustomerId() {
+    return sl<AuthLocalService>().getCustomerId();
   }
 
   Future<void> getCustomerSavedPlaces() async {
     final customerId = getCustomerId();
+    if (customerId == null) return;
 
     // API body expects current location for latitude/longtitude.
     String lat = '';
@@ -69,6 +69,11 @@ class SavedLocationsProvider extends ChangeNotifier {
     notifyListeners();
 
     final customerId = getCustomerId();
+    if (customerId == null) {
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
 
     // API body: lat/long = location user chose (e.g. from map picker), not current device location.
     final result = await _customerSavedPlacesRepository.addCustomerSavedPlace(

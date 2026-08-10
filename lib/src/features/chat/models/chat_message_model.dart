@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ChatMessageModel {
   final String id;
   final String text;
-  /// Sender identifier: "driver_$userId" for driver, "customer" for customer.
+  /// Sender identifier: `driver_{id}` or `customer_{id}` (legacy: `customer`).
   final String senderId;
   final String senderDisplayName;
   final DateTime createdAt;
@@ -52,4 +52,8 @@ class ChatMessageModel {
   }
 
   bool get isFromDriver => senderId.startsWith('driver_');
+
+  /// True for current and legacy customer sender ids.
+  bool get isFromCustomer =>
+      senderId == 'customer' || senderId.startsWith('customer_');
 }

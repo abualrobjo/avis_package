@@ -73,7 +73,8 @@ class _TripDetailsPageState extends State<TripDetailsPage> {
       ),
     );
 
-    final customerId = sl<AuthLocalService>().getUserId() ?? AppConst.fallbackCustomerId;
+    final customerId = sl<AuthLocalService>().getCustomerId();
+    if (customerId == null) return;
     await sl<CustomerInfoService>().getCustomerInfo(customerId);
     if (!mounted) return;
 

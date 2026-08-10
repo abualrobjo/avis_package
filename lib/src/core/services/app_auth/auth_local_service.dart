@@ -1,4 +1,5 @@
-import 'package:avis_package/src/core/_core.dart' show HiveService;
+import 'package:avis_package/src/core/_core.dart' show AppConst, HiveService;
+import 'package:avis_package/src/core/utils/route_customer_session.dart';
 
 class AuthLocalService {
   final HiveService _hiveService;
@@ -33,6 +34,12 @@ class AuthLocalService {
     if (value is int) return value;
     if (value is String) return int.tryParse(value);
     return null;
+  }
+
+  /// Test: [AppConst.testCustomerId]. Live: `customerId` from host route args.
+  int? getCustomerId() {
+    if (AppConst.isTestEnvironment) return AppConst.testCustomerId;
+    return RouteCustomerSession.currentCustomerId;
   }
 
   Future<void> clearUserId() async {

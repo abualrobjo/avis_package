@@ -9,6 +9,7 @@ abstract class ChatRepository {
   Future<void> ensureChatMetadata({
     required String tripId,
     required String driverId,
+    required String customerId,
     required String contactDisplayName,
     String? contactPhone,
     String? driverDisplayName,

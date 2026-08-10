@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'package:firebase_core/firebase_core.dart';
 
 import '../models/chat_conversation_model.dart';
@@ -75,29 +74,20 @@ class ChatRepositoryImpl implements ChatRepository {
   Future<void> ensureChatMetadata({
     required String tripId,
     required String driverId,
+    required String customerId,
     required String contactDisplayName,
     String? contactPhone,
     String? driverDisplayName,
   }) async {
-    final ref = _chatMetaDoc(tripId);
-    final snap = await ref.get();
-    final now = FieldValue.serverTimestamp();
-    if (!snap.exists) {
-      await ref.set({
-        if (driverId.isNotEmpty) 'driverId': driverId,
-        'contactDisplayName': contactDisplayName,
-        if (contactPhone != null) 'contactPhone': contactPhone,
-        if (driverDisplayName != null) 'driverDisplayName': driverDisplayName,
-        'lastMessageAt': now,
-      });
-    } else {
-      await ref.set({
-        'contactDisplayName': contactDisplayName,
-        if (contactPhone != null) 'contactPhone': contactPhone,
-        if (driverDisplayName != null) 'driverDisplayName': driverDisplayName,
-        if (driverId.isNotEmpty) 'driverId': driverId,
-      }, SetOptions(merge: true));
-    }
+    // Merge-only (no prior get) so this still works once secure rules land:
+    // older chats may deny reads until customerId is written.
+    await _chatMetaDoc(tripId).set({
+      'customerId': customerId,
+      'driverId': driverId,
+      'contactDisplayName': contactDisplayName,
+      if (contactPhone != null) 'contactPhone': contactPhone,
+      if (driverDisplayName != null) 'driverDisplayName': driverDisplayName,
+    }, SetOptions(merge: true));
   }
 
   @override
@@ -118,6 +108,7 @@ class ChatRepositoryImpl implements ChatRepository {
     });
     final meta = <String, dynamic>{'lastMessage': text, 'lastMessageAt': now};
     if (senderId.startsWith('driver_')) meta['driverId'] = senderId;
+    if (senderId.startsWith('customer_')) meta['customerId'] = senderId;
     await _chatMetaDoc(tripId).set(meta, SetOptions(merge: true));
   }
 

@@ -604,54 +604,61 @@ class _ServicesPageState extends State<ServicesPage> {
     final count = labels.length;
     if (count == 0) return const SizedBox.shrink();
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(count, (index) {
-          final isSelected = p.selectedServiceTypeIndex == index;
-          final label = labels[index];
-          final iconName = p.iconNameForTabIndex(index, count);
-          return Padding(
-            padding: EdgeInsets.only(right: index < count - 1 ? 8.w : 0),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => p.selectServiceTypeIndex(index),
-                borderRadius: BorderRadius.circular(AppCornerRadius.medium.r),
-                child: Container(
-                  height: 32.w,
-                  padding: EdgeInsets.symmetric(horizontal: 12.w),
-                  constraints: BoxConstraints(minWidth: 80.w),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.greyEF : Colors.transparent,
-                    borderRadius: BorderRadius.circular(
-                      AppCornerRadius.absolute,
-                    ),
-                    border: Border.all(color: AppColors.borderColor),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SvgIconWidget(name: iconName, width: 16.r, height: 16.r),
-                      SizedBox(width: 6.w),
-                      Flexible(
-                        child: TextWidget(
-                          label,
-                          style: AppTextStyles.bodyXSmall,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8.w,
+      runSpacing: 8.h,
+      children: List.generate(count, (index) {
+        final isSelected = p.selectedServiceTypeIndex == index;
+        final label = labels[index];
+        final iconName = p.iconNameForTabIndex(index, count);
+        final contentColor =
+            isSelected ? AppColors.white : context.colors.primaryText;
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => p.selectServiceTypeIndex(index),
+            borderRadius: BorderRadius.circular(AppCornerRadius.medium.r),
+            child: Container(
+              height: 32.w,
+              padding: EdgeInsets.symmetric(horizontal: 12.w),
+              constraints: BoxConstraints(minWidth: 80.w),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primaryBrand : Colors.transparent,
+                borderRadius: BorderRadius.circular(
+                  AppCornerRadius.absolute,
+                ),
+                border: Border.all(
+                  color: isSelected
+                      ? AppColors.primaryBrand
+                      : AppColors.borderColor,
                 ),
               ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SvgIconWidget(
+                    name: iconName,
+                    width: 16.r,
+                    height: 16.r,
+                    color: contentColor,
+                  ),
+                  SizedBox(width: 6.w),
+                  TextWidget(
+                    label,
+                    style: AppTextStyles.bodyXSmall.copyWith(
+                      color: contentColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-          );
-        }),
-      ),
+          ),
+        );
+      }),
     );
   }
 

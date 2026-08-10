@@ -395,6 +395,11 @@ class ReviewTripProvider extends ChangeNotifier {
       return ReviewTripBookingResult.failure(validationError);
     }
 
+    final customerId = _authLocalService.getCustomerId();
+    if (customerId == null) {
+      return ReviewTripBookingResult.failure(AppConst.loginRequiredMessage);
+    }
+
     final options = buildOptions();
     final vehicle = pageArgs.vehicles.first;
     final haveMeetGreet = _optionValue(options, 'meet');
@@ -405,8 +410,7 @@ class ReviewTripProvider extends ChangeNotifier {
 
     final body = BookChauffeurRequestBody(
       companyId: companyId,
-      customerId:
-          _authLocalService.getUserId() ?? AppConst.fallbackCustomerId,
+      customerId: customerId,
       branchId: pageArgs.branchId,
       requestSourceId: 3,
       requestStatusId: 7,
@@ -502,6 +506,9 @@ class ReviewTripProvider extends ChangeNotifier {
       return;
     }
 
+    final customerId = _authLocalService.getCustomerId();
+    if (customerId == null) return;
+
     final options = buildOptions();
     final haveMeetGreet = _optionValue(options, 'meet');
     final onCurb = _optionValue(options, 'curb');
@@ -510,8 +517,7 @@ class ReviewTripProvider extends ChangeNotifier {
 
     final body = ChauffeurServicePricesByRequestBody(
       companyId: companyId,
-      customerId:
-          _authLocalService.getUserId() ?? AppConst.fallbackCustomerId,
+      customerId: customerId,
       tripTypeId: pageArgs.tripTypeId,
       tripsHour: pageArgs.isByDay ? null : pageArgs.durationHours,
       tripsDay: pageArgs.isByDay ? pageArgs.durationHours : null,
@@ -588,8 +594,8 @@ class ReviewTripProvider extends ChangeNotifier {
   }
 
   Future<void> loadCustomerInfoForFlightFields() async {
-    final customerId =
-        _authLocalService.getUserId() ?? AppConst.fallbackCustomerId;
+    final customerId = _authLocalService.getCustomerId();
+    if (customerId == null) return;
     final result = await _customerInfoService.getCustomerInfo(customerId);
     if (!result.isSuccess) return;
     _cachedCustomerInfo = result.data;
@@ -597,8 +603,8 @@ class ReviewTripProvider extends ChangeNotifier {
   }
 
   Future<void> refreshCustomerInfoAfterBooking() async {
-    final customerId =
-        _authLocalService.getUserId() ?? AppConst.fallbackCustomerId;
+    final customerId = _authLocalService.getCustomerId();
+    if (customerId == null) return;
     await _customerInfoService.getCustomerInfo(customerId);
   }
 

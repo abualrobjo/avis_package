@@ -5,8 +5,12 @@ class AppConst {
   static String accessToken = '';
   static String lang = 'en';
 
-  /// Default customer id when the user is not logged in; host may override via route `customerId`.
-  static int fallbackCustomerId = 2761;
+  /// Shown when API calls or booking actions require a stored customer id.
+  static const String loginRequiredMessage =
+      'You have to login to continue.';
+
+  /// Default customer id used in test when no user is logged in.
+  static const int testCustomerId = 2761;
 
   /// `true` for test servers, `false` for live.
   static const bool isTestEnvironment = false;

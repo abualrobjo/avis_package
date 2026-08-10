@@ -78,7 +78,7 @@ class _AddPromoCodeBottomSheetState extends State<AddPromoCodeBottomSheet> {
   }
 
   Future<int> _getBranchId() async {
-    final customerId = sl<AuthLocalService>().getUserId();
+    final customerId = sl<AuthLocalService>().getCustomerId();
     if (customerId == null) return _defaultBranchId;
     final response = await sl<CustomerInfoService>().getCustomerInfo(customerId);
     if (response.isSuccess && response.data.clientbranchId != 0) {

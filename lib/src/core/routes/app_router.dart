@@ -19,14 +19,16 @@ class AppRouter {
             : null;
         final showBackButton = args?['showBackButton'] == true;
         return _slideRoute(
-          MultiProvider(
-            providers: [
-              ChangeNotifierProvider(create: (_) => sl<LocalizationProvider>()),
-              ChangeNotifierProvider(
-                create: (_) => sl<ServicesProvider>()..initialize(),
-              ),
-            ],
-            child: ServicesPage(showBackButton: showBackButton),
+          LoginRequiredGate(
+            child: MultiProvider(
+              providers: [
+                ChangeNotifierProvider(create: (_) => sl<LocalizationProvider>()),
+                ChangeNotifierProvider(
+                  create: (_) => sl<ServicesProvider>()..initialize(),
+                ),
+              ],
+              child: ServicesPage(showBackButton: showBackButton),
+            ),
           ),
           settings,
         );
@@ -41,13 +43,15 @@ class AppRouter {
         );
       case AppRoutes.reviewTrip:
         return _slideRoute(
-          MultiProvider(
-            providers: [
-              ChangeNotifierProvider(create: (_) => sl<ReviewTripProvider>()),
-              ChangeNotifierProvider(create: (_) => sl<AddNewCardProvider>()),
-              ChangeNotifierProvider(create: (_) => sl<PaymentProvider>()),
-            ],
-            child: const ReviewTripPage(),
+          LoginRequiredGate(
+            child: MultiProvider(
+              providers: [
+                ChangeNotifierProvider(create: (_) => sl<ReviewTripProvider>()),
+                ChangeNotifierProvider(create: (_) => sl<AddNewCardProvider>()),
+                ChangeNotifierProvider(create: (_) => sl<PaymentProvider>()),
+              ],
+              child: const ReviewTripPage(),
+            ),
           ),
           settings,
         );
@@ -64,11 +68,13 @@ class AppRouter {
         );
       case AppRoutes.myTrips:
         return _slideRoute(
-          ChangeNotifierProvider(
-            create: (_) => sl<LocalizationProvider>(),
+          LoginRequiredGate(
             child: ChangeNotifierProvider(
-              create: (_) => sl<MyTripsProvider>(),
-              child: const MyTripsPage(),
+              create: (_) => sl<LocalizationProvider>(),
+              child: ChangeNotifierProvider(
+                create: (_) => sl<MyTripsProvider>(),
+                child: const MyTripsPage(),
+              ),
             ),
           ),
           settings,
@@ -79,13 +85,15 @@ class AppRouter {
             ? raw
             : (raw is String ? int.tryParse(raw) : null);
         return _slideRoute(
-          ChangeNotifierProvider(
-            create: (_) => sl<LocalizationProvider>(),
+          LoginRequiredGate(
             child: ChangeNotifierProvider(
-              create: (_) => sl<MyTripsProvider>(),
+              create: (_) => sl<LocalizationProvider>(),
               child: ChangeNotifierProvider(
-                create: (_) => sl<PaymentProvider>(),
-                child: TripDetailsPage(tripId: tripId ?? 0),
+                create: (_) => sl<MyTripsProvider>(),
+                child: ChangeNotifierProvider(
+                  create: (_) => sl<PaymentProvider>(),
+                  child: TripDetailsPage(tripId: tripId ?? 0),
+                ),
               ),
             ),
           ),
@@ -103,7 +111,7 @@ class AppRouter {
                   create: (_) => sl<AddNewCardProvider>(),
                   child: const AddNewCardPage(),
                 );
-          return _slideRoute(page, settings);
+          return _slideRoute(LoginRequiredGate(child: page), settings);
         }
       case AppRoutes.rideRequest:
         ReviewTripUiModel? tripModel;
@@ -127,29 +135,35 @@ class AppRouter {
           tripId = null;
         }
         return _slideRoute(
-          RideRequestPage(
-            tripModel: tripModel!,
-            tripId: tripId,
-            tripTypeId: tripTypeId,
-            fromMyTrips: fromMyTrips,
-            cancellationBookLaterEnabled: cancellationBookLaterEnabled,
+          LoginRequiredGate(
+            child: RideRequestPage(
+              tripModel: tripModel!,
+              tripId: tripId,
+              tripTypeId: tripTypeId,
+              fromMyTrips: fromMyTrips,
+              cancellationBookLaterEnabled: cancellationBookLaterEnabled,
+            ),
           ),
           settings,
         );
       case AppRoutes.map:
         final tripId = settings.arguments as int?;
         return _slideRoute(
-          ChangeNotifierProvider(
-            create: (_) => sl<LocalizationProvider>(),
-            child: MapPage(tripId: tripId ?? 0),
+          LoginRequiredGate(
+            child: ChangeNotifierProvider(
+              create: (_) => sl<LocalizationProvider>(),
+              child: MapPage(tripId: tripId ?? 0),
+            ),
           ),
           settings,
         );
       case AppRoutes.savedLocations:
         return _slideRoute(
-          ChangeNotifierProvider(
-            create: (_) => sl<SavedLocationsProvider>(),
-            child: const SavedLocationsPage(),
+          LoginRequiredGate(
+            child: ChangeNotifierProvider(
+              create: (_) => sl<SavedLocationsProvider>(),
+              child: const SavedLocationsPage(),
+            ),
           ),
           settings,
         );
@@ -166,7 +180,7 @@ class AppRouter {
                   create: (_) => sl<SavedLocationsProvider>(),
                   child: const AddNewPlacePage(),
                 );
-          return _slideRoute(page, settings);
+          return _slideRoute(LoginRequiredGate(child: page), settings);
         }
       case AppRoutes.locationPicker:
         {
@@ -181,7 +195,7 @@ class AppRouter {
                   create: (_) => sl<SavedLocationsProvider>(),
                   child: const LocationPickerPage(),
                 );
-          return _slideRoute(page, settings);
+          return _slideRoute(LoginRequiredGate(child: page), settings);
         }
       case AppRoutes.saveDetails:
         {
@@ -202,7 +216,7 @@ class AppRouter {
                   create: (_) => sl<SavedLocationsProvider>(),
                   child: detailsPage,
                 );
-          return _slideRoute(page, settings);
+          return _slideRoute(LoginRequiredGate(child: page), settings);
         }
       default:
         return MaterialPageRoute(

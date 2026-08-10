@@ -28,8 +28,13 @@ class MyTripsProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final customerId =
-        _authLocalService.getUserId() ?? AppConst.fallbackCustomerId;
+    final customerId = _authLocalService.getCustomerId();
+    if (customerId == null) {
+      _loading = false;
+      _errorMessage = AppConst.loginRequiredMessage;
+      notifyListeners();
+      return;
+    }
     final response = await _customerTripsRepository.getCustomerTripsHistory(
       customerId,
     );

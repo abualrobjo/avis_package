@@ -717,8 +717,8 @@ class ServicesProvider extends ChangeNotifier {
   }
 
   Future<LatestTripRateModel?> loadCheckLatestTripRate() async {
-    final customerId =
-        _authLocalService.getUserId() ?? AppConst.fallbackCustomerId;
+    final customerId = _authLocalService.getCustomerId();
+    if (customerId == null) return null;
     final result = await _latestTripRateService.checkLatestTripRate(customerId);
     if (_disposed) return null;
     if (result.isSuccess &&
@@ -738,8 +738,8 @@ class ServicesProvider extends ChangeNotifier {
   }
 
   Future<void> loadCustomerInfo() async {
-    final customerId =
-        _authLocalService.getUserId() ?? AppConst.fallbackCustomerId;
+    final customerId = _authLocalService.getCustomerId();
+    if (customerId == null) return;
     final result = await _customerInfoService.getCustomerInfo(customerId);
     if (_disposed) return;
     if (result.isSuccess) {
@@ -749,8 +749,8 @@ class ServicesProvider extends ChangeNotifier {
   }
 
   Future<void> loadCustomerSavedPlaces() async {
-    final customerId =
-        _authLocalService.getUserId() ?? AppConst.fallbackCustomerId;
+    final customerId = _authLocalService.getCustomerId();
+    if (customerId == null) return;
 
     String lat = '';
     String lng = '';
@@ -875,8 +875,8 @@ class ServicesProvider extends ChangeNotifier {
     }
     final newPickupZoneId = zoneResponse.data.pickupZoneId ?? 0;
     final newDropZoneId = zoneResponse.data.dropZoneId ?? 0;
-    final customerId =
-        _authLocalService.getUserId() ?? AppConst.fallbackCustomerId;
+    final customerId = _authLocalService.getCustomerId();
+    if (customerId == null) return null;
     final request = VehicleClassesPriceRequest(
       tripId: tripTypeId,
       customerId: customerId,

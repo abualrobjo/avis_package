@@ -62,12 +62,21 @@ class _RedeemLoyaltyPointsBottomSheetState
   int _maxRedeemablePoints = 0;
   int _minimumPointsValueForTransfer = 0;
 
-  int get _customerId =>
-      sl<AuthLocalService>().getUserId() ?? AppConst.fallbackCustomerId;
+  int? get _customerId => sl<AuthLocalService>().getCustomerId();
 
   @override
   void initState() {
     super.initState();
+    if (_customerId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppConst.loginRequiredMessage)),
+        );
+      });
+      return;
+    }
     final fromArgs = widget.totalLoyalityPoints != null &&
         widget.maxRedeemablePoints != null &&
         widget.minimumPointsValueForTransfer != null;
@@ -83,7 +92,9 @@ class _RedeemLoyaltyPointsBottomSheetState
   }
 
   Future<void> _loadCustomerInfo() async {
-    final response = await sl<CustomerInfoService>().getCustomerInfo(_customerId);
+    final customerId = _customerId;
+    if (customerId == null) return;
+    final response = await sl<CustomerInfoService>().getCustomerInfo(customerId);
     if (!mounted) return;
     setState(() {
       _loadingInfo = false;
@@ -114,7 +125,7 @@ class _RedeemLoyaltyPointsBottomSheetState
     setState(() => _loading = true);
     final request = GenerateCustomerLoyaltyPromoCodeRequest(
       createdBy: 0,
-      fkCustomerId: _customerId,
+      fkCustomerId: _customerId!,
       pointsAmount: _pointsCount,
     );
     final response = await sl<CustomerLoyaltyPromoCodeService>()

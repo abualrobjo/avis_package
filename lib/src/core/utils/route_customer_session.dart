@@ -1,11 +1,11 @@
-import 'package:avis_package/src/core/services/app_auth/auth_local_service.dart';
-import 'package:avis_package/src/core/services/di_service.dart';
-import 'package:avis_package/src/core/utils/constants/app_const/app_const.dart';
-
-/// Applies `customerId` from host route arguments so existing code that uses
-/// `AuthLocalService.getUserId() ?? AppConst.fallbackCustomerId` works unchanged.
+/// Holds the customer id passed from the host app (home page) for the current session.
 class RouteCustomerSession {
   RouteCustomerSession._();
+
+  static int? _routeCustomerId;
+
+  /// Customer id from the latest route navigation (not persisted storage).
+  static int? get currentCustomerId => _routeCustomerId;
 
   static int? parseCustomerId(Object? arguments) {
     if (arguments is Map<String, dynamic>) {
@@ -30,8 +30,6 @@ class RouteCustomerSession {
   static void applyFromRouteArguments(Object? arguments) {
     final id = parseCustomerId(arguments);
     if (id == null) return;
-
-    AppConst.fallbackCustomerId = id;
-    sl<AuthLocalService>().saveUserId(id);
+    _routeCustomerId = id;
   }
 }

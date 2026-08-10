@@ -26,6 +26,7 @@ export 'success_dialog.dart';
 export 'cancel_trip_reason_dialog.dart';
 export 'add_promo_code_bottom_sheet.dart';
 export 'redeem_loyalty_points_bottom_sheet.dart';
+export 'login_required_gate.dart';
 export 'counter_widget.dart';
 export 'draggable_map_card.dart';
 export 'driver_card.dart';

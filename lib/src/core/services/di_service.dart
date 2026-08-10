@@ -146,6 +146,10 @@ Future<void> init() async {
   // ======================
   // Repositories
   // ======================
+  sl.registerLazySingleton<FirebaseChatAuthService>(
+    () => FirebaseChatAuthService(),
+  );
+
   sl.registerLazySingleton<ChatRepository>(() => ChatRepositoryImpl());
 
   sl.registerLazySingleton<CustomerSavedPlacesRepository>(
@@ -171,7 +175,13 @@ Future<void> init() async {
   // ======================
   // Providers
   // ======================
-  sl.registerFactory<ChatProvider>(() => ChatProvider(sl<ChatRepository>()));
+  sl.registerFactory<ChatProvider>(
+    () => ChatProvider(
+      sl<ChatRepository>(),
+      sl<AuthLocalService>(),
+      sl<FirebaseChatAuthService>(),
+    ),
+  );
 
   sl.registerLazySingleton<SplashProvider>(() => SplashProvider());
 
