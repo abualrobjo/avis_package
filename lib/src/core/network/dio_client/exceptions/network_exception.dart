@@ -32,68 +32,73 @@ sealed class NetworkException implements Exception {
     final response = dioException.response;
     final statusCode = response?.statusCode;
 
-    switch (dioException.type) {
-      case DioExceptionType.connectionTimeout:
-      case DioExceptionType.sendTimeout:
-      case DioExceptionType.receiveTimeout:
-        return TimeoutException(
-          message:
-              'Connection timed out. Please check your internet connection.',
-          originalError: dioException,
-          stackTrace: dioException.stackTrace,
-        );
+    final type = dioException.type;
+    final isTimeout = type == DioExceptionType.connectionTimeout ||
+        type == DioExceptionType.sendTimeout ||
+        type == DioExceptionType.receiveTimeout ||
+        type.name == 'transformTimeout';
 
-      case DioExceptionType.connectionError:
-        if (dioException.error is SocketException) {
-          return NoInternetException(
-            message:
-                'No internet connection. Please check your network settings.',
-            originalError: dioException,
-            stackTrace: dioException.stackTrace,
-          );
-        }
-        return ConnectionException(
-          message: 'Failed to connect to server. Please try again.',
-          originalError: dioException,
-          stackTrace: dioException.stackTrace,
-        );
-
-      case DioExceptionType.badCertificate:
-        return CertificateException(
-          message: 'SSL certificate verification failed.',
-          originalError: dioException,
-          stackTrace: dioException.stackTrace,
-        );
-
-      case DioExceptionType.badResponse:
-        return _createFromStatusCode(
-          statusCode: statusCode,
-          response: response,
-          dioException: dioException,
-        );
-
-      case DioExceptionType.cancel:
-        return RequestCancelledException(
-          message: 'Request was cancelled.',
-          originalError: dioException,
-          stackTrace: dioException.stackTrace,
-        );
-
-      case DioExceptionType.unknown:
-        if (dioException.error is SocketException) {
-          return NoInternetException(
-            message:
-                'No internet connection. Please check your network settings.',
-            originalError: dioException,
-            stackTrace: dioException.stackTrace,
-          );
-        }
-        return UnknownException(
-          message: 'An unexpected error occurred. Please try again.',
-          originalError: dioException,
-          stackTrace: dioException.stackTrace,
-        );
+    if (isTimeout) {
+      return TimeoutException(
+        message: 'Connection timed out. Please check your internet connection.',
+        originalError: dioException,
+        stackTrace: dioException.stackTrace,
+      );
     }
+
+    if (type == DioExceptionType.connectionError) {
+      if (dioException.error is SocketException) {
+        return NoInternetException(
+          message:
+              'No internet connection. Please check your network settings.',
+          originalError: dioException,
+          stackTrace: dioException.stackTrace,
+        );
+      }
+      return ConnectionException(
+        message: 'Failed to connect to server. Please try again.',
+        originalError: dioException,
+        stackTrace: dioException.stackTrace,
+      );
+    }
+
+    if (type == DioExceptionType.badCertificate) {
+      return CertificateException(
+        message: 'SSL certificate verification failed.',
+        originalError: dioException,
+        stackTrace: dioException.stackTrace,
+      );
+    }
+
+    if (type == DioExceptionType.badResponse) {
+      return _createFromStatusCode(
+        statusCode: statusCode,
+        response: response,
+        dioException: dioException,
+      );
+    }
+
+    if (type == DioExceptionType.cancel) {
+      return RequestCancelledException(
+        message: 'Request was cancelled.',
+        originalError: dioException,
+        stackTrace: dioException.stackTrace,
+      );
+    }
+
+    if (dioException.error is SocketException) {
+      return NoInternetException(
+        message: 'No internet connection. Please check your network settings.',
+        originalError: dioException,
+        stackTrace: dioException.stackTrace,
+      );
+    }
+
+    return UnknownException(
+      message: 'An unexpected error occurred. Please try again.',
+      originalError: dioException,
+      stackTrace: dioException.stackTrace,
+    );
   }
 
   /// Creates the appropriate exception based on HTTP status code.
