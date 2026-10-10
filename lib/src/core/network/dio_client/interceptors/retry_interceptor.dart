@@ -152,6 +152,9 @@ class RetryInterceptor extends Interceptor {
       case DioExceptionType.badCertificate:
       case DioExceptionType.cancel:
         return false;
+
+      default:
+        return false;
     }
   }
 

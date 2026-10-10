@@ -93,6 +93,13 @@ sealed class NetworkException implements Exception {
           originalError: dioException,
           stackTrace: dioException.stackTrace,
         );
+
+      default:
+        return UnknownException(
+          message: 'An unexpected error occurred. Please try again.',
+          originalError: dioException,
+          stackTrace: dioException.stackTrace,
+        );
     }
   }
 
