@@ -93,6 +93,12 @@ class _PlaceSearchFieldWidgetState extends State<PlaceSearchFieldWidget> {
         ..addAll(next);
       _loadingSuggestions = false;
     });
+    unawaited(
+      AnalyticsService.instance.track(
+        AnalyticsEvents.searchPerformed,
+        properties: {'query': query},
+      ),
+    );
   }
 
   Future<void> _onSuggestionTap(PlaceSuggestion suggestion) async {

@@ -17,6 +17,8 @@ Future<void> init() async {
     await dotenv.load(fileName: '.env');
   } catch (_) {}
 
+  await AnalyticsService.instance.initialize();
+
   // Initialize Hive
   final hiveService = HiveServiceImpl();
   await hiveService.init();

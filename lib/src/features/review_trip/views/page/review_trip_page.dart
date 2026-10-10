@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
@@ -21,7 +23,7 @@ import 'package:avis_package/src/features/review_trip/views/page/terms_and_condi
 import 'package:avis_package/src/features/payment/views/payment_screen.dart';
 
 import 'package:avis_package/src/core/_core.dart'
-    show AppConst, AppContextExtension, AppTextStyles, SvgIconWidget, TextWidget, BackArrowWidget, AppSpaces, HorizontalDivider, TripRouteWidget, AppCustomDropdown, AppTextFormFieldComponent, AppRoutes, AvisNavigation, FlightNameModel, KeyboardDoneToolbar;
+    show AnalyticsEvents, AnalyticsService, AppConst, AppContextExtension, AppTextStyles, SvgIconWidget, TextWidget, BackArrowWidget, AppSpaces, HorizontalDivider, TripRouteWidget, AppCustomDropdown, AppTextFormFieldComponent, AppRoutes, AvisNavigation, FlightNameModel, KeyboardDoneToolbar;
 
 class ReviewTripPage extends StatefulWidget {
   const ReviewTripPage({super.key});
@@ -31,6 +33,9 @@ class ReviewTripPage extends StatefulWidget {
 }
 
 class _ReviewTripPageState extends State<ReviewTripPage> {
+  bool _bookingCompleted = false;
+  int? _tripTypeId;
+
   ReviewTripUiModel _modelFromRoute() {
     final args =
         ModalRoute.of(context)?.settings.arguments as ReviewTripPageArgs?;
@@ -48,6 +53,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
       final provider = context.read<ReviewTripProvider>();
       final args =
           ModalRoute.of(context)?.settings.arguments as ReviewTripPageArgs?;
+      _tripTypeId = args?.tripTypeId;
       provider.initialize(args: args, model: _modelFromRoute());
       provider.loadFlightNames('ar');
       provider.loadCustomerInfoForFlightFields();
@@ -112,6 +118,13 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
       );
     }
 
+    _bookingCompleted = true;
+    unawaited(
+      AnalyticsService.instance.track(
+        AnalyticsEvents.bookingCompleted,
+        properties: {'trip_id': tripId},
+      ),
+    );
     await provider.refreshCustomerInfoAfterBooking();
     if (!mounted) return;
 
@@ -130,6 +143,19 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
         'cancellationBookLaterEnabled': cancellationBookLaterEnabled,
       },
     );
+  }
+
+  @override
+  void dispose() {
+    if (!_bookingCompleted) {
+      unawaited(
+        AnalyticsService.instance.track(
+          AnalyticsEvents.cartAbandoned,
+          properties: {'trip_type_id': _tripTypeId},
+        ),
+      );
+    }
+    super.dispose();
   }
 
   Future<void> _openTermsAndConditions() async {

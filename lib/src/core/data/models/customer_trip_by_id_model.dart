@@ -12,13 +12,6 @@ bool? _parseNullableBool(dynamic value) {
   return null;
 }
 
-double? _parseNullableDouble(dynamic value) {
-  if (value == null) return null;
-  if (value is num) return value.toDouble();
-  if (value is String) return double.tryParse(value.trim());
-  return null;
-}
-
 class CustomerTripByIdModel {
   final int tripId;
 
@@ -81,9 +74,6 @@ class CustomerTripByIdModel {
   final int? suitcasesNo;
   final int? tripHours;
 
-  final double? paidAmount;
-  final double? allowedKMs;
-
   const CustomerTripByIdModel({
     required this.tripId,
     this.customerPrimaryName,
@@ -125,8 +115,6 @@ class CustomerTripByIdModel {
     this.tripTypeSecondaryName,
     this.tripTypeId,
     this.tripHours,
-    this.paidAmount,
-    this.allowedKMs,
   });
 
   factory CustomerTripByIdModel.fromJson(Map<String, dynamic> json) {
@@ -199,15 +187,6 @@ class CustomerTripByIdModel {
       suitcasesNo: (json['suitcasesNo'] as num?)?.toInt(),
       tripHours: (json['TripHours'] as num?)?.toInt() ??
           (json['tripHours'] as num?)?.toInt(),
-      paidAmount: _parseNullableDouble(
-        json['paidAmount'] ?? json['PaidAmount'],
-      ),
-      allowedKMs: _parseNullableDouble(
-        json['allowedKMs'] ??
-            json['allowedKms'] ??
-            json['AllowedKMs'] ??
-            json['AllowedKms'],
-      ),
     );
   }
 
@@ -253,20 +232,6 @@ class CustomerTripByIdModel {
   String get tripHoursLabel {
     final hours = tripHoursValue;
     return hours == 1 ? '1 hour' : '$hours hours';
-  }
-
-  String? get paidAmountText => _formatQuantity(paidAmount);
-
-  String? get allowedKMsText {
-    final value = _formatQuantity(allowedKMs);
-    if (value == null) return null;
-    return '$value KM';
-  }
-
-  static String? _formatQuantity(double? value) {
-    if (value == null) return null;
-    if (value == value.roundToDouble()) return value.toInt().toString();
-    return value.toStringAsFixed(2);
   }
 
   /// Class image from [vehicleClassImage].

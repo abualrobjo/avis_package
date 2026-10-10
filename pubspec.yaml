@@ -40,6 +40,9 @@ dependencies:
   connectivity_plus: ^7.1.1
   webview_flutter: ^4.13.1
   open_file: ^3.5.10
+  customer_io: ^4.7.2
+  adjust_sdk: ^5.8.0
+  mixpanel_flutter: ^2.14.0
 
 dev_dependencies:
   flutter_test:

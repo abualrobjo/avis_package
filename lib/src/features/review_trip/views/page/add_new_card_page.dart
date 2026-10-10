@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' show log;
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,8 @@ import 'package:uuid/uuid.dart';
 
 import 'package:avis_package/src/core/_core.dart'
     show
+        AnalyticsEvents,
+        AnalyticsService,
         AppContextExtension,
         AppTextFormFieldComponent,
         AppTextStyles,
@@ -82,6 +85,9 @@ class _AddNewCardPageState extends State<AddNewCardPage> {
       context.read<AddNewCardProvider>().addCard(
         _paymentCard,
         saveForLater: _saveForLater,
+      );
+      unawaited(
+        AnalyticsService.instance.track(AnalyticsEvents.paymentInfoEntered),
       );
 
       successDialog(

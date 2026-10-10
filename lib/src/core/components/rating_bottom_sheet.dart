@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -86,6 +88,23 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
     );
 
     if (result) {
+      unawaited(
+        AnalyticsService.instance.track(
+          AnalyticsEvents.ratingSubmitted,
+          properties: {
+            'trip_id': widget.tripId,
+            'rate': _rating,
+          },
+        ),
+      );
+      if (_reviewController.text.trim().isNotEmpty) {
+        unawaited(
+          AnalyticsService.instance.track(
+            AnalyticsEvents.feedbackSubmitted,
+            properties: {'trip_id': widget.tripId},
+          ),
+        );
+      }
       if (mounted) {
         Navigator.pop(context);
       }

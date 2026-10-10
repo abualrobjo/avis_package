@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -24,9 +26,25 @@ class _ServicesPageState extends State<ServicesPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_trackStartup());
       context.read<ServicesProvider>().addListener(_onProviderUpdate);
       _maybeShowRatingSheet();
     });
+  }
+
+  Future<void> _trackStartup() async {
+    final customerId = RouteCustomerSession.currentCustomerId ?? 2914;
+    await AnalyticsService.instance.identifyCustomer(customerId: customerId);
+    await AnalyticsService.instance.trackAppLifecycle();
+    if (!mounted) return;
+    final service = context.read<ServicesProvider>().selectedTripType;
+    await AnalyticsService.instance.track(
+      AnalyticsEvents.serviceType,
+      properties: {
+        'service_type': service?.displayName,
+        'service_type_id': service?.id,
+      },
+    );
   }
 
   @override
@@ -331,6 +349,24 @@ class _ServicesPageState extends State<ServicesPage> {
     }
     final args = p.buildReviewTripArgs();
     if (args != null) {
+      unawaited(
+        AnalyticsService.instance.track(
+          AnalyticsEvents.confirmRide,
+          properties: {
+            'trip_type_id': args.tripTypeId,
+            'vehicle_name': args.vehicles.isEmpty ? null : args.vehicles.first.name,
+          },
+        ),
+      );
+      unawaited(
+        AnalyticsService.instance.track(
+          AnalyticsEvents.checkoutInitiated,
+          properties: {
+            'trip_type_id': args.tripTypeId,
+            'vehicle_name': args.vehicles.isEmpty ? null : args.vehicles.first.name,
+          },
+        ),
+      );
       AvisNavigation.push(context, AppRoutes.reviewTrip, arguments: args);
     }
   }

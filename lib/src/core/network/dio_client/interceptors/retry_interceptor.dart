@@ -131,28 +131,28 @@ class RetryInterceptor extends Interceptor {
       return false;
     }
 
-    final type = err.type;
-    if (type == DioExceptionType.connectionTimeout ||
-        type == DioExceptionType.sendTimeout ||
-        type == DioExceptionType.receiveTimeout ||
-        type.name == 'transformTimeout') {
-      return retryOnTimeout;
-    }
+    // Check error type
+    switch (err.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return retryOnTimeout;
 
-    if (type == DioExceptionType.connectionError) {
-      return retryOnConnectionError;
-    }
+      case DioExceptionType.connectionError:
+        return retryOnConnectionError;
 
-    if (type == DioExceptionType.badResponse) {
-      final statusCode = err.response?.statusCode;
-      return statusCode != null && retryableStatusCodes.contains(statusCode);
-    }
+      case DioExceptionType.badResponse:
+        final statusCode = err.response?.statusCode;
+        return statusCode != null && retryableStatusCodes.contains(statusCode);
 
-    if (type == DioExceptionType.unknown) {
-      return err.error is SocketException;
-    }
+      case DioExceptionType.unknown:
+        // Retry on socket exceptions (network issues)
+        return err.error is SocketException;
 
-    return false;
+      case DioExceptionType.badCertificate:
+      case DioExceptionType.cancel:
+        return false;
+    }
   }
 
   /// Calculates the retry delay with exponential backoff and jitter.

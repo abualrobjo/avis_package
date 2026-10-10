@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -9,7 +11,12 @@ import 'package:avis_package/src/generated/locale_keys.g.dart';
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     RouteCustomerSession.applyFromRouteArguments(settings.arguments);
-
+    final customerId = RouteCustomerSession.currentCustomerId;
+    if (customerId != null) {
+      unawaited(
+        AnalyticsService.instance.identifyCustomer(customerId: customerId),
+      );
+    }
     switch (settings.name) {
       case AppRoutes.splash:
         return _slideRoute(const SplashPage(), settings);

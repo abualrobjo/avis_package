@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:avis_package/src/core/_core.dart';
@@ -274,6 +276,12 @@ class ReviewTripProvider extends ChangeNotifier {
     _capturePromoOriginalPrices();
     _appliedPromoCode = code;
     _appliedPromoDetails = details;
+    unawaited(
+      AnalyticsService.instance.track(
+        AnalyticsEvents.promoCodeApplied,
+        properties: {'promo_code': code},
+      ),
+    );
     notifyListeners();
     fetchChauffeurServicePrice();
   }

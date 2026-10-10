@@ -239,28 +239,6 @@ class _TripDetailsPageState extends State<TripDetailsPage> {
                     ),
                   ),
                 ),
-                if (displayTrip?.paidAmountText != null) ...[
-                  SizedBox(height: 16.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: _TripMetaRow(
-                      icon: 'card',
-                      label: 'Paid Amount',
-                      value: displayTrip!.paidAmountText!,
-                    ),
-                  ),
-                ],
-                if (displayTrip?.allowedKMsText != null) ...[
-                  SizedBox(height: 16.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: _TripMetaRow(
-                      icon: 'destance',
-                      label: 'Allowed KMs',
-                      value: displayTrip!.allowedKMsText!,
-                    ),
-                  ),
-                ],
                 if (displayTrip?.showsTripHours == true) ...[
                   SizedBox(height: 16.h),
                   Padding(
@@ -564,46 +542,6 @@ class _VehicleImageErrorState extends State<_VehicleImageError> {
       Icons.directions_car,
       size: 36.w,
       color: context.colors.tertiaryText,
-    );
-  }
-}
-
-class _TripMetaRow extends StatelessWidget {
-  const _TripMetaRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final String icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SvgIconWidget(
-          name: icon,
-          width: 24.w,
-          height: 24.w,
-          color: context.colors.secondaryText,
-        ),
-        SizedBox(width: 12.w),
-        TextWidget(
-          label,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: context.colors.secondaryText,
-          ),
-        ),
-        SizedBox(width: 8.w),
-        TextWidget(
-          value,
-          style: AppTextStyles.bodyMediumBold.copyWith(
-            color: context.colors.primaryText,
-          ),
-        ),
-      ],
     );
   }
 }

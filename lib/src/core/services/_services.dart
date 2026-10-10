@@ -78,6 +78,9 @@ export 'local_database/payment_cards_local_service.dart';
 // firebase chat auth (custom token -> FirebaseAuth uid)
 export 'firebase_chat_auth_service.dart';
 
+// Customer.io, Adjust, and Mixpanel
+export 'analytics/analytics_service.dart';
+
 // service locator
 export 'di_service.dart';
 

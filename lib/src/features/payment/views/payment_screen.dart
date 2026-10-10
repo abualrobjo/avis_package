@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import 'package:avis_package/src/core/services/analytics/analytics_service.dart';
 import 'package:avis_package/src/core/utils/constants/app_const/app_const.dart';
 import 'package:avis_package/src/core/components/app_web_view_app_bar.dart';
 
@@ -118,6 +119,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final result = _evaluatePaymentRedirect(url);
     if (result == null) return;
     _paymentFlowCompleted = true;
+    unawaited(
+      AnalyticsService.instance.track(
+        AnalyticsEvents.paymentStatus,
+        properties: {'status': result ? 'success' : 'failed'},
+      ),
+    );
     _loadingFallbackTimer?.cancel();
     _terminalPollTimer?.cancel();
     _terminalPollTimer = null;
@@ -201,6 +208,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(
+      AnalyticsService.instance.track(AnalyticsEvents.paymentInfoEntered),
+    );
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(

@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:avis_package/src/core/_core.dart'
     show
+        AnalyticsEvents,
+        AnalyticsService,
         AppButton,
         AppContextExtension,
         AppCornerRadius,
@@ -155,6 +159,12 @@ class CancelTripButton extends StatelessWidget {
     if (!context.mounted) return;
 
     if (provider.cancellationStatus == 1) {
+      unawaited(
+        AnalyticsService.instance.track(
+          AnalyticsEvents.bookingCancelled,
+          properties: {'trip_id': trip.tripId},
+        ),
+      );
       successDialog(
         context,
         message: 'Your ride has been canceled.',

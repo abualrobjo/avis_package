@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' show log;
 
 import 'package:flutter/material.dart';
@@ -537,6 +538,7 @@ class ServicesProvider extends ChangeNotifier {
       }
     }
     invalidateVehicleList();
+    _trackTripType();
   }
 
   void onRoundTripCheckboxChanged(bool? value) {
@@ -550,6 +552,7 @@ class ServicesProvider extends ChangeNotifier {
     } else {
       _notify();
     }
+    _trackTripType();
   }
 
   void selectServiceTypeIndex(int index) {
@@ -557,6 +560,16 @@ class ServicesProvider extends ChangeNotifier {
     selectedServiceTypeIndex = index;
     resetFormValues();
     clampDateAndTimeToMinBooking();
+    final service = selectedTripType;
+    unawaited(
+      AnalyticsService.instance.track(
+        AnalyticsEvents.serviceType,
+        properties: {
+          'service_type': service?.displayName,
+          'service_type_id': service?.id,
+        },
+      ),
+    );
   }
 
   void setDurationHours(int v) {
@@ -575,6 +588,16 @@ class ServicesProvider extends ChangeNotifier {
     if (index < 0 || index >= vehicleClasses.length) return;
     if (vehicleClasses[index].isSoldOut) return;
     selectedVehicleClassIndex = index;
+    final vehicle = vehicleClasses[index];
+    unawaited(
+      AnalyticsService.instance.track(
+        AnalyticsEvents.vehicleSelected,
+        properties: {
+          'class_id': vehicle.classId,
+          'vehicle_name': vehicle.name,
+        },
+      ),
+    );
     _notify();
   }
 
@@ -608,6 +631,7 @@ class ServicesProvider extends ChangeNotifier {
     ensureFlightDateAfterPickup();
     ensureReturnAfterPickup();
     invalidateVehicleList();
+    _trackDatesSelected();
   }
 
   void applyPickedTime(TimeOfDay slot) {
@@ -618,6 +642,7 @@ class ServicesProvider extends ChangeNotifier {
     ensureFlightDateAfterPickup();
     ensureReturnAfterPickup();
     invalidateVehicleList();
+    _trackDatesSelected();
   }
 
   void applyPickedReturnDate(DateTime picked) {
@@ -636,6 +661,7 @@ class ServicesProvider extends ChangeNotifier {
     }
     ensureReturnAfterPickup();
     invalidateVehicleList();
+    _trackDatesSelected();
   }
 
   void applyPickedReturnTime(TimeOfDay slot) {
@@ -644,6 +670,7 @@ class ServicesProvider extends ChangeNotifier {
       DateTime(2000, 1, 1, slot.hour, slot.minute),
     );
     invalidateVehicleList();
+    _trackDatesSelected();
   }
 
   String? applyFlightDateTime(DateTime pickedFlightDateTime) {
@@ -665,13 +692,13 @@ class ServicesProvider extends ChangeNotifier {
       fromPlaceName = placeName;
       fromLatLng = latLng;
       pickupFromAirportList = false;
-      invalidateVehicleList();
-      return;
+    } else {
+      dropOffPlaceName = placeName;
+      dropOffLatLng = latLng;
+      dropOffFromAirportList = false;
     }
-    dropOffPlaceName = placeName;
-    dropOffLatLng = latLng;
-    dropOffFromAirportList = false;
     invalidateVehicleList();
+    _trackLocationSelected(placeName: placeName, isPickup: isFrom);
   }
 
   Future<String?> applyPlaceFromSheet({
@@ -685,6 +712,7 @@ class ServicesProvider extends ChangeNotifier {
       fromLatLng = coord;
       pickupFromAirportList = fromAirportList;
       invalidateVehicleList();
+      _trackLocationSelected(placeName: name, isPickup: true);
       return null;
     }
     if (coord != null && fromLatLng != null) {
@@ -695,7 +723,51 @@ class ServicesProvider extends ChangeNotifier {
     dropOffLatLng = coord;
     dropOffFromAirportList = fromAirportList;
     invalidateVehicleList();
+    _trackLocationSelected(placeName: name, isPickup: false);
     return null;
+  }
+
+  void _trackDatesSelected() {
+    unawaited(
+      AnalyticsService.instance.track(
+        AnalyticsEvents.datesSelected,
+        properties: {
+          'pickup_date': dateController.text,
+          'pickup_time': timeController.text,
+          if (showsReturnDateTimeRow) 'return_date': returnDateController.text,
+          if (showsReturnDateTimeRow) 'return_time': returnTimeController.text,
+        },
+      ),
+    );
+  }
+
+  void _trackTripType() {
+    unawaited(
+      AnalyticsService.instance.track(
+        AnalyticsEvents.tripType,
+        properties: {
+          'trip_type': selectedTripType?.displayName,
+          'trip_type_id': bookingTripTypeId,
+          'round_trip': roundTripCheckboxSelected,
+          'by_day': isFullDay,
+        },
+      ),
+    );
+  }
+
+  void _trackLocationSelected({
+    required String placeName,
+    required bool isPickup,
+  }) {
+    unawaited(
+      AnalyticsService.instance.track(
+        AnalyticsEvents.locationSelected,
+        properties: {
+          'place_name': placeName,
+          'is_pickup': isPickup,
+        },
+      ),
+    );
   }
 
   Future<void> loadAllowedPolygons() async {
@@ -744,6 +816,19 @@ class ServicesProvider extends ChangeNotifier {
     if (_disposed) return;
     if (result.isSuccess) {
       customerInfo = result.data;
+      final info = result.data;
+      final phone = [
+        info.countryCode?.trim(),
+        info.customerPhoneNumber?.trim(),
+      ].whereType<String>().where((part) => part.isNotEmpty).join();
+      unawaited(
+        AnalyticsService.instance.identifyCustomer(
+          customerId: customerId,
+          name: info.customerPrimaryName,
+          email: info.customerEmail,
+          phone: phone.isEmpty ? null : phone,
+        ),
+      );
       _notify();
     }
   }
@@ -904,6 +989,12 @@ class ServicesProvider extends ChangeNotifier {
       vehicleClasses = result.data;
       selectedVehicleClassIndex = _firstAvailableVehicleClassIndex();
       selectedCurrencyIndex = 0;
+      unawaited(
+        AnalyticsService.instance.track(
+          AnalyticsEvents.chooseVehicle,
+          properties: {'trip_type_id': tripTypeId},
+        ),
+      );
       _notify();
       return null;
     }
