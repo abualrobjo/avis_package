@@ -63,7 +63,7 @@ class AnalyticsEvents {
   static const serviceType = AnalyticsEvent(
     'Service_type',
     mixpanel: true,
-    adjust: false,
+    adjust: true,
     customerIo: true,
   );
   static const locationSelected = AnalyticsEvent(
@@ -87,7 +87,7 @@ class AnalyticsEvents {
   static const chooseVehicle = AnalyticsEvent(
     'Choose_vehicle',
     mixpanel: true,
-    adjust: false,
+    adjust: true,
     customerIo: true,
   );
   static const searchPerformed = AnalyticsEvent(
@@ -161,7 +161,7 @@ class AnalyticsEvents {
   static const paymentStatus = AnalyticsEvent(
     'Paymnet_status',
     mixpanel: true,
-    adjust: false,
+    adjust: true,
     customerIo: true,
   );
   static const rentalCompleted = AnalyticsEvent(
