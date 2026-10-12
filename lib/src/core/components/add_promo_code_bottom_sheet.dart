@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:avis_package/src/core/_core.dart'
@@ -14,7 +16,9 @@ import 'package:avis_package/src/core/_core.dart'
         CheckPromoCodeValidityRequest,
         CheckPromoCodeValidityDetails,
         AuthLocalService,
-        CustomerInfoService;
+        CustomerInfoService,
+        AnalyticsEvents,
+        AnalyticsService;
 import 'bottom_sheet_handle.dart';
 
 class AddPromoCodeBottomSheet extends StatefulWidget {
@@ -122,6 +126,17 @@ class _AddPromoCodeBottomSheetState extends State<AddPromoCodeBottomSheet> {
         );
       }
     } else {
+      unawaited(
+        AnalyticsService.instance.track(
+          AnalyticsEvents.promoCodeApplied,
+          properties: {
+            'promo_code': code,
+            'discount_amount': 0,
+            'discount_type': 'amount',
+            'is_valid': false,
+          },
+        ),
+      );
       setState(() => _errorMessage = 'Invalid promo code');
     }
   }

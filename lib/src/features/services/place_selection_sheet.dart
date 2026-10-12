@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:avis_package/src/core/_core.dart';
-import 'package:avis_package/src/features/services/place_search_helper.dart';
-import 'package:avis_package/src/features/services/widgets/place_search_field_widget.dart';
+import 'place_search_helper.dart';
+import 'widgets/place_search_field_widget.dart';
 
 typedef PlaceSelectionHandler = Future<void> Function({
   required String name,
@@ -44,12 +44,13 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
   String? _errorMessage;
 
   Future<void> _handleSearchSuggestion(PlaceSuggestion suggestion) async {
-    setState(() => _errorMessage = null);
+    if (mounted) setState(() => _errorMessage = null);
 
     final latLng = await PlaceSearchHelper.resolveSuggestion(suggestion);
-    if (!mounted) return;
     if (latLng == null) {
-      setState(() => _errorMessage = 'Could not find this location');
+      if (mounted) {
+        setState(() => _errorMessage = 'Could not find this location');
+      }
       return;
     }
 
@@ -57,15 +58,16 @@ class _PlaceSelectionSheetState extends State<PlaceSelectionSheet> {
       latLng,
       widget.allowedPolygons,
     )) {
-      setState(
-        () => _errorMessage = 'This address is outside the service area',
-      );
+      if (mounted) {
+        setState(
+          () => _errorMessage = 'This address is outside the service area',
+        );
+      }
       return;
     }
 
     if (widget.validateLocation != null) {
       final allowed = await widget.validateLocation!(latLng);
-      if (!mounted) return;
       if (!allowed) return;
     }
 

@@ -36,6 +36,9 @@ class ServicesProvider extends ChangeNotifier {
         DateTime(2000, 1, 1, returnTime.hour, returnTime.minute),
       ),
     );
+    fromController = TextEditingController();
+    dropOffController = TextEditingController();
+    dropOffController.addListener(_onDropOffTextChanged);
   }
 
   final AuthLocalService _authLocalService;
@@ -105,6 +108,10 @@ class ServicesProvider extends ChangeNotifier {
   late final TextEditingController flightDateController;
   late final TextEditingController returnDateController;
   late final TextEditingController returnTimeController;
+  late final TextEditingController fromController;
+  late final TextEditingController dropOffController;
+
+  String? _trackedDropOffSignature;
 
   LatestTripRateModel? pendingRatingTrip;
 
@@ -476,21 +483,22 @@ class ServicesProvider extends ChangeNotifier {
   }
 
   void swapFromAndDropOff() {
-    final from = fromPlaceName;
-    fromPlaceName = dropOffPlaceName;
-    dropOffPlaceName = from;
+    final from = fromController.text;
+    final dropOff = dropOffController.text;
     final fromCoord = fromLatLng;
     fromLatLng = dropOffLatLng;
     dropOffLatLng = fromCoord;
     final pickupAirport = pickupFromAirportList;
     pickupFromAirportList = dropOffFromAirportList;
     dropOffFromAirportList = pickupAirport;
+    _fillPickupController(dropOff);
+    _fillDropOffController(from);
     invalidateVehicleList();
   }
 
   void resetFormValues() {
-    fromPlaceName = '';
-    dropOffPlaceName = '';
+    _fillPickupController('');
+    _fillDropOffController('');
     fromLatLng = null;
     dropOffLatLng = null;
     pickupFromAirportList = false;
@@ -560,14 +568,10 @@ class ServicesProvider extends ChangeNotifier {
     selectedServiceTypeIndex = index;
     resetFormValues();
     clampDateAndTimeToMinBooking();
-    final service = selectedTripType;
     unawaited(
       AnalyticsService.instance.track(
         AnalyticsEvents.serviceType,
-        properties: {
-          'service_type': service?.displayName,
-          'service_type_id': service?.id,
-        },
+        properties: {'Ride_type': selectedTripType?.displayName},
       ),
     );
   }
@@ -587,17 +591,9 @@ class ServicesProvider extends ChangeNotifier {
   void selectVehicleClassIndex(int index) {
     if (index < 0 || index >= vehicleClasses.length) return;
     if (vehicleClasses[index].isSoldOut) return;
+    if (index == selectedVehicleClassIndex) return;
     selectedVehicleClassIndex = index;
-    final vehicle = vehicleClasses[index];
-    unawaited(
-      AnalyticsService.instance.track(
-        AnalyticsEvents.vehicleSelected,
-        properties: {
-          'class_id': vehicle.classId,
-          'vehicle_name': vehicle.name,
-        },
-      ),
-    );
+    _trackVehicleSelected(vehicleClasses[index]);
     _notify();
   }
 
@@ -689,16 +685,15 @@ class ServicesProvider extends ChangeNotifier {
     required LatLng latLng,
   }) {
     if (isFrom) {
-      fromPlaceName = placeName;
+      _fillPickupController(placeName);
       fromLatLng = latLng;
       pickupFromAirportList = false;
     } else {
-      dropOffPlaceName = placeName;
       dropOffLatLng = latLng;
       dropOffFromAirportList = false;
+      _fillDropOffController(placeName);
     }
     invalidateVehicleList();
-    _trackLocationSelected(placeName: placeName, isPickup: isFrom);
   }
 
   Future<String?> applyPlaceFromSheet({
@@ -708,34 +703,38 @@ class ServicesProvider extends ChangeNotifier {
     bool fromAirportList = false,
   }) async {
     if (isFrom) {
-      fromPlaceName = name;
+      _fillPickupController(name);
       fromLatLng = coord;
       pickupFromAirportList = fromAirportList;
       invalidateVehicleList();
-      _trackLocationSelected(placeName: name, isPickup: true);
       return null;
     }
     if (coord != null && fromLatLng != null) {
       final error = await checkDropOffAllowed(coord);
       if (error != null) return error;
     }
-    dropOffPlaceName = name;
     dropOffLatLng = coord;
     dropOffFromAirportList = fromAirportList;
+    _fillDropOffController(name);
     invalidateVehicleList();
-    _trackLocationSelected(placeName: name, isPickup: false);
     return null;
   }
 
   void _trackDatesSelected() {
+    final start = selectedPickupDateTime;
+    final end = _analyticsEndDateTime(start);
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    final startDate = DateTime(start.year, start.month, start.day);
+    final leadDays = startDate.difference(todayDate).inDays;
     unawaited(
       AnalyticsService.instance.track(
         AnalyticsEvents.datesSelected,
         properties: {
-          'pickup_date': dateController.text,
-          'pickup_time': timeController.text,
-          if (showsReturnDateTimeRow) 'return_date': returnDateController.text,
-          if (showsReturnDateTimeRow) 'return_time': returnTimeController.text,
+          'start_date': tripDateTimeApiString,
+          'end_date': _apiDateTime(end),
+          'rental_days': _rentalDayCount(start, end),
+          'lead_time_days': leadDays < 0 ? 0 : leadDays,
         },
       ),
     );
@@ -746,28 +745,177 @@ class ServicesProvider extends ChangeNotifier {
       AnalyticsService.instance.track(
         AnalyticsEvents.tripType,
         properties: {
-          'trip_type': selectedTripType?.displayName,
-          'trip_type_id': bookingTripTypeId,
-          'round_trip': roundTripCheckboxSelected,
-          'by_day': isFullDay,
+          'trip_type': showsReturnDateTimeRow ? 'round_trip' : 'single_trip',
         },
       ),
     );
   }
 
-  void _trackLocationSelected({
-    required String placeName,
-    required bool isPickup,
-  }) {
+  void _fillPickupController(String value) {
+    fromPlaceName = value;
+    if (fromController.text != value) {
+      fromController.text = value;
+    }
+  }
+
+  /// Writes the drop-off field. The controller listener sends Location_Selected.
+  void _fillDropOffController(String value) {
+    dropOffPlaceName = value;
+    if (dropOffController.text != value) {
+      dropOffController.text = value;
+      return;
+    }
+    _onDropOffTextChanged();
+  }
+
+  void _onDropOffTextChanged() {
+    if (_disposed) return;
+    final dropOff = dropOffController.text.trim();
+    final pickup = fromController.text.trim();
+    if (dropOff.isEmpty) {
+      _trackedDropOffSignature = null;
+      return;
+    }
+    final signature = '$pickup|$dropOff';
+    if (signature == _trackedDropOffSignature) return;
+    _trackedDropOffSignature = signature;
+    final city = _airportCity(
+          fromList: dropOffFromAirportList,
+          placeName: dropOff,
+          coord: dropOffLatLng,
+        ) ??
+        _airportCity(
+          fromList: pickupFromAirportList,
+          placeName: pickup,
+          coord: fromLatLng,
+        ) ??
+        _cityFromLabel(dropOff) ??
+        _cityFromLabel(pickup);
+    log(
+      'Location_Selected pickup=$pickup dropOff=$dropOff city=$city',
+      name: 'Analytics',
+    );
     unawaited(
       AnalyticsService.instance.track(
         AnalyticsEvents.locationSelected,
         properties: {
-          'place_name': placeName,
-          'is_pickup': isPickup,
+          'Pick_up_area': pickup.isEmpty ? null : pickup,
+          'Drop_off_area': dropOff,
+          'city': city,
         },
       ),
     );
+  }
+
+  String? _airportCity({
+    required bool fromList,
+    required String placeName,
+    required LatLng? coord,
+  }) {
+    if (!fromList || placeName.isEmpty) return null;
+    for (final airport in airports) {
+      final primary = airport.airportPimaryName?.trim() ?? '';
+      final secondary = airport.airportSecondaryName?.trim() ?? '';
+      var matches = placeName == primary || placeName == secondary;
+      if (!matches && coord != null) {
+        final lat = double.tryParse(airport.latitude ?? '');
+        final lng = double.tryParse(airport.longitude ?? '');
+        if (lat != null && lng != null) {
+          matches = (lat - coord.latitude).abs() < 0.0005 &&
+              (lng - coord.longitude).abs() < 0.0005;
+        }
+      }
+      if (!matches) continue;
+      final city = airport.cityPrimaryName?.trim();
+      if (city != null && city.isNotEmpty) return city;
+      final secondaryCity = airport.citySecondaryName?.trim();
+      if (secondaryCity != null && secondaryCity.isNotEmpty) {
+        return secondaryCity;
+      }
+    }
+    return null;
+  }
+
+  String? _cityFromLabel(String label) {
+    final parts = label
+        .split(RegExp(r'[,،]'))
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .toList();
+    if (parts.length >= 3) return parts[parts.length - 2];
+    if (parts.length == 2) return parts.first;
+    return null;
+  }
+
+  DateTime _analyticsEndDateTime(DateTime start) {
+    if (showsReturnDateTimeRow) return selectedReturnDateTime;
+    final byDay =
+        (selectedTripType?.displayCheckBoxIsByDay ?? false) && isFullDay;
+    return start.add(Duration(hours: byDay ? durationHours * 24 : durationHours));
+  }
+
+  int _rentalDayCount(DateTime start, DateTime end) {
+    final days = DateTime(end.year, end.month, end.day)
+        .difference(DateTime(start.year, start.month, start.day))
+        .inDays;
+    return days < 1 ? 1 : days;
+  }
+
+  String _apiDateTime(DateTime value) {
+    final year = value.year.toString().padLeft(4, '0');
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    final hour = value.hour.toString().padLeft(2, '0');
+    final minute = value.minute.toString().padLeft(2, '0');
+    return '$year-$month-${day}T$hour:$minute:00';
+  }
+
+  String _rideDurationLabel() {
+    final byDay =
+        (selectedTripType?.displayCheckBoxIsByDay ?? false) && isFullDay;
+    if (byDay) {
+      return durationHours == 1 ? '1 day' : '$durationHours days';
+    }
+    return durationHours == 1 ? '1 hour' : '$durationHours hours';
+  }
+
+  Map<String, dynamic> _vehicleSelectedProperties(
+    VehicleClassPriceModel vehicle,
+  ) {
+    final displayPrice = vehicle.priceForCurrency(selectedCurrencyCode);
+    return {
+      'car_class': vehicle.name,
+      'car_model': vehicle.analyticsModelName,
+      'Price': displayPrice?.total ?? vehicle.total,
+      'vehicle_id': vehicle.classId,
+    };
+  }
+
+  void _trackVehicleSelected(VehicleClassPriceModel vehicle) {
+    unawaited(
+      AnalyticsService.instance.track(
+        AnalyticsEvents.vehicleSelected,
+        properties: _vehicleSelectedProperties(vehicle),
+      ),
+    );
+  }
+
+  void _trackChooseVehicle(VehicleClassPriceModel? selected) {
+    unawaited(
+      AnalyticsService.instance.track(
+        AnalyticsEvents.chooseVehicle,
+        properties: {
+          'pickup_area': fromPlaceName,
+          'trip_type': showsReturnDateTimeRow ? 'round_trip' : 'single_trip',
+          'drop_off_area': dropOffPlaceName,
+          if (showsReturnDateTimeRow)
+            'Round_Trip_Date': returnTripDateTimeApiString,
+          'Trip_time': timeController.text,
+          'ride_duration': _rideDurationLabel(),
+        },
+      ),
+    );
+    if (selected != null) _trackVehicleSelected(selected);
   }
 
   Future<void> loadAllowedPolygons() async {
@@ -989,12 +1137,10 @@ class ServicesProvider extends ChangeNotifier {
       vehicleClasses = result.data;
       selectedVehicleClassIndex = _firstAvailableVehicleClassIndex();
       selectedCurrencyIndex = 0;
-      unawaited(
-        AnalyticsService.instance.track(
-          AnalyticsEvents.chooseVehicle,
-          properties: {'trip_type_id': tripTypeId},
-        ),
-      );
+      final selected = selectedVehicleClassIndex >= 0
+          ? vehicleClasses[selectedVehicleClassIndex]
+          : null;
+      _trackChooseVehicle(selected);
       _notify();
       return null;
     }
@@ -1158,12 +1304,15 @@ class ServicesProvider extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    dropOffController.removeListener(_onDropOffTextChanged);
     dateController.dispose();
     timeController.dispose();
     flightNumberController.dispose();
     flightDateController.dispose();
     returnDateController.dispose();
     returnTimeController.dispose();
+    fromController.dispose();
+    dropOffController.dispose();
     super.dispose();
   }
 }

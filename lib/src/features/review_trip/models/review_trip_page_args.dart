@@ -73,6 +73,21 @@ class ReviewTripPageArgs {
   final int minimumPointsValueForTransfer;
   final String currencyCode;
 
+  /// Whole days covered by the booking, used by the analytics payload.
+  int get rentalDays {
+    if (isByDay) return durationHours < 1 ? 1 : durationHours;
+    final start = DateTime.tryParse(tripDateTimeApiString);
+    if (start == null) return 1;
+    final parsedReturn = returnTripDateTimeApiString == null
+        ? null
+        : DateTime.tryParse(returnTripDateTimeApiString!);
+    final end = parsedReturn ?? start.add(Duration(hours: durationHours));
+    final days = DateTime(end.year, end.month, end.day)
+        .difference(DateTime(start.year, start.month, start.day))
+        .inDays;
+    return days < 1 ? 1 : days;
+  }
+
   /// Builds options list from trip type visibility: Meet & Assist, On Curb, WiFi.
   List<ReviewTripOptionUiModel> _buildOptions() {
     final t = tripTypeConfig;

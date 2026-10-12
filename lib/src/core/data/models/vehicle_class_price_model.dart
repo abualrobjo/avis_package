@@ -57,6 +57,13 @@ class VehicleClassPriceModel {
 
   bool get isSoldOut => stopSale || soldOut;
 
+  /// Class label from the price API. [classMiniDesc] is the shorter model text.
+  String get analyticsModelName {
+    final description = classMiniDesc?.trim();
+    if (description != null && description.isNotEmpty) return description;
+    return name;
+  }
+
   factory VehicleClassPriceModel.fromJson(Map<String, dynamic> json) {
     final rawList = json['displayPrices'] as List<dynamic>?;
     final displayPrices = rawList != null

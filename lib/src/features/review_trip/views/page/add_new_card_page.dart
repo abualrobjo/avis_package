@@ -87,7 +87,10 @@ class _AddNewCardPageState extends State<AddNewCardPage> {
         saveForLater: _saveForLater,
       );
       unawaited(
-        AnalyticsService.instance.track(AnalyticsEvents.paymentInfoEntered),
+        AnalyticsService.instance.track(
+          AnalyticsEvents.paymentInfoEntered,
+          properties: {'payment_type': 'card'},
+        ),
       );
 
       successDialog(

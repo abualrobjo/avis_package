@@ -11,16 +11,16 @@ import 'from_location_icon.dart';
 class LocationFieldsWithSwapWidget extends StatelessWidget {
   const LocationFieldsWithSwapWidget({
     super.key,
-    required this.fromPlaceName,
-    required this.dropOffPlaceName,
+    required this.fromController,
+    required this.dropOffController,
     required this.onFromTap,
     required this.onDropOffTap,
     required this.onSwap,
     this.showDropOffAndSwap = true,
   });
 
-  final String fromPlaceName;
-  final String dropOffPlaceName;
+  final TextEditingController fromController;
+  final TextEditingController dropOffController;
   final VoidCallback onFromTap;
   final VoidCallback onDropOffTap;
   final VoidCallback onSwap;
@@ -37,7 +37,7 @@ class LocationFieldsWithSwapWidget extends StatelessWidget {
           children: [
             LocationTapContainer(
               label: 'From',
-              value: fromPlaceName,
+              value: fromController.text,
               placeholder: 'Pickup location',
               prefixIcon: FromLocationIcon(colors: context.colors),
               onTap: onFromTap,
@@ -46,7 +46,7 @@ class LocationFieldsWithSwapWidget extends StatelessWidget {
               SizedBox(height: 8.h),
               LocationTapContainer(
                 label: 'Drop-off',
-                value: dropOffPlaceName,
+                value: dropOffController.text,
                 placeholder: 'Drop-off location?',
                 prefixIcon: SvgIconWidget(
                   name: 'location',

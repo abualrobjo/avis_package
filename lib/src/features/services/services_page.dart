@@ -40,10 +40,7 @@ class _ServicesPageState extends State<ServicesPage> {
     final service = context.read<ServicesProvider>().selectedTripType;
     await AnalyticsService.instance.track(
       AnalyticsEvents.serviceType,
-      properties: {
-        'service_type': service?.displayName,
-        'service_type_id': service?.id,
-      },
+      properties: {'Ride_type': service?.displayName},
     );
   }
 
@@ -349,12 +346,20 @@ class _ServicesPageState extends State<ServicesPage> {
     }
     final args = p.buildReviewTripArgs();
     if (args != null) {
+      final vehicle = args.vehicles.isEmpty ? null : args.vehicles.first;
       unawaited(
         AnalyticsService.instance.track(
           AnalyticsEvents.confirmRide,
           properties: {
-            'trip_type_id': args.tripTypeId,
-            'vehicle_name': args.vehicles.isEmpty ? null : args.vehicles.first.name,
+            'car_class': vehicle?.name,
+            'car_model': vehicle?.analyticsModelName,
+            'total_amount': vehicle?.total,
+            'currency': args.currencyCode,
+            'pick_up_location': args.fromPlaceName,
+            'Drop-off_location': args.dropOffPlaceName,
+            'Time': args.time,
+            'Date': args.date,
+            'trip_type': args.isRoundTrip ? 'round_trip' : 'single_trip',
           },
         ),
       );
@@ -488,8 +493,8 @@ class _ServicesPageState extends State<ServicesPage> {
                               _buildServiceTypeTabs(context, p),
                               SizedBox(height: 20.h),
                               LocationFieldsWithSwapWidget(
-                                fromPlaceName: p.fromPlaceName,
-                                dropOffPlaceName: p.dropOffPlaceName,
+                                fromController: p.fromController,
+                                dropOffController: p.dropOffController,
                                 onFromTap: () =>
                                     _showPlaceSelectionSheet(p, isFrom: true),
                                 onDropOffTap: () {

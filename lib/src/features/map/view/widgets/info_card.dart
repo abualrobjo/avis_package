@@ -159,10 +159,19 @@ class CancelTripButton extends StatelessWidget {
     if (!context.mounted) return;
 
     if (provider.cancellationStatus == 1) {
+      final daysBeforePickup = trip.tripDateTime
+          ?.difference(DateTime.now())
+          .inDays
+          .clamp(0, 100000);
       unawaited(
         AnalyticsService.instance.track(
           AnalyticsEvents.bookingCancelled,
-          properties: {'trip_id': trip.tripId},
+          properties: {
+            'booking_id': trip.tripId,
+            'cancellation_reason': reason.displayName,
+            'days_before_pickup': daysBeforePickup,
+            'refund_amount': trip.paidAmount,
+          },
         ),
       );
       successDialog(

@@ -43,6 +43,7 @@ class ReviewTripProvider extends ChangeNotifier {
   double? _promoOriginalTaxAmount;
   String? _appliedPromoCode;
   CheckPromoCodeValidityDetails? _appliedPromoDetails;
+  bool _trackPromoAfterPrice = false;
   String? _appliedLoyaltyCode;
   List<FlightNameModel> _flightNames = [];
   bool _loadingFlightNames = false;
@@ -276,12 +277,7 @@ class ReviewTripProvider extends ChangeNotifier {
     _capturePromoOriginalPrices();
     _appliedPromoCode = code;
     _appliedPromoDetails = details;
-    unawaited(
-      AnalyticsService.instance.track(
-        AnalyticsEvents.promoCodeApplied,
-        properties: {'promo_code': code},
-      ),
-    );
+    _trackPromoAfterPrice = true;
     notifyListeners();
     fetchChauffeurServicePrice();
   }
@@ -507,15 +503,35 @@ class ReviewTripProvider extends ChangeNotifier {
     return enabled;
   }
 
+  Map<String, dynamic> cartAbandonedProperties() {
+    final pageArgs = _args;
+    final base = _model;
+    final vehicle = (pageArgs != null && pageArgs.vehicles.isNotEmpty)
+        ? pageArgs.vehicles.first
+        : null;
+    return {
+      'car_class': vehicle?.name,
+      'total_amount': base == null ? _priceFromApi : displayPrice(base).amount,
+      'pickup_station': pageArgs?.fromPlaceName,
+    };
+  }
+
   Future<void> fetchChauffeurServicePrice() async {
+    final trackPromo = _trackPromoAfterPrice;
+    if (trackPromo) _trackPromoAfterPrice = false;
+
     final pageArgs = _args;
     final tripModel = _model;
     if (pageArgs == null || pageArgs.vehicles.isEmpty || tripModel == null) {
+      if (trackPromo) _emitPromoCodeApplied(discountAmount: 0);
       return;
     }
 
     final customerId = _authLocalService.getCustomerId();
-    if (customerId == null) return;
+    if (customerId == null) {
+      if (trackPromo) _emitPromoCodeApplied(discountAmount: 0);
+      return;
+    }
 
     final options = buildOptions();
     final haveMeetGreet = _optionValue(options, 'meet');
@@ -579,7 +595,33 @@ class ReviewTripProvider extends ChangeNotifier {
         _priceFromApi = _displayPrices[_selectedDisplayPriceIndex].totalWithTax;
       }
     }
+    if (trackPromo) {
+      final item = selectedDisplayPrice;
+      _emitPromoCodeApplied(
+        discountAmount: item?.discountAmount ?? 0,
+      );
+    }
     notifyListeners();
+  }
+
+  void _emitPromoCodeApplied({required double discountAmount}) {
+    final code = _appliedPromoCode;
+    if (code == null) return;
+    final details = _appliedPromoDetails;
+    final isFreeRide = details?.isFreeRide == true;
+    unawaited(
+      AnalyticsService.instance.track(
+        AnalyticsEvents.promoCodeApplied,
+        properties: {
+          'promo_code': code,
+          'discount_amount': isFreeRide
+              ? (_promoOriginalTotalWithTax ?? discountAmount)
+              : discountAmount,
+          'discount_type': isFreeRide ? 'free_ride' : 'amount',
+          'is_valid': details?.isPromoValid ?? false,
+        },
+      ),
+    );
   }
 
   Future<void> loadFlightNames(String language) async {

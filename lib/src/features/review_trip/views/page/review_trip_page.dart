@@ -20,7 +20,7 @@ import 'package:avis_package/src/features/_features.dart'
 
 import 'package:avis_package/src/features/review_trip/views/page/terms_and_conditions_pdf_page.dart';
 
-import 'package:avis_package/src/features/payment/views/payment_screen.dart';
+import '../../../payment/views/payment_screen.dart';
 
 import 'package:avis_package/src/core/_core.dart'
     show AnalyticsEvents, AnalyticsService, AppConst, AppContextExtension, AppTextStyles, SvgIconWidget, TextWidget, BackArrowWidget, AppSpaces, HorizontalDivider, TripRouteWidget, AppCustomDropdown, AppTextFormFieldComponent, AppRoutes, AvisNavigation, FlightNameModel, KeyboardDoneToolbar;
@@ -34,7 +34,7 @@ class ReviewTripPage extends StatefulWidget {
 
 class _ReviewTripPageState extends State<ReviewTripPage> {
   bool _bookingCompleted = false;
-  int? _tripTypeId;
+  final List<TextEditingController> _checkoutActivityControllers = [];
 
   ReviewTripUiModel _modelFromRoute() {
     final args =
@@ -53,12 +53,35 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
       final provider = context.read<ReviewTripProvider>();
       final args =
           ModalRoute.of(context)?.settings.arguments as ReviewTripPageArgs?;
-      _tripTypeId = args?.tripTypeId;
       provider.initialize(args: args, model: _modelFromRoute());
+      _watchCheckoutActivity(provider);
+      AnalyticsService.instance.startCartAbandonment(
+        payload: provider.cartAbandonedProperties,
+      );
       provider.loadFlightNames('ar');
       provider.loadCustomerInfoForFlightFields();
       provider.fetchChauffeurServicePrice();
     });
+  }
+
+  void _onCheckoutActivity() {
+    AnalyticsService.instance.noteCartActivity();
+  }
+
+  void _watchCheckoutActivity(ReviewTripProvider provider) {
+    if (_checkoutActivityControllers.isNotEmpty) return;
+    _checkoutActivityControllers.addAll([
+      provider.flightNumberController,
+      provider.frequentFlyerNumberController,
+      provider.eTicketNumberController,
+      provider.otherFirstNameController,
+      provider.otherLastNameController,
+      provider.otherEmailController,
+      provider.otherPhoneController,
+    ]);
+    for (final controller in _checkoutActivityControllers) {
+      controller.addListener(_onCheckoutActivity);
+    }
   }
 
   Future<void> _onConfirm(
@@ -82,6 +105,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
     if (!isFreeRide) {
       final paymentUrl =
           '${AppConst.paymentBaseUrl}?TripId=$tripId&f=0&RequestSource=3';
+      AnalyticsService.instance.noteCartActivity(checkoutStep: 'payment');
 
       final isPaymentSuccess = await Navigator.push(
             context,
@@ -93,6 +117,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
 
       if (!mounted) return;
       if (!isPaymentSuccess) {
+        AnalyticsService.instance.noteCartActivity(checkoutStep: 'review_trip');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Payment was not completed. Please try again.'),
@@ -119,10 +144,24 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
     }
 
     _bookingCompleted = true;
+    AnalyticsService.instance.completeCartCheckout();
+    final args = provider.args;
+    final vehicle =
+        (args != null && args.vehicles.isNotEmpty) ? args.vehicles.first : null;
+    final price = provider.displayPrice(model);
     unawaited(
       AnalyticsService.instance.track(
         AnalyticsEvents.bookingCompleted,
-        properties: {'trip_id': tripId},
+        properties: {
+          'booking_id': tripId,
+          'revenue': price.amount,
+          'currency': price.currency,
+          'car_class': vehicle?.name,
+          'station_name': args?.fromPlaceName,
+          'brand': 'Avis',
+          'payment_method': isFreeRide ? 'promo' : 'online_gateway',
+          'rental_days': args?.rentalDays,
+        },
       ),
     );
     await provider.refreshCustomerInfoAfterBooking();
@@ -147,13 +186,11 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
 
   @override
   void dispose() {
+    for (final controller in _checkoutActivityControllers) {
+      controller.removeListener(_onCheckoutActivity);
+    }
     if (!_bookingCompleted) {
-      unawaited(
-        AnalyticsService.instance.track(
-          AnalyticsEvents.cartAbandoned,
-          properties: {'trip_type_id': _tripTypeId},
-        ),
-      );
+      AnalyticsService.instance.cancelCartAbandonment();
     }
     super.dispose();
   }
@@ -611,7 +648,10 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
         final displayPrice = provider.displayPrice(model);
         final isHourlyTrip = args?.tripTypeId == 2;
 
-        return Scaffold(
+        return Listener(
+          behavior: HitTestBehavior.translucent,
+          onPointerDown: (_) => AnalyticsService.instance.noteCartActivity(),
+          child: Scaffold(
           bottomNavigationBar: TripBottomBarWidget(
             price: displayPrice,
             buttonText: provider.confirming
@@ -773,6 +813,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
               const KeyboardDoneToolbar(),
             ],
           ),
+        ),
         );
       },
     );

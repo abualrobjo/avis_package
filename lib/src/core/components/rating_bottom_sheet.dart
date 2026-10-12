@@ -92,16 +92,31 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
         AnalyticsService.instance.track(
           AnalyticsEvents.ratingSubmitted,
           properties: {
-            'trip_id': widget.tripId,
-            'rate': _rating,
+            'booking_id': widget.tripId,
+            'rating_score': _rating,
           },
         ),
       );
-      if (_reviewController.text.trim().isNotEmpty) {
+      final feedback = _reviewController.text.trim();
+      if (feedback.isNotEmpty) {
+        final reason = _selectedReason;
+        final issueCategory = reason == null
+            ? null
+            : (reason.primaryName.trim().isNotEmpty
+                ? reason.primaryName.trim()
+                : reason.name.trim());
         unawaited(
           AnalyticsService.instance.track(
             AnalyticsEvents.feedbackSubmitted,
-            properties: {'trip_id': widget.tripId},
+            properties: {
+              'booking_id': widget.tripId,
+              'feedback_text': feedback,
+              'rating_score': _rating,
+              'issue_category':
+                  (issueCategory == null || issueCategory.isEmpty)
+                      ? null
+                      : issueCategory,
+            },
           ),
         );
       }

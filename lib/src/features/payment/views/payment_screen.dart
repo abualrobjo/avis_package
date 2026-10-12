@@ -122,7 +122,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     unawaited(
       AnalyticsService.instance.track(
         AnalyticsEvents.paymentStatus,
-        properties: {'status': result ? 'success' : 'failed'},
+        properties: {
+          'payment_status': result ? 'success' : 'failed',
+        },
       ),
     );
     _loadingFallbackTimer?.cancel();
@@ -209,7 +211,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void initState() {
     super.initState();
     unawaited(
-      AnalyticsService.instance.track(AnalyticsEvents.paymentInfoEntered),
+      AnalyticsService.instance.track(
+        AnalyticsEvents.paymentInfoEntered,
+        properties: {'payment_type': 'online_gateway'},
+      ),
     );
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)

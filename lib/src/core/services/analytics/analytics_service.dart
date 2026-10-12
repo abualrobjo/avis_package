@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:developer';
+import 'dart:io' show Platform;
 
 import 'package:adjust_sdk/adjust.dart';
 import 'package:adjust_sdk/adjust_config.dart';
@@ -7,9 +9,12 @@ import 'package:customer_io/customer_io.dart';
 import 'package:customer_io/customer_io_config.dart';
 import 'package:customer_io/customer_io_enums.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mixpanel_flutter/mixpanel_flutter.dart';
+
+import 'package:avis_package/src/core/utils/route_customer_session.dart';
 
 /// Which SDKs receive one unified event from the tracking sheet.
 class AnalyticsEvent {
@@ -180,11 +185,23 @@ class AnalyticsService {
   static final AnalyticsService instance = AnalyticsService._();
 
   static const _installFlagKey = 'analytics_app_installed';
+  static const _lastActiveKey = 'analytics_last_active_at';
+  static const cartIdleLimit = Duration(minutes: 15);
 
   Mixpanel? _mixpanel;
   bool _customerIoReady = false;
   bool _adjustReady = false;
   int? _identifiedCustomerId;
+  String? _sessionId;
+
+  Timer? _cartTimer;
+  DateTime? _cartEnteredAt;
+  DateTime? _cartLastActionAt;
+  Map<String, dynamic> Function()? _cartPayload;
+  String _checkoutStep = 'review_trip';
+  bool _cartActive = false;
+  bool _cartFired = false;
+  bool _cartLifecycleBound = false;
 
   Future<void> initialize() async {
     await Future.wait([
@@ -196,12 +213,72 @@ class AnalyticsService {
 
   /// Call after Hive `settings_box` is open.
   Future<void> trackAppLifecycle() async {
-    await track(AnalyticsEvents.appOpened);
+    final now = DateTime.now().toUtc().toIso8601String();
+    String? lastActive;
+    if (Hive.isBoxOpen('settings_box')) {
+      final box = Hive.box('settings_box');
+      final stored = box.get(_lastActiveKey);
+      if (stored is String && stored.trim().isNotEmpty) lastActive = stored;
+      await box.put(_lastActiveKey, now);
+    }
+
+    final loggedIn = _identifiedCustomerId != null ||
+        RouteCustomerSession.currentCustomerId != null;
+    await track(
+      AnalyticsEvents.appOpened,
+      properties: {
+        'session_id': _currentSessionId,
+        'user_status': loggedIn ? 'logged_in' : 'guest',
+        'last_active_date': lastActive,
+      },
+    );
+
     if (!Hive.isBoxOpen('settings_box')) return;
     final box = Hive.box('settings_box');
     if (box.get(_installFlagKey) == true) return;
-    await track(AnalyticsEvents.appInstalled);
+    await track(
+      AnalyticsEvents.appInstalled,
+      properties: {
+        'install_source': 'organic',
+        'platform': _platformName(),
+        'device_os': _deviceOs(),
+      },
+    );
     await box.put(_installFlagKey, true);
+  }
+
+  /// Starts the 15-minute checkout idle timer when the review trip page opens.
+  /// [payload] is read when the timer fires so price and vehicle stay current.
+  void startCartAbandonment({
+    required Map<String, dynamic> Function() payload,
+  }) {
+    _ensureCartLifecycle();
+    _cartPayload = payload;
+    _cartActive = true;
+    _cartFired = false;
+    _checkoutStep = 'review_trip';
+    _cartEnteredAt = DateTime.now();
+    _armCartTimer();
+  }
+
+  /// Any checkout action restarts the 15-minute idle window.
+  void noteCartActivity({String? checkoutStep}) {
+    if (!_cartActive || _cartFired) return;
+    if (checkoutStep != null && checkoutStep.trim().isNotEmpty) {
+      _checkoutStep = checkoutStep.trim();
+    }
+    _armCartTimer();
+  }
+
+  /// Booking finished. Do not send [AnalyticsEvents.cartAbandoned].
+  void completeCartCheckout() {
+    _cartFired = true;
+    _stopCartTimer();
+  }
+
+  /// User left checkout before the idle window elapsed.
+  void cancelCartAbandonment() {
+    _stopCartTimer();
   }
 
   Future<void> identifyCustomer({
@@ -244,7 +321,10 @@ class AnalyticsService {
     if (isNewUser) {
       await track(
         AnalyticsEvents.userLoggedIn,
-        properties: {'customer_id': customerId},
+        properties: {
+          'user_id': customerId,
+          'login_method': 'session',
+        },
       );
     }
   }
@@ -376,5 +456,85 @@ class AnalyticsService {
     final trimmed = value?.trim();
     if (trimmed == null || trimmed.isEmpty) return null;
     return trimmed;
+  }
+
+  String get _currentSessionId =>
+      _sessionId ??= DateTime.now().microsecondsSinceEpoch.toString();
+
+  String _platformName() {
+    if (kIsWeb) return 'web';
+    if (Platform.isIOS) return 'ios';
+    if (Platform.isAndroid) return 'android';
+    return Platform.operatingSystem;
+  }
+
+  String _deviceOs() {
+    if (kIsWeb) return 'web';
+    return Platform.operatingSystemVersion;
+  }
+
+  void _ensureCartLifecycle() {
+    if (_cartLifecycleBound) return;
+    _cartLifecycleBound = true;
+    WidgetsBinding.instance.addObserver(_CartAbandonmentLifecycle(this));
+  }
+
+  void _armCartTimer() {
+    _cartLastActionAt = DateTime.now();
+    _cartTimer?.cancel();
+    _cartTimer = Timer(cartIdleLimit, _fireCartAbandoned);
+  }
+
+  void _stopCartTimer() {
+    _cartActive = false;
+    _cartTimer?.cancel();
+    _cartTimer = null;
+    _cartPayload = null;
+    _cartLastActionAt = null;
+  }
+
+  void _onCartCheckoutResumed() {
+    if (!_cartActive || _cartFired || _cartLastActionAt == null) return;
+    final idle = DateTime.now().difference(_cartLastActionAt!);
+    if (idle >= cartIdleLimit) {
+      _fireCartAbandoned();
+      return;
+    }
+    _cartTimer?.cancel();
+    _cartTimer = Timer(cartIdleLimit - idle, _fireCartAbandoned);
+  }
+
+  void _fireCartAbandoned() {
+    if (!_cartActive || _cartFired) return;
+    final enteredAt = _cartEnteredAt;
+    final payload = _cartPayload?.call() ?? const <String, dynamic>{};
+    final spent = enteredAt == null
+        ? cartIdleLimit.inSeconds
+        : DateTime.now().difference(enteredAt).inSeconds;
+    _cartFired = true;
+    _stopCartTimer();
+    unawaited(
+      track(
+        AnalyticsEvents.cartAbandoned,
+        properties: {
+          ...payload,
+          'checkout_step': _checkoutStep,
+          'time_spent_sec': spent < 0 ? 0 : spent,
+        },
+      ),
+    );
+  }
+}
+
+class _CartAbandonmentLifecycle with WidgetsBindingObserver {
+  _CartAbandonmentLifecycle(this._service);
+
+  final AnalyticsService _service;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _service._onCartCheckoutResumed();
+    }
   }
 }
