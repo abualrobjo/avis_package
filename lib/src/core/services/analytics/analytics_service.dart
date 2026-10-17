@@ -186,7 +186,7 @@ class AnalyticsService {
 
   static const _installFlagKey = 'analytics_app_installed';
   static const _lastActiveKey = 'analytics_last_active_at';
-  static const cartIdleLimit = Duration(seconds: 30);
+  static const cartIdleLimit = Duration(minutes: 15);
 
   Mixpanel? _mixpanel;
   bool _customerIoReady = false;
