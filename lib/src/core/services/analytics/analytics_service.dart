@@ -186,7 +186,7 @@ class AnalyticsService {
 
   static const _installFlagKey = 'analytics_app_installed';
   static const _lastActiveKey = 'analytics_last_active_at';
-  static const cartIdleLimit = Duration(minutes: 15);
+  static const cartIdleLimit = Duration(seconds: 30);
 
   Mixpanel? _mixpanel;
   bool _customerIoReady = false;
@@ -198,6 +198,7 @@ class AnalyticsService {
   DateTime? _cartEnteredAt;
   DateTime? _cartLastActionAt;
   Map<String, dynamic> Function()? _cartPayload;
+  VoidCallback? _onCartTimedOut;
   String _checkoutStep = 'review_trip';
   bool _cartActive = false;
   bool _cartFired = false;
@@ -251,9 +252,11 @@ class AnalyticsService {
   /// [payload] is read when the timer fires so price and vehicle stay current.
   void startCartAbandonment({
     required Map<String, dynamic> Function() payload,
+    VoidCallback? onTimedOut,
   }) {
     _ensureCartLifecycle();
     _cartPayload = payload;
+    _onCartTimedOut = onTimedOut;
     _cartActive = true;
     _cartFired = false;
     _checkoutStep = 'review_trip';
@@ -490,6 +493,7 @@ class AnalyticsService {
     _cartTimer?.cancel();
     _cartTimer = null;
     _cartPayload = null;
+    _onCartTimedOut = null;
     _cartLastActionAt = null;
   }
 
@@ -508,6 +512,7 @@ class AnalyticsService {
     if (!_cartActive || _cartFired) return;
     final enteredAt = _cartEnteredAt;
     final payload = _cartPayload?.call() ?? const <String, dynamic>{};
+    final onTimedOut = _onCartTimedOut;
     final spent = enteredAt == null
         ? cartIdleLimit.inSeconds
         : DateTime.now().difference(enteredAt).inSeconds;
@@ -523,6 +528,7 @@ class AnalyticsService {
         },
       ),
     );
+    onTimedOut?.call();
   }
 }
 

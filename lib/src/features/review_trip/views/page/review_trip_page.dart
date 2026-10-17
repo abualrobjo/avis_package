@@ -57,6 +57,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
       _watchCheckoutActivity(provider);
       AnalyticsService.instance.startCartAbandonment(
         payload: provider.cartAbandonedProperties,
+        onTimedOut: _onCheckoutTimedOut,
       );
       provider.loadFlightNames('ar');
       provider.loadCustomerInfoForFlightFields();
@@ -66,6 +67,55 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
 
   void _onCheckoutActivity() {
     AnalyticsService.instance.noteCartActivity();
+  }
+
+  void _onCheckoutTimedOut() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _showSessionTimedOutDialog();
+    });
+  }
+
+  Future<void> _showSessionTimedOutDialog() async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      useRootNavigator: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: dialogContext.colors.surface,
+          title: Text(
+            'Session time off',
+            style: AppTextStyles.bodyLargeBold.copyWith(
+              color: dialogContext.colors.primaryText,
+            ),
+          ),
+          content: Text(
+            'Your session time is off.',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: dialogContext.colors.secondaryText,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                'OK',
+                style: AppTextStyles.bodyMediumBold.copyWith(
+                  color: dialogContext.colors.primary,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    if (!mounted) return;
+    Navigator.of(context).popUntil(
+      (route) =>
+          route.settings.name == AppRoutes.servicePage || route.isFirst,
+    );
   }
 
   void _watchCheckoutActivity(ReviewTripProvider provider) {
