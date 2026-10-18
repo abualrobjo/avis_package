@@ -16,14 +16,15 @@ import 'package:avis_package/src/features/_features.dart'
         TripOptionsWidget,
         TripActionsWidget,
         PaymentProvider,
-        BookForOtherTitle;
+        BookForOtherTitle,
+        ServicesProvider;
 
 import 'package:avis_package/src/features/review_trip/views/page/terms_and_conditions_pdf_page.dart';
 
 import '../../../payment/views/payment_screen.dart';
 
 import 'package:avis_package/src/core/_core.dart'
-    show AnalyticsEvents, AnalyticsService, AppConst, AppContextExtension, AppTextStyles, SvgIconWidget, TextWidget, BackArrowWidget, AppSpaces, HorizontalDivider, TripRouteWidget, AppCustomDropdown, AppTextFormFieldComponent, AppRoutes, AvisNavigation, FlightNameModel, KeyboardDoneToolbar;
+    show AnalyticsEvents, AnalyticsService, AppConst, AppContextExtension, AppTextStyles, SvgIconWidget, TextWidget, BackArrowWidget, AppSpaces, HorizontalDivider, TripRouteWidget, AppCustomDropdown, AppTextFormFieldComponent, AppRoutes, AvisNavigation, FlightNameModel, KeyboardDoneToolbar, sl;
 
 class ReviewTripPage extends StatefulWidget {
   const ReviewTripPage({super.key});
@@ -111,6 +112,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
         );
       },
     );
+    sl<ServicesProvider>().resetFormValues();
     if (!mounted) return;
     Navigator.of(context).popUntil(
       (route) =>

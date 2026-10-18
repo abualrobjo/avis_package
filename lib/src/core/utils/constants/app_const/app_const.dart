@@ -13,7 +13,7 @@ class AppConst {
   static const int testCustomerId = 2761;
 
   /// `true` for test servers, `false` for live.
-  static const bool isTestEnvironment = true;
+  static const bool isTestEnvironment = false;
 
   static const String _paymentLiveBaseUrl = 'https://chauffeurdriven.avis.eg/';
   static const String _paymentTestBaseUrl = 'http://94.249.88.254:1040/';

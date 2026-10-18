@@ -524,6 +524,9 @@ class ServicesProvider extends ChangeNotifier {
       DateTime(2000, 1, 1, returnTime.hour, returnTime.minute),
     );
     roundTripCheckboxSelected = false;
+    isFullDay = false;
+    isHalfDay = false;
+    selectedCurrencyIndex = 0;
     syncDurationHoursToDiscreteOptions();
     _notify();
   }
@@ -565,6 +568,7 @@ class ServicesProvider extends ChangeNotifier {
 
   void selectServiceTypeIndex(int index) {
     if (index == selectedServiceTypeIndex) return;
+    AnalyticsService.instance.cancelCartAbandonment();
     selectedServiceTypeIndex = index;
     resetFormValues();
     clampDateAndTimeToMinBooking();
@@ -898,6 +902,18 @@ class ServicesProvider extends ChangeNotifier {
         properties: _vehicleSelectedProperties(vehicle),
       ),
     );
+  }
+
+  Map<String, dynamic> cartAbandonedProperties() {
+    final selected = selectedVehicleClassIndex >= 0 &&
+            selectedVehicleClassIndex < vehicleClasses.length
+        ? vehicleClasses[selectedVehicleClassIndex]
+        : null;
+    return {
+      'car_class': selected?.name,
+      'total_amount': selected?.total,
+      'pickup_station': fromPlaceName,
+    };
   }
 
   void _trackChooseVehicle(VehicleClassPriceModel? selected) {

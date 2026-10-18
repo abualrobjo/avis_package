@@ -253,13 +253,14 @@ class AnalyticsService {
   void startCartAbandonment({
     required Map<String, dynamic> Function() payload,
     VoidCallback? onTimedOut,
+    String checkoutStep = 'review_trip',
   }) {
     _ensureCartLifecycle();
     _cartPayload = payload;
     _onCartTimedOut = onTimedOut;
     _cartActive = true;
     _cartFired = false;
-    _checkoutStep = 'review_trip';
+    _checkoutStep = checkoutStep;
     _cartEnteredAt = DateTime.now();
     _armCartTimer();
   }
@@ -272,6 +273,9 @@ class AnalyticsService {
     }
     _armCartTimer();
   }
+
+  /// True after checkout completes or the idle timer fires.
+  bool get cartSessionFinished => _cartFired;
 
   /// Booking finished. Do not send [AnalyticsEvents.cartAbandoned].
   void completeCartCheckout() {

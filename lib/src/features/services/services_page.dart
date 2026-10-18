@@ -47,10 +47,68 @@ class _ServicesPageState extends State<ServicesPage> {
   @override
   void dispose() {
     context.read<ServicesProvider>().removeListener(_onProviderUpdate);
+    AnalyticsService.instance.cancelCartAbandonment();
     super.dispose();
   }
 
-  void _onProviderUpdate() => _maybeShowRatingSheet();
+  void _onProviderUpdate() {
+    AnalyticsService.instance.noteCartActivity();
+    _maybeShowRatingSheet();
+  }
+
+  void _startVehicleSessionTimer(ServicesProvider provider) {
+    AnalyticsService.instance.startCartAbandonment(
+      payload: provider.cartAbandonedProperties,
+      checkoutStep: 'choose_vehicle',
+      onTimedOut: _onVehicleSessionTimedOut,
+    );
+  }
+
+  void _onVehicleSessionTimedOut() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_showVehicleSessionTimedOut());
+    });
+  }
+
+  Future<void> _showVehicleSessionTimedOut() async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      useRootNavigator: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: dialogContext.colors.surface,
+          title: Text(
+            'Session time off',
+            style: AppTextStyles.bodyLargeBold.copyWith(
+              color: dialogContext.colors.primaryText,
+            ),
+          ),
+          content: Text(
+            'Your session time is off.',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: dialogContext.colors.secondaryText,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                'OK',
+                style: AppTextStyles.bodyMediumBold.copyWith(
+                  color: dialogContext.colors.primary,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    if (!mounted) return;
+    context.read<ServicesProvider>().resetFormValues();
+  }
 
   Future<void> _maybeShowRatingSheet() async {
     if (_ratingSheetShown || !mounted) return;
@@ -335,10 +393,17 @@ class _ServicesPageState extends State<ServicesPage> {
 
   Future<void> _loadVehicleClasses(ServicesProvider p) async {
     final error = await p.loadVehicleClasses();
-    if (error != null && mounted) _showSnack(error);
+    if (!mounted) return;
+    if (error != null) {
+      _showSnack(error);
+      return;
+    }
+    if (p.vehicleClasses.isNotEmpty) {
+      _startVehicleSessionTimer(p);
+    }
   }
 
-  void _goToReviewTrip(ServicesProvider p) {
+  Future<void> _goToReviewTrip(ServicesProvider p) async {
     final error = p.validateForReviewTrip();
     if (error != null) {
       _showSnack(error);
@@ -372,7 +437,11 @@ class _ServicesPageState extends State<ServicesPage> {
           },
         ),
       );
-      AvisNavigation.push(context, AppRoutes.reviewTrip, arguments: args);
+      await AvisNavigation.push(context, AppRoutes.reviewTrip, arguments: args);
+      if (!mounted || AnalyticsService.instance.cartSessionFinished) return;
+      if (p.vehicleClasses.isNotEmpty) {
+        _startVehicleSessionTimer(p);
+      }
     }
   }
 
