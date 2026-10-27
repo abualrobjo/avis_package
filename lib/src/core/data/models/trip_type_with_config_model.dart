@@ -31,6 +31,7 @@ class TripTypeWithConfigModel {
   final String? availableNumberOfHours;
   /// Max duration (hours) allowed for return date when booking by hour.
   final int maxDurationForReturnDateByHour;
+  final List<TripTypeNoteModel> tripTypeNotes;
   final List<TripTypeWithConfigModel> children;
 
   const TripTypeWithConfigModel({
@@ -62,6 +63,7 @@ class TripTypeWithConfigModel {
     this.iconKey,
     this.availableNumberOfHours,
     this.maxDurationForReturnDateByHour = 0,
+    this.tripTypeNotes = const [],
     this.children = const [],
   });
 
@@ -109,6 +111,7 @@ class TripTypeWithConfigModel {
       availableNumberOfHours: _stringFromJson(json['availableNumberOfHours']),
       maxDurationForReturnDateByHour:
           (json['maxDurationForReturnDateByHour'] as num?)?.toInt() ?? 0,
+      tripTypeNotes: _notesFromJson(json['tripTypeNotes']),
       children: rawChildren is List
           ? rawChildren
               .map(
@@ -125,5 +128,99 @@ class TripTypeWithConfigModel {
     if (value == null) return null;
     if (value is String) return value;
     return value.toString();
+  }
+
+  static List<TripTypeNoteModel> _notesFromJson(Object? raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map(
+          (e) => TripTypeNoteModel.fromJson(Map<String, dynamic>.from(e)),
+        )
+        .toList();
+  }
+
+  /// Active notes grouped by [TripTypeNoteModel.title], items ordered by
+  /// [TripTypeNoteModel.displayOrder]. Groups are ordered by the smallest
+  /// displayOrder in the group.
+  List<TripTypeNoteGroup> get groupedTripTypeNotes =>
+      TripTypeNoteGroup.fromNotes(tripTypeNotes);
+}
+
+/// One item from GetTripsTypeWithConfig [tripTypeNotes].
+class TripTypeNoteModel {
+  const TripTypeNoteModel({
+    required this.id,
+    required this.tripTypeId,
+    this.notePrimaryName,
+    this.noteSecondaryName,
+    this.title,
+    this.displayOrder = 0,
+    this.isActive = true,
+  });
+
+  final int id;
+  final int tripTypeId;
+  final String? notePrimaryName;
+  final String? noteSecondaryName;
+  final String? title;
+  final int displayOrder;
+  final bool isActive;
+
+  factory TripTypeNoteModel.fromJson(Map<String, dynamic> json) {
+    return TripTypeNoteModel(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      tripTypeId: (json['tripTypeId'] as num?)?.toInt() ?? 0,
+      notePrimaryName: json['notePrimaryName'] as String?,
+      noteSecondaryName: json['noteSecondaryName'] as String?,
+      title: json['title'] as String?,
+      displayOrder: (json['displayOrder'] as num?)?.toInt() ?? 0,
+      isActive: json['isActive'] as bool? ?? true,
+    );
+  }
+}
+
+class TripTypeNoteGroup {
+  const TripTypeNoteGroup({
+    required this.title,
+    required this.notes,
+  });
+
+  final String title;
+  final List<TripTypeNoteModel> notes;
+
+  static List<TripTypeNoteGroup> fromNotes(List<TripTypeNoteModel> notes) {
+    final active = notes.where((n) => n.isActive).toList();
+    if (active.isEmpty) return const [];
+
+    final grouped = <String, List<TripTypeNoteModel>>{};
+    final titleOrder = <String>[];
+    for (final note in active) {
+      final title = note.title?.trim() ?? '';
+      if (!grouped.containsKey(title)) {
+        grouped[title] = <TripTypeNoteModel>[];
+        titleOrder.add(title);
+      }
+      grouped[title]!.add(note);
+    }
+
+    final groups = titleOrder.map((title) {
+      final items = List<TripTypeNoteModel>.from(grouped[title]!)
+        ..sort((a, b) {
+          final byOrder = a.displayOrder.compareTo(b.displayOrder);
+          if (byOrder != 0) return byOrder;
+          return a.id.compareTo(b.id);
+        });
+      return TripTypeNoteGroup(title: title, notes: items);
+    }).toList()
+      ..sort((a, b) {
+        final byOrder = a.notes.first.displayOrder.compareTo(
+          b.notes.first.displayOrder,
+        );
+        if (byOrder != 0) return byOrder;
+        return a.title.compareTo(b.title);
+      });
+
+    return groups;
   }
 }

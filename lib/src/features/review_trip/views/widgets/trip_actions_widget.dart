@@ -25,12 +25,14 @@ class TripActionsWidget extends StatelessWidget {
   final String? appliedLoyaltyCode;
   final void Function(String code)? onLoyaltyRedeemed;
   final VoidCallback? onLoyaltyRemoved;
+  final int classId;
 
   const TripActionsWidget({
     super.key,
     required this.actions,
     required this.tripTypeId,
     required this.pickupDateTime,
+    required this.classId,
     this.appliedPromoCode,
     this.onPromoCodeApplied,
     this.onPromoCodeRemoved,
@@ -66,6 +68,7 @@ class TripActionsWidget extends StatelessWidget {
                   tripTypeId: tripTypeId,
                   pickupDateTime: pickupDateTime,
                   onPromoApplied: onPromoCodeApplied,
+                  classId: classId
                 );
               }
             } else if (isLoyaltyPoints) {

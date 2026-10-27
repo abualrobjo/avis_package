@@ -4,3 +4,4 @@ export 'trip_bottom_bar_widget.dart';
 export 'trip_header_widget.dart';
 export 'trip_options_widget.dart';
 export 'trip_payment_widget.dart';
+export 'trip_type_notes_widget.dart';

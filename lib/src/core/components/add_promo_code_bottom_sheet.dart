@@ -25,11 +25,13 @@ class AddPromoCodeBottomSheet extends StatefulWidget {
   const AddPromoCodeBottomSheet({
     super.key,
     required this.tripTypeId,
+    required this.classId,
     required this.pickupDateTime,
     this.onPromoApplied,
   });
 
   final int tripTypeId;
+  final int classId;
   final String pickupDateTime;
   final void Function(String code, CheckPromoCodeValidityDetails details)?
       onPromoApplied;
@@ -37,6 +39,7 @@ class AddPromoCodeBottomSheet extends StatefulWidget {
   static Future<void> show(
     BuildContext context, {
     required int tripTypeId,
+    required int classId,
     required String pickupDateTime,
     void Function(String code, CheckPromoCodeValidityDetails details)?
         onPromoApplied,
@@ -48,6 +51,7 @@ class AddPromoCodeBottomSheet extends StatefulWidget {
         tripTypeId: tripTypeId,
         pickupDateTime: pickupDateTime,
         onPromoApplied: onPromoApplied,
+        classId:classId,
       ),
     );
   }
@@ -101,6 +105,8 @@ class _AddPromoCodeBottomSheetState extends State<AddPromoCodeBottomSheet> {
     }
     setState(() => _loading = true);
     setState(() => _errorMessage = null);
+    final customerId = sl<AuthLocalService>().getCustomerId();
+
     final branchId = await _getBranchId();
     if (!mounted) return;
     final request = CheckPromoCodeValidityRequest(
@@ -109,6 +115,8 @@ class _AddPromoCodeBottomSheetState extends State<AddPromoCodeBottomSheet> {
       tripTypeId: widget.tripTypeId,
       branchId: branchId,
       pickupDateTime: widget.pickupDateTime,
+      customerId: customerId ?? 0,
+      classId: widget.classId,
     );
     final response = await sl<PromoCodeService>().checkPromoCodeValidity(request);
     if (!mounted) return;

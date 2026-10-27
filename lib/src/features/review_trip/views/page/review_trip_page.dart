@@ -15,6 +15,7 @@ import 'package:avis_package/src/features/_features.dart'
         TripHeaderWidget,
         TripOptionsWidget,
         TripActionsWidget,
+        TripTypeNotesWidget,
         PaymentProvider,
         BookForOtherTitle,
         ServicesProvider;
@@ -699,6 +700,8 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
         final options = provider.buildOptions();
         final displayPrice = provider.displayPrice(model);
         final isHourlyTrip = args?.tripTypeId == 2;
+        final tripTypeConfig = args?.tripTypeConfig;
+        final tripTypeNotes = tripTypeConfig?.tripTypeNotes ?? const [];
 
         return Listener(
           behavior: HitTestBehavior.translucent,
@@ -810,6 +813,7 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
                       appliedPromoCode: provider.appliedPromoCode,
                       onPromoCodeApplied: provider.applyPromoCode,
                       onPromoCodeRemoved: provider.removePromoCode,
+                      classId: args?.vehicles.first.classId ?? 0,
                     ),
                     const SizedBox(height: AppSpaces.large),
                     if (provider.displayPrices.isNotEmpty) ...[
@@ -851,6 +855,14 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
                             ),
                           ),
                         ),
+                      ),
+                      const SizedBox(height: AppSpaces.large),
+                    ],
+                    if (tripTypeNotes.isNotEmpty) ...[
+                      TripTypeNotesWidget(
+                        notes: tripTypeNotes,
+                        servicePrimaryName: tripTypeConfig?.primaryName,
+                        serviceSecondaryName: tripTypeConfig?.secondaryName,
                       ),
                       const SizedBox(height: AppSpaces.large),
                     ],

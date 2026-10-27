@@ -7,6 +7,8 @@ class CheckPromoCodeValidityRequest {
   final int lineOfBusiness;
   final int tripTypeId;
   final String pickupDateTime;
+  final int customerId;
+  final int classId;
 
   const CheckPromoCodeValidityRequest({
     required this.promoCode,
@@ -16,6 +18,8 @@ class CheckPromoCodeValidityRequest {
     this.applicableApplication = 2,
     required this.branchId,
     this.lineOfBusiness = 5,
+    required this.customerId,
+    required this.classId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -26,5 +30,7 @@ class CheckPromoCodeValidityRequest {
         'LineOfBusiness': lineOfBusiness,
         'TripTypeId': tripTypeId,
         'PickupDateTime': pickupDateTime,
+        'CustomerId': customerId,
+        'ClassId': classId,
       };
 }
