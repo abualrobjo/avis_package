@@ -10,14 +10,20 @@ final sl = GetIt.instance;
 /// Access DioClient from GetIt (convenience getter)
 DioClient get dioClient => sl<DioClient>();
 
-Future<void> init() async {
+/// [initializeAnalytics]: pass `true` only when the package runs on its own
+/// (e.g. the demo app). A host app that already starts Customer.io, Adjust,
+/// and Mixpanel leaves it `false` and calls
+/// [AnalyticsService.attachToHost] after its own analytics setup.
+Future<void> init({bool initializeAnalytics = false}) async {
   // Host apps using the package alone (e.g. demo) must get Maps/Places keys here;
   // acs_customer also loads .env in bootstrap — a second load is harmless.
   try {
     await dotenv.load(fileName: '.env');
   } catch (_) {}
 
-  // await AnalyticsService.instance.initialize();
+  if (initializeAnalytics) {
+    await AnalyticsService.instance.initialize();
+  }
 
   // Initialize Hive
   final hiveService = HiveServiceImpl();
@@ -37,7 +43,7 @@ Future<void> init() async {
 
   // Register DioClient
   sl.registerLazySingleton<DioClient>(
-    () => DioClient(
+        () => DioClient(
       config: DioClientConfig(
         baseUrl: ApiEndpoints.baseUrl,
         enableLogging: true,
@@ -56,129 +62,129 @@ Future<void> init() async {
   sl.registerSingleton<HiveService>(hiveService);
 
   sl.registerLazySingleton<AppAuthService>(
-    () => AppAuthServiceImpl(sl<DioClient>(), sl<AuthLocalService>()),
+        () => AppAuthServiceImpl(sl<DioClient>(), sl<AuthLocalService>()),
   );
 
   sl.registerLazySingleton<AuthLocalService>(
-    () => AuthLocalService(sl<HiveService>()),
+        () => AuthLocalService(sl<HiveService>()),
   );
 
   sl.registerLazySingleton<SettingsLocalService>(
-    () => SettingsLocalService(sl<HiveService>()),
+        () => SettingsLocalService(sl<HiveService>()),
   );
 
   sl.registerLazySingleton<PaymentCardsLocalService>(
-    () => PaymentCardsLocalService(sl<HiveService>()),
+        () => PaymentCardsLocalService(sl<HiveService>()),
   );
 
   sl.registerLazySingleton<CustomerTripsService>(
-    () => CustomerTripsServiceImpl(),
+        () => CustomerTripsServiceImpl(),
   );
 
   sl.registerLazySingleton<CustomerSavedPlacesService>(
-    () => const CustomerSavedPlacesServiceImpl(),
+        () => const CustomerSavedPlacesServiceImpl(),
   );
 
   sl.registerLazySingleton<CustomerInfoService>(
-    () => CustomerInfoServiceImpl(sl<DioClient>()),
+        () => CustomerInfoServiceImpl(sl<DioClient>()),
   );
 
   sl.registerLazySingleton<LatestTripRateService>(
-    () => LatestTripRateServiceImpl(sl<DioClient>()),
+        () => LatestTripRateServiceImpl(sl<DioClient>()),
   );
 
   sl.registerLazySingleton<CustomerFavoriteDriversService>(
-    () => CustomerFavoriteDriversServiceImpl(sl<DioClient>()),
+        () => CustomerFavoriteDriversServiceImpl(sl<DioClient>()),
   );
 
   sl.registerLazySingleton<CustomerRateDriverService>(
-    () => CustomerRateDriverServiceImpl(sl<DioClient>()),
+        () => CustomerRateDriverServiceImpl(sl<DioClient>()),
   );
 
   sl.registerLazySingleton<LookupService>(() => LookupServiceImpl());
 
   sl.registerLazySingleton<TripsTypeService>(
-    () => TripsTypeServiceImpl(sl<DioClient>()),
+        () => TripsTypeServiceImpl(sl<DioClient>()),
   );
 
   sl.registerLazySingleton<FlightNamesService>(
-    () => FlightNamesServiceImpl(sl<DioClient>()),
+        () => FlightNamesServiceImpl(sl<DioClient>()),
   );
 
   sl.registerLazySingleton<AirportsService>(
-    () => AirportsServiceImpl(sl<DioClient>()),
+        () => AirportsServiceImpl(sl<DioClient>()),
   );
 
   sl.registerLazySingleton<VehicleClassesPriceService>(
-    () => VehicleClassesPriceServiceImpl(sl<DioClient>()),
+        () => VehicleClassesPriceServiceImpl(sl<DioClient>()),
   );
 
   sl.registerLazySingleton<AllowedPolygonsService>(
-    () => AllowedPolygonsServiceImpl(sl<DioClient>()),
+        () => AllowedPolygonsServiceImpl(sl<DioClient>()),
   );
 
   sl.registerLazySingleton<PromoCodeService>(
-    () => PromoCodeServiceImpl(sl<DioClient>()),
+        () => PromoCodeServiceImpl(sl<DioClient>()),
   );
 
   sl.registerLazySingleton<CustomerLoyaltyPromoCodeService>(
-    () => CustomerLoyaltyPromoCodeServiceImpl(sl<DioClient>()),
+        () => CustomerLoyaltyPromoCodeServiceImpl(sl<DioClient>()),
   );
 
   sl.registerLazySingleton<ChauffeurServicePricesService>(
-    () => ChauffeurServicePricesServiceImpl(sl<DioClient>()),
+        () => ChauffeurServicePricesServiceImpl(sl<DioClient>()),
   );
 
   sl.registerLazySingleton<ChauffeurRequestService>(
-    () => ChauffeurRequestServiceImpl(sl<DioClient>()),
+        () => ChauffeurRequestServiceImpl(sl<DioClient>()),
   );
 
   sl.registerLazySingleton<TermsAndConditionsService>(
-    () => TermsAndConditionsServiceImpl(sl<DioClient>()),
+        () => TermsAndConditionsServiceImpl(sl<DioClient>()),
   );
 
   sl.registerLazySingleton<CancellationService>(
-    () => CancellationServiceImpl(),
+        () => CancellationServiceImpl(),
   );
 
   sl.registerLazySingleton<PaymentService>(
-    () => PaymentServiceImpl(),
+        () => PaymentServiceImpl(),
   );
 
   // ======================
   // Repositories
   // ======================
   sl.registerLazySingleton<FirebaseChatAuthService>(
-    () => FirebaseChatAuthService(),
+        () => FirebaseChatAuthService(),
   );
 
   sl.registerLazySingleton<ChatRepository>(() => ChatRepositoryImpl());
 
   sl.registerLazySingleton<CustomerSavedPlacesRepository>(
-    () => CustomerSavedPlacesRepositoryImpl(sl<CustomerSavedPlacesService>()),
+        () => CustomerSavedPlacesRepositoryImpl(sl<CustomerSavedPlacesService>()),
   );
 
   sl.registerLazySingleton<CustomerTripsRepository>(
-    () => CustomerTripsRepositoryImpl(sl<CustomerTripsService>()),
+        () => CustomerTripsRepositoryImpl(sl<CustomerTripsService>()),
   );
 
   sl.registerLazySingleton<CancellationRepository>(
-    () => CancellationRepositoryImpl(sl<CancellationService>()),
+        () => CancellationRepositoryImpl(sl<CancellationService>()),
   );
 
   sl.registerLazySingleton<LookupRepository>(
-    () => LookupRepositoryImpl(sl<LookupService>()),
+        () => LookupRepositoryImpl(sl<LookupService>()),
   );
 
   sl.registerLazySingleton<PaymentRepository>(
-    () => PaymentRepositoryImpl(sl<PaymentService>()),
+        () => PaymentRepositoryImpl(sl<PaymentService>()),
   );
 
   // ======================
   // Providers
   // ======================
   sl.registerFactory<ChatProvider>(
-    () => ChatProvider(
+        () => ChatProvider(
       sl<ChatRepository>(),
       sl<AuthLocalService>(),
       sl<FirebaseChatAuthService>(),
@@ -188,15 +194,15 @@ Future<void> init() async {
   sl.registerLazySingleton<SplashProvider>(() => SplashProvider());
 
   sl.registerFactory<LocalizationProvider>(
-    () => LocalizationProvider(sl<SettingsLocalService>()),
+        () => LocalizationProvider(sl<SettingsLocalService>()),
   );
 
   sl.registerFactory<NavigatorHandlerProvider>(
-    () => NavigatorHandlerProvider(),
+        () => NavigatorHandlerProvider(),
   );
 
   sl.registerFactory<RatingProvider>(
-    () => RatingProvider(
+        () => RatingProvider(
       sl<CustomerFavoriteDriversService>(),
       sl<CustomerRateDriverService>(),
       sl<LookupRepository>(),
@@ -204,15 +210,15 @@ Future<void> init() async {
   );
 
   sl.registerFactory<MapProvider>(
-    () => MapProvider(sl<CustomerTripsRepository>()),
+        () => MapProvider(sl<CustomerTripsRepository>()),
   );
 
   sl.registerFactory<SavedLocationsProvider>(
-    () => SavedLocationsProvider(sl<CustomerSavedPlacesRepository>()),
+        () => SavedLocationsProvider(sl<CustomerSavedPlacesRepository>()),
   );
 
   sl.registerFactory<ReviewTripProvider>(
-    () => ReviewTripProvider(
+        () => ReviewTripProvider(
       sl<AuthLocalService>(),
       sl<ChauffeurServicePricesService>(),
       sl<ChauffeurRequestService>(),
@@ -224,7 +230,7 @@ Future<void> init() async {
   );
 
   sl.registerFactory<ServicesProvider>(
-    () => ServicesProvider(
+        () => ServicesProvider(
       sl<AuthLocalService>(),
       sl<TripsTypeService>(),
       sl<FlightNamesService>(),
@@ -238,19 +244,19 @@ Future<void> init() async {
   );
 
   sl.registerFactory<AddNewCardProvider>(
-    () => AddNewCardProvider(sl<PaymentCardsLocalService>()),
+        () => AddNewCardProvider(sl<PaymentCardsLocalService>()),
   );
 
   sl.registerFactory<MyTripsProvider>(
-    () =>
+        () =>
         MyTripsProvider(sl<CustomerTripsRepository>(), sl<AuthLocalService>()),
   );
 
   sl.registerFactory<CancellationProvider>(
-    () => CancellationProvider(sl<CancellationRepository>()),
+        () => CancellationProvider(sl<CancellationRepository>()),
   );
 
   sl.registerFactory<PaymentProvider>(
-    () => PaymentProvider(sl<PaymentRepository>()),
+        () => PaymentProvider(sl<PaymentRepository>()),
   );
 }

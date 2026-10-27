@@ -19,11 +19,11 @@ import 'package:avis_package/src/core/utils/route_customer_session.dart';
 /// Which SDKs receive one unified event from the tracking sheet.
 class AnalyticsEvent {
   const AnalyticsEvent(
-    this.name, {
-    required this.mixpanel,
-    required this.adjust,
-    required this.customerIo,
-  });
+      this.name, {
+        required this.mixpanel,
+        required this.adjust,
+        required this.customerIo,
+      });
 
   final String name;
   final bool mixpanel;
@@ -177,8 +177,15 @@ class AnalyticsEvents {
   );
 }
 
-/// Starts Customer.io, Adjust, and Mixpanel, then sends spec events
-/// only to the SDKs marked yes for that event.
+/// Sends spec events only to the SDKs marked yes for that event.
+///
+/// Two modes:
+/// - Standalone (demo app): call [initialize], which starts Customer.io,
+///   Adjust, and Mixpanel from `.env`.
+/// - Embedded in a host app that already starts those SDKs: call
+///   [attachToHost] instead. The package then sends its events through the
+///   host's SDKs and leaves user identity, App_Opened, and App_Installed to
+///   the host.
 class AnalyticsService {
   AnalyticsService._();
 
@@ -191,6 +198,7 @@ class AnalyticsService {
   Mixpanel? _mixpanel;
   bool _customerIoReady = false;
   bool _adjustReady = false;
+  bool _hostOwnsSdks = false;
   int? _identifiedCustomerId;
   String? _sessionId;
 
@@ -204,7 +212,10 @@ class AnalyticsService {
   bool _cartFired = false;
   bool _cartLifecycleBound = false;
 
+  /// Standalone apps only. Starts the three SDKs from `.env`.
+  /// Does nothing after [attachToHost], so the SDKs are never started twice.
   Future<void> initialize() async {
+    if (_hostOwnsSdks) return;
     await Future.wait([
       _initCustomerIo(),
       _initAdjust(),
@@ -212,8 +223,25 @@ class AnalyticsService {
     ]);
   }
 
+  /// Host apps that already start Customer.io, Adjust, and Mixpanel call this
+  /// after their own analytics setup, instead of [initialize].
+  ///
+  /// Customer.io and Adjust are process-wide singletons, so the package uses
+  /// them directly. Mixpanel has no shared instance in Flutter, so the host
+  /// passes the one it created; without it, Mixpanel events are skipped.
+  void attachToHost({Mixpanel? mixpanel}) {
+    _hostOwnsSdks = true;
+    _mixpanel = mixpanel;
+    _customerIoReady = true;
+    _adjustReady = true;
+    log('Analytics attached to host SDKs'
+        '${mixpanel == null ? ' (no Mixpanel instance, Mixpanel skipped)' : ''}');
+  }
+
   /// Call after Hive `settings_box` is open.
+  /// Does nothing after [attachToHost]: the host already tracks these.
   Future<void> trackAppLifecycle() async {
+    if (_hostOwnsSdks) return;
     final now = DateTime.now().toUtc().toIso8601String();
     String? lastActive;
     if (Hive.isBoxOpen('settings_box')) {
@@ -303,8 +331,13 @@ class AnalyticsService {
     final isNewUser = _identifiedCustomerId != customerId;
     _identifiedCustomerId = customerId;
 
+    // The host identifies the user with its own id and sends User_Logged_In
+    // on real logins. Identifying again here with the chauffeur customer id
+    // would switch the Mixpanel / Customer.io profile to a different id.
+    if (_hostOwnsSdks) return;
+
     if (_customerIoReady && (isNewUser || traits.isNotEmpty)) {
-      CustomerIO.instance.identify(userId: userId, traits: traits);
+      _customerIo?.identify(userId: userId, traits: traits);
     }
 
     final mixpanel = _mixpanel;
@@ -337,15 +370,15 @@ class AnalyticsService {
   }
 
   Future<void> track(
-    AnalyticsEvent event, {
-    Map<String, dynamic>? properties,
-  }) async {
+      AnalyticsEvent event, {
+        Map<String, dynamic>? properties,
+      }) async {
     final props = _withoutNulls(properties);
     if (event.mixpanel) {
       await _mixpanel?.track(event.name, properties: props);
     }
     if (event.customerIo && _customerIoReady) {
-      CustomerIO.instance.track(name: event.name, properties: props);
+      _customerIo?.track(name: event.name, properties: props);
     }
     if (event.adjust && _adjustReady) {
       _trackAdjust(event.name, props);
@@ -363,6 +396,18 @@ class AnalyticsService {
       adjustEvent.addCallbackParameter(entry.key, entry.value.toString());
     }
     Adjust.trackEvent(adjustEvent);
+  }
+
+  /// [CustomerIO.instance] throws until someone calls [CustomerIO.initialize].
+  /// After [attachToHost] that is the host, so guard against it not having
+  /// done so (e.g. its Customer.io key is missing).
+  CustomerIO? get _customerIo {
+    try {
+      return CustomerIO.instance;
+    } on StateError {
+      log('Customer.io event skipped: SDK not initialized');
+      return null;
+    }
   }
 
   Future<void> _initCustomerIo() async {

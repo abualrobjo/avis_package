@@ -33,8 +33,12 @@ class _ServicesPageState extends State<ServicesPage> {
   }
 
   Future<void> _trackStartup() async {
-    final customerId = RouteCustomerSession.currentCustomerId ?? 2914;
-    await AnalyticsService.instance.identifyCustomer(customerId: customerId);
+    // No fallback id: identifying guests as a fixed customer would merge
+    // every guest into that one profile.
+    final customerId = RouteCustomerSession.currentCustomerId;
+    if (customerId != null) {
+      await AnalyticsService.instance.identifyCustomer(customerId: customerId);
+    }
     await AnalyticsService.instance.trackAppLifecycle();
     if (!mounted) return;
     final service = context.read<ServicesProvider>().selectedTripType;
@@ -189,7 +193,7 @@ class _ServicesPageState extends State<ServicesPage> {
                     );
                     final isSelected =
                         slot.hour == selected.hour &&
-                        slot.minute == selected.minute;
+                            slot.minute == selected.minute;
                     return ListTile(
                       title: TextWidget(
                         label,
@@ -279,7 +283,7 @@ class _ServicesPageState extends State<ServicesPage> {
                     );
                     final isSelected =
                         slot.hour == selected.hour &&
-                        slot.minute == selected.minute;
+                            slot.minute == selected.minute;
                     return ListTile(
                       title: TextWidget(
                         label,
@@ -320,13 +324,13 @@ class _ServicesPageState extends State<ServicesPage> {
         allowedPolygons: isFrom ? p.allowedPolygons : null,
         validateLocation: !isFrom && p.fromLatLng != null
             ? (latLng) async {
-                final error = await p.checkDropOffAllowed(latLng);
-                if (error != null) {
-                  _showSnack(error);
-                  return false;
-                }
-                return true;
-              }
+          final error = await p.checkDropOffAllowed(latLng);
+          if (error != null) {
+            _showSnack(error);
+            return false;
+          }
+          return true;
+        }
             : null,
         localizeAirportName: (airport) => context.localized(
           airport.airportPimaryName ?? '',
@@ -577,7 +581,7 @@ class _ServicesPageState extends State<ServicesPage> {
                                 },
                                 onSwap: p.swapFromAndDropOff,
                                 showDropOffAndSwap:
-                                    p.selectedTripType?.allowDropOff ?? true,
+                                p.selectedTripType?.allowDropOff ?? true,
                               ),
                               SizedBox(height: 16.h),
                               if (p.selectedTripType?.requiresHourDuration ??
@@ -588,20 +592,20 @@ class _ServicesPageState extends State<ServicesPage> {
                                       ? p.discreteHourlyDurations
                                       : null,
                                   maxHours:
-                                      (p.selectedTripType
-                                                  ?.displayCheckBoxIsByDay ??
-                                              false) &&
-                                          p.isFullDay
+                                  (p.selectedTripType
+                                      ?.displayCheckBoxIsByDay ??
+                                      false) &&
+                                      p.isFullDay
                                       ? 30
                                       : (p.selectedTripType
-                                                ?.displayCheckBoxIsHalfDay ??
-                                            false)
+                                      ?.displayCheckBoxIsHalfDay ??
+                                      false)
                                       ? 15
                                       : 11,
                                   isByDay:
-                                      (p.selectedTripType
-                                              ?.displayCheckBoxIsByDay ??
-                                          false) &&
+                                  (p.selectedTripType
+                                      ?.displayCheckBoxIsByDay ??
+                                      false) &&
                                       p.isFullDay,
                                   onChanged: p.setDurationHours,
                                 ),
@@ -622,8 +626,8 @@ class _ServicesPageState extends State<ServicesPage> {
                               SizedBox(height: 24.h),
                               AppButton.primary(
                                 onPressed:
-                                    p.vehicleClasses.isNotEmpty &&
-                                        p.selectedVehicleClassIndex >= 0
+                                p.vehicleClasses.isNotEmpty &&
+                                    p.selectedVehicleClassIndex >= 0
                                     ? () => _goToReviewTrip(p)
                                     : null,
                                 text: 'CONFIRM RIDE',
@@ -643,9 +647,9 @@ class _ServicesPageState extends State<ServicesPage> {
   }
 
   Widget _buildTripOptionCheckboxes(
-    BuildContext context,
-    ServicesProvider p,
-  ) {
+      BuildContext context,
+      ServicesProvider p,
+      ) {
     Widget row({
       required bool value,
       required ValueChanged<bool?> onChanged,
@@ -723,7 +727,7 @@ class _ServicesPageState extends State<ServicesPage> {
         final label = labels[index];
         final iconName = p.iconNameForTabIndex(index, count);
         final contentColor =
-            isSelected ? AppColors.white : context.colors.primaryText;
+        isSelected ? AppColors.white : context.colors.primaryText;
         return Material(
           color: Colors.transparent,
           child: InkWell(
@@ -887,7 +891,7 @@ class _ServicesPageState extends State<ServicesPage> {
     if (options.isEmpty) return const SizedBox.shrink();
 
     final selected =
-        options[p.selectedCurrencyIndex.clamp(0, options.length - 1)];
+    options[p.selectedCurrencyIndex.clamp(0, options.length - 1)];
 
     return Material(
       color: context.colors.surface,
