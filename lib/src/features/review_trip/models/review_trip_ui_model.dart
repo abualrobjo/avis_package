@@ -177,7 +177,7 @@ class ReviewTripUiModelFactory {
       ),
       price: ReviewTripPriceUiModel(
         amount: 85.00,
-        currency: 'USD',
+        currency: 'EGP',
         label: 'Include',
       ),
       options: [

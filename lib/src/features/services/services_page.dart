@@ -449,55 +449,6 @@ class _ServicesPageState extends State<ServicesPage> {
     }
   }
 
-  void _showCurrencyPicker(BuildContext context, ServicesProvider p) {
-    final options = p.currencyOptions;
-    if (options.isEmpty) return;
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: context.colors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: TextWidget(
-                  'Select currency',
-                  style: AppTextStyles.bodyLargeBold.copyWith(
-                    color: context.colors.primaryText,
-                  ),
-                ),
-              ),
-              ...List.generate(options.length, (i) {
-                final item = options[i];
-                final selected = i == p.selectedCurrencyIndex;
-                return ListTile(
-                  title: TextWidget(
-                    item.currencyCode,
-                    style: AppTextStyles.bodyMediumBold.copyWith(
-                      color: selected
-                          ? context.colors.primary
-                          : context.colors.primaryText,
-                    ),
-                  ),
-                  onTap: () {
-                    p.selectCurrencyIndex(i);
-                    Navigator.pop(ctx);
-                  },
-                );
-              }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final p = context.watch<ServicesProvider>();
@@ -886,57 +837,10 @@ class _ServicesPageState extends State<ServicesPage> {
     );
   }
 
-  Widget _buildCurrencySelector(BuildContext context, ServicesProvider p) {
-    final options = p.currencyOptions;
-    if (options.isEmpty) return const SizedBox.shrink();
-
-    final selected =
-    options[p.selectedCurrencyIndex.clamp(0, options.length - 1)];
-
-    return Material(
-      color: context.colors.surface,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: () => _showCurrencyPicker(context, p),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            vertical: 14,
-            horizontal: AppSpaces.medium,
-          ),
-          decoration: BoxDecoration(
-            border: Border.all(color: context.colors.inputBorder),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              TextWidget(
-                'Currency: ${selected.currencyCode}',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: context.colors.secondaryText,
-                ),
-              ),
-              const Spacer(),
-              Icon(
-                Icons.keyboard_arrow_down,
-                size: 24,
-                color: context.colors.tertiaryText,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildChooseVehicleSection(BuildContext context, ServicesProvider p) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (p.currencyOptions.isNotEmpty) ...[
-          _buildCurrencySelector(context, p),
-          SizedBox(height: 12.h),
-        ],
         TextWidget(
           'CHOOSE VEHICLE',
           style: AppTextStyles.bodySmallBold.copyWith(

@@ -283,54 +283,6 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
     );
   }
 
-  void _showCurrencyPicker(BuildContext context, ReviewTripProvider provider) {
-    if (provider.displayPrices.isEmpty) return;
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: context.colors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: TextWidget(
-                  'Select currency',
-                  style: AppTextStyles.bodyLargeBold.copyWith(
-                    color: context.colors.primaryText,
-                  ),
-                ),
-              ),
-              ...List.generate(provider.displayPrices.length, (i) {
-                final item = provider.displayPrices[i];
-                final selected = i == provider.selectedDisplayPriceIndex;
-                return ListTile(
-                  title: TextWidget(
-                    item.currencyCode,
-                    style: AppTextStyles.bodyMediumBold.copyWith(
-                      color: selected
-                          ? context.colors.primary
-                          : context.colors.primaryText,
-                    ),
-                  ),
-                  onTap: () {
-                    provider.selectDisplayPriceIndex(i);
-                    Navigator.pop(ctx);
-                  },
-                );
-              }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildSectionTitleWithPrice(
     BuildContext context,
     ReviewTripProvider provider, {
@@ -816,48 +768,6 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
                       classId: args?.vehicles.first.classId ?? 0,
                     ),
                     const SizedBox(height: AppSpaces.large),
-                    if (provider.displayPrices.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Material(
-                          color: context.colors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          child: InkWell(
-                            onTap: () => _showCurrencyPicker(context, provider),
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 14,
-                                horizontal: AppSpaces.medium,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: context.colors.inputBorder,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  TextWidget(
-                                    'Currency: ${provider.displayPrices[provider.selectedDisplayPriceIndex].currencyCode}',
-                                    style: AppTextStyles.bodySmall.copyWith(
-                                      color: context.colors.secondaryText,
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  Icon(
-                                    Icons.keyboard_arrow_down,
-                                    size: 24,
-                                    color: context.colors.tertiaryText,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpaces.large),
-                    ],
                     if (tripTypeNotes.isNotEmpty) ...[
                       TripTypeNotesWidget(
                         notes: tripTypeNotes,

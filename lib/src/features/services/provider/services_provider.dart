@@ -82,7 +82,6 @@ class ServicesProvider extends ChangeNotifier {
 
   List<VehicleClassPriceModel> vehicleClasses = [];
   int selectedVehicleClassIndex = -1;
-  int selectedCurrencyIndex = 0;
   bool loadingVehicleClasses = false;
   int pickupZoneId = 0;
   int dropZoneId = 0;
@@ -287,17 +286,9 @@ class ServicesProvider extends ChangeNotifier {
     return DateTime(pickup.year, pickup.month, pickup.day);
   }
 
-  List<VehicleClassDisplayPrice> get currencyOptions =>
-      vehicleClasses.isNotEmpty && vehicleClasses.first.displayPrices.isNotEmpty
-      ? vehicleClasses.first.displayPrices
-      : const [];
+  static const String defaultCurrencyCode = 'EGP';
 
-  String get selectedCurrencyCode {
-    final options = currencyOptions;
-    if (options.isEmpty) return 'USD';
-    final index = selectedCurrencyIndex.clamp(0, options.length - 1);
-    return options[index].currencyCode;
-  }
+  String get selectedCurrencyCode => defaultCurrencyCode;
 
   double? get selectedVehicleTotalForCurrency {
     if (selectedVehicleClassIndex < 0 ||
@@ -478,7 +469,6 @@ class ServicesProvider extends ChangeNotifier {
   void invalidateVehicleList() {
     vehicleClasses = [];
     selectedVehicleClassIndex = -1;
-    selectedCurrencyIndex = 0;
     _notify();
   }
 
@@ -526,7 +516,6 @@ class ServicesProvider extends ChangeNotifier {
     roundTripCheckboxSelected = false;
     isFullDay = false;
     isHalfDay = false;
-    selectedCurrencyIndex = 0;
     syncDurationHoursToDiscreteOptions();
     _notify();
   }
@@ -606,11 +595,6 @@ class ServicesProvider extends ChangeNotifier {
       if (!vehicleClasses[i].isSoldOut) return i;
     }
     return -1;
-  }
-
-  void selectCurrencyIndex(int index) {
-    selectedCurrencyIndex = index;
-    _notify();
   }
 
   void applyPickedDate(DateTime picked) {
@@ -1152,7 +1136,6 @@ class ServicesProvider extends ChangeNotifier {
     if (result.isSuccess && result.data.isNotEmpty) {
       vehicleClasses = result.data;
       selectedVehicleClassIndex = _firstAvailableVehicleClassIndex();
-      selectedCurrencyIndex = 0;
       final selected = selectedVehicleClassIndex >= 0
           ? vehicleClasses[selectedVehicleClassIndex]
           : null;
@@ -1297,7 +1280,7 @@ class ServicesProvider extends ChangeNotifier {
     if (displayPrice != null) {
       return '${currencySymbol(displayPrice.currencyCode)}${displayPrice.total.toStringAsFixed(2)}';
     }
-    return '\$${vehicle.total.toStringAsFixed(2)}';
+    return '${currencySymbol(defaultCurrencyCode)}${vehicle.total.toStringAsFixed(2)}';
   }
 
   String currencySymbol(String code) {

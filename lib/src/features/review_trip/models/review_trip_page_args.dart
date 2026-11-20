@@ -32,7 +32,7 @@ class ReviewTripPageArgs {
     this.totalLoyalityPoints = 0,
     this.maxRedeemablePoints = 0,
     this.minimumPointsValueForTransfer = 0,
-    this.currencyCode = 'USD',
+    this.currencyCode = 'EGP',
   });
 
   final List<VehicleClassPriceModel> vehicles;

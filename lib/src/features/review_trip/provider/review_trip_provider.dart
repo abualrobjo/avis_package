@@ -66,8 +66,6 @@ class ReviewTripProvider extends ChangeNotifier {
   ReviewTripUiModel? get model => _model;
   bool get confirming => _confirming;
   bool get loadingPrice => _loadingPrice;
-  List<DisplayPriceItem> get displayPrices => _displayPrices;
-  int get selectedDisplayPriceIndex => _selectedDisplayPriceIndex;
   String? get appliedPromoCode => _appliedPromoCode;
   CheckPromoCodeValidityDetails? get appliedPromoDetails => _appliedPromoDetails;
   String? get appliedLoyaltyCode => _appliedLoyaltyCode;
@@ -300,13 +298,6 @@ class ReviewTripProvider extends ChangeNotifier {
     _appliedLoyaltyCode = null;
     notifyListeners();
     fetchChauffeurServicePrice();
-  }
-
-  void selectDisplayPriceIndex(int index) {
-    if (index < 0 || index >= _displayPrices.length) return;
-    _selectedDisplayPriceIndex = index;
-    _priceFromApi = _displayPrices[index].totalWithTax;
-    notifyListeners();
   }
 
   String? validateBeforeConfirm() {
@@ -572,9 +563,6 @@ class ReviewTripProvider extends ChangeNotifier {
 
     _loadingPrice = false;
     if (response.isSuccess) {
-      final previousCurrencyCode = _displayPrices.isNotEmpty
-          ? _displayPrices[_selectedDisplayPriceIndex].currencyCode
-          : null;
       _priceFromApi = response.data.totalWithTax;
       _displayPrices = response.data.displayPrices;
       _fallbackOrginalMinPrice = response.data.orginalMinPrice;
@@ -582,16 +570,7 @@ class ReviewTripProvider extends ChangeNotifier {
       _fallbackReturnTripPriceDiscount = response.data.returnTripPriceDiscount;
       _fallbackTaxAmount = response.data.taxAmount;
       if (_displayPrices.isNotEmpty) {
-        var nextIndex = 0;
-        if (previousCurrencyCode != null) {
-          final sameCurrencyIndex = _displayPrices.indexWhere(
-            (item) => item.currencyCode == previousCurrencyCode,
-          );
-          if (sameCurrencyIndex >= 0) {
-            nextIndex = sameCurrencyIndex;
-          }
-        }
-        _selectedDisplayPriceIndex = nextIndex;
+        _selectedDisplayPriceIndex = _egpPriceIndex(_displayPrices);
         _priceFromApi = _displayPrices[_selectedDisplayPriceIndex].totalWithTax;
       }
     }
@@ -659,7 +638,8 @@ class ReviewTripProvider extends ChangeNotifier {
   }
 
   String formatLegPrice(double amount) {
-    final code = selectedDisplayPrice?.currencyCode ?? '';
+    final raw = selectedDisplayPrice?.currencyCode ?? '';
+    final code = raw.isEmpty ? 'EGP' : raw;
     return '${currencySymbol(code)}${amount.toStringAsFixed(2)}';
   }
 
@@ -680,6 +660,13 @@ class ReviewTripProvider extends ChangeNotifier {
   void _clearPromoOriginalPrices() {
     _promoOriginalTotalWithTax = null;
     _promoOriginalTaxAmount = null;
+  }
+
+  int _egpPriceIndex(List<DisplayPriceItem> prices) {
+    final index = prices.indexWhere(
+      (item) => item.currencyCode.toUpperCase() == 'EGP',
+    );
+    return index >= 0 ? index : 0;
   }
 
   String currencySymbol(String code) {
