@@ -8,6 +8,12 @@
       "languageVersion": "3.2"
     },
     {
+      "name": "adjust_sdk",
+      "rootUri": "file:///Users/abualroub/.pub-cache/hosted/pub.dev/adjust_sdk-5.8.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "args",
       "rootUri": "file:///Users/abualroub/.pub-cache/hosted/pub.dev/args-2.7.0",
       "packageUri": "lib/",
@@ -108,6 +114,12 @@
       "rootUri": "file:///Users/abualroub/.pub-cache/hosted/pub.dev/cupertino_icons-1.0.8",
       "packageUri": "lib/",
       "languageVersion": "3.1"
+    },
+    {
+      "name": "customer_io",
+      "rootUri": "file:///Users/abualroub/.pub-cache/hosted/pub.dev/customer_io-4.7.2",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
     },
     {
       "name": "dbus",
@@ -582,6 +594,18 @@
       "rootUri": "file:///Users/abualroub/.pub-cache/hosted/pub.dev/mime-2.0.0",
       "packageUri": "lib/",
       "languageVersion": "3.2"
+    },
+    {
+      "name": "mixpanel_flutter",
+      "rootUri": "file:///Users/abualroub/.pub-cache/hosted/pub.dev/mixpanel_flutter-2.14.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "mixpanel_flutter_common",
+      "rootUri": "file:///Users/abualroub/.pub-cache/hosted/pub.dev/mixpanel_flutter_common-1.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
     },
     {
       "name": "native_toolchain_c",

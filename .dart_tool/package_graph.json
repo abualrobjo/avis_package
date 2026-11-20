@@ -7,10 +7,12 @@
       "name": "avis_package",
       "version": "1.0.1",
       "dependencies": [
+        "adjust_sdk",
         "cloud_firestore",
         "connectivity_plus",
         "country_code_picker",
         "cupertino_icons",
+        "customer_io",
         "dio",
         "dotted_border",
         "easy_localization",
@@ -31,6 +33,7 @@
         "hive_flutter",
         "image_picker",
         "intl",
+        "mixpanel_flutter",
         "open_file",
         "permission_handler",
         "pinput",
@@ -68,6 +71,31 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "mixpanel_flutter",
+      "version": "2.14.0",
+      "dependencies": [
+        "flutter",
+        "flutter_web_plugins",
+        "mixpanel_flutter_common"
+      ]
+    },
+    {
+      "name": "adjust_sdk",
+      "version": "5.8.0",
+      "dependencies": [
+        "flutter",
+        "meta"
+      ]
+    },
+    {
+      "name": "customer_io",
+      "version": "4.7.2",
+      "dependencies": [
+        "flutter",
+        "plugin_platform_interface"
       ]
     },
     {
@@ -487,6 +515,27 @@
       ]
     },
     {
+      "name": "mixpanel_flutter_common",
+      "version": "1.0.0",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
+      "name": "flutter_web_plugins",
+      "version": "0.0.0",
+      "dependencies": [
+        "flutter"
+      ]
+    },
+    {
+      "name": "plugin_platform_interface",
+      "version": "2.1.8",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
       "name": "open_file_platform_interface",
       "version": "1.0.3",
       "dependencies": [
@@ -593,13 +642,6 @@
         "flutter",
         "meta",
         "plugin_platform_interface"
-      ]
-    },
-    {
-      "name": "flutter_web_plugins",
-      "version": "0.0.0",
-      "dependencies": [
-        "flutter"
       ]
     },
     {
@@ -1189,13 +1231,6 @@
       "dependencies": [
         "source_span",
         "string_scanner"
-      ]
-    },
-    {
-      "name": "plugin_platform_interface",
-      "version": "2.1.8",
-      "dependencies": [
-        "meta"
       ]
     },
     {

@@ -1,6 +1,6 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 import 'package:avis_package/src/core/_core.dart';
 import 'package:avis_package/src/generated/locale_keys.g.dart';
@@ -10,10 +10,12 @@ class CancelTripReasonDialog extends StatefulWidget {
   const CancelTripReasonDialog({
     super.key,
     required this.categories,
+    required this.isArabic,
     this.isLoading = false,
   });
 
   final List<CancelationCategoryModel> categories;
+  final bool isArabic;
   final bool isLoading;
 
   static Future<CancelationCategoryModel?> show(
@@ -21,13 +23,25 @@ class CancelTripReasonDialog extends StatefulWidget {
     required List<CancelationCategoryModel> categories,
     bool isLoading = false,
   }) {
+    final isArabic = _isArabic(context);
     return showDialog<CancelationCategoryModel>(
       context: context,
       builder: (ctx) => CancelTripReasonDialog(
         categories: categories,
+        isArabic: isArabic,
         isLoading: isLoading,
       ),
     );
+  }
+
+  /// Read language from the caller. [showDialog] puts this dialog on the
+  /// navigator overlay, outside the route-scoped [LocalizationProvider].
+  static bool _isArabic(BuildContext context) {
+    try {
+      return context.isArabic;
+    } on ProviderNotFoundException {
+      return Localizations.localeOf(context).languageCode == 'ar';
+    }
   }
 
   @override
@@ -39,16 +53,19 @@ class _CancelTripReasonDialogState extends State<CancelTripReasonDialog> {
   String? _validationError;
 
   String _displayName(CancelationCategoryModel item) {
-    return context.localized(
-      item.primaryName ?? item.name ?? '',
-      item.secondaryName,
-    );
+    final primary = item.primaryName ?? item.name ?? '';
+    final secondary = item.secondaryName;
+    if (widget.isArabic && secondary != null) return secondary;
+    return primary;
   }
 
   void _onSubmit() {
     if (_selectedReason == null) {
       setState(() {
-        _validationError = LocaleKeys.common_please_select_a_reason.tr();
+        _validationError = avisTr(
+          LocaleKeys.common_please_select_a_reason,
+          context: context,
+        );
       });
       return;
     }
@@ -99,7 +116,10 @@ class _CancelTripReasonDialogState extends State<CancelTripReasonDialog> {
               AppCustomDropdown<CancelationCategoryModel>(
                 items: widget.categories,
                 title: '',
-                hintText: LocaleKeys.common_please_select_a_reason.tr(),
+                hintText: avisTr(
+                  LocaleKeys.common_please_select_a_reason,
+                  context: context,
+                ),
                 selectedTextStyle: _selectedReason != null
                     ? AppTextStyles.bodyMedium.copyWith(
                         color: context.colors.primaryText,
@@ -134,14 +154,14 @@ class _CancelTripReasonDialogState extends State<CancelTripReasonDialog> {
               onPressed: widget.isLoading || widget.categories.isEmpty
                   ? null
                   : _onSubmit,
-              text: LocaleKeys.common_submit.tr(),
+              text: avisTr(LocaleKeys.common_submit, context: context),
               width: double.infinity,
               height: 48.w,
             ),
             SizedBox(height: 12.h),
             AppButton.secondary(
               onPressed: () => Navigator.of(context).pop(),
-              text: LocaleKeys.common_cancel.tr(),
+              text: avisTr(LocaleKeys.common_cancel, context: context),
               width: double.infinity,
               height: 48.w,
               customBorderColor: context.colors.border,

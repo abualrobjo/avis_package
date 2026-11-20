@@ -53,6 +53,9 @@ class AppRouter {
           LoginRequiredGate(
             child: MultiProvider(
               providers: [
+                ChangeNotifierProvider(
+                  create: (_) => sl<LocalizationProvider>(),
+                ),
                 ChangeNotifierProvider(create: (_) => sl<ReviewTripProvider>()),
                 ChangeNotifierProvider(create: (_) => sl<AddNewCardProvider>()),
                 ChangeNotifierProvider(create: (_) => sl<PaymentProvider>()),
