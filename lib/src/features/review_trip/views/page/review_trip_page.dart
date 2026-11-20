@@ -137,6 +137,34 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
     }
   }
 
+  Future<void> _showMissingPhoneDialog(BuildContext context, String message) {
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: dialogContext.colors.surface,
+          content: Text(
+            message,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: dialogContext.colors.primaryText,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                'OK',
+                style: AppTextStyles.bodyMediumBold.copyWith(
+                  color: dialogContext.colors.primary,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _onConfirm(
     BuildContext context,
     ReviewTripProvider provider,
@@ -146,6 +174,10 @@ class _ReviewTripPageState extends State<ReviewTripPage> {
     if (!mounted) return;
 
     if (!result.success) {
+      if (result.missingPhoneNumber) {
+        await _showMissingPhoneDialog(context, result.errorMessage!);
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result.errorMessage ?? 'Could not confirm booking.')),
       );
