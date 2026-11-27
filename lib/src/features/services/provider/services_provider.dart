@@ -331,7 +331,7 @@ class ServicesProvider extends ChangeNotifier {
     final farFuture = DateTime.now().add(const Duration(days: 365));
     var last = cap != null && cap.isBefore(farFuture) ? cap : farFuture;
     if (last.isBefore(pickupFirstDate)) last = pickupFirstDate;
-    return last;
+    return farFuture;
   }
 
   DateTime returnDatePickerInitialDate(DateTime firstDate, DateTime lastDate) {
@@ -415,20 +415,20 @@ class ServicesProvider extends ChangeNotifier {
   }
 
   void clampReturnDateToMaxDurationWindow() {
-    if (!showsReturnDateTimeRow) return;
-    final latest = latestAllowedReturnCalendarDate;
-    if (latest == null) return;
-    final retDay = DateTime(returnDate.year, returnDate.month, returnDate.day);
-    if (!retDay.isAfter(latest)) return;
-    returnDate = DateTime(latest.year, latest.month, latest.day);
-    if (!availableReturnTimeSlots.any(
-      (t) => t.hour == returnTime.hour && t.minute == returnTime.minute,
-    )) {
-      final slots = availableReturnTimeSlots;
-      if (slots.isNotEmpty) {
-        returnTime = slots.first;
-      }
-    }
+    // if (!showsReturnDateTimeRow) return;
+    // final latest = latestAllowedReturnCalendarDate;
+    // if (latest == null) return;
+    // final retDay = DateTime(returnDate.year, returnDate.month, returnDate.day);
+    // if (!retDay.isAfter(latest)) return;
+    // returnDate = DateTime(latest.year, latest.month, latest.day);
+    // if (!availableReturnTimeSlots.any(
+    //   (t) => t.hour == returnTime.hour && t.minute == returnTime.minute,
+    // )) {
+    //   final slots = availableReturnTimeSlots;
+    //   if (slots.isNotEmpty) {
+    //     returnTime = slots.first;
+    //   }
+    // }
   }
 
   void bumpReturnUntilStrictlyAfterPickup() {

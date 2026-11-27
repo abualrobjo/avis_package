@@ -398,25 +398,6 @@ class ReviewTripProvider extends ChangeNotifier {
     _confirming = true;
     notifyListeners();
 
-    final customerInfo = await _customerInfoService.getCustomerInfo(customerId);
-    if (!customerInfo.isSuccess) {
-      _confirming = false;
-      notifyListeners();
-      return ReviewTripBookingResult.failure(
-        customerInfo.errorMessage ?? 'Could not load your profile.',
-      );
-    }
-
-    final phone = customerInfo.data.customerPhoneNumber?.trim();
-    if (phone == null || phone.isEmpty) {
-      _confirming = false;
-      notifyListeners();
-      return ReviewTripBookingResult.failure(
-        'Please fill the phone number from your profile to complete the process.',
-        missingPhoneNumber: true,
-      );
-    }
-
     final options = buildOptions();
     final vehicle = pageArgs.vehicles.first;
     final haveMeetGreet = _optionValue(options, 'meet');
@@ -781,7 +762,6 @@ class ReviewTripBookingResult {
     this.tripId,
     this.tripModel,
     this.errorMessage,
-    this.missingPhoneNumber = false,
   });
 
   factory ReviewTripBookingResult.success({
@@ -795,14 +775,10 @@ class ReviewTripBookingResult {
     );
   }
 
-  factory ReviewTripBookingResult.failure(
-    String message, {
-    bool missingPhoneNumber = false,
-  }) {
+  factory ReviewTripBookingResult.failure(String message) {
     return ReviewTripBookingResult._(
       success: false,
       errorMessage: message,
-      missingPhoneNumber: missingPhoneNumber,
     );
   }
 
@@ -810,7 +786,6 @@ class ReviewTripBookingResult {
   final int? tripId;
   final ReviewTripUiModel? tripModel;
   final String? errorMessage;
-  final bool missingPhoneNumber;
 }
 
 class TermsAndConditionsPdfResult {
